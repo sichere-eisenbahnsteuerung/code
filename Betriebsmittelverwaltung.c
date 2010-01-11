@@ -15,7 +15,7 @@ void main(void) {
 
 	initBV();
 
-	for (z=0; z++; z < 5)  {
+	for (z=1; z < 5; z++)  {
 		workBV();
 	}
 
