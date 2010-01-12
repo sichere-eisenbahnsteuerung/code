@@ -22,8 +22,9 @@
 
 /* Includes *****************************************************************/
 
-#include "Leitzentrale.h"
 #include "Betriebsmittelverwaltung.h"
+#include "Befehlsvalidierung.h"
+#include "Leitzentrale.h"
 
 /* Definition globaler Konstanten *******************************************/
 
@@ -32,6 +33,15 @@
 /* Lokale Makros ************************************************************/
 
 /* Lokale Typen *************************************************************/
+
+typedef byte[6] Nachricht;
+
+typedef enum {
+	FB_FAHREN = 0x0,
+	FB_ANKUPPELN = 0x2,
+	FB_ABKUPPELN = 0x4,
+	FB_HALTEN = 0x6
+} Fahrbefehl;
 
 typedef enum {
 	LOK1,
@@ -60,10 +70,14 @@ typedef enum {
 	KEINE
 } KuppelAktion;
 
+typedef enum {
+	FEHLER_ZUSTAND // Unm√∂glicher Zustand
+} FehlerCode;
+
 /* Lokale Konstanten ********************************************************/
 
-#define MODULE_ID 0 // fürs auditing und sw watchdog
-#define ERROR_ZUSTAND 0 // unmöglicher zustand
+#define MODULE_ID 0 // f¬ürs auditing und sw watchdogg
+#define PRUEFSENSOR_NR 14
 
 /* Lokale Variablen *********************************************************/
 
@@ -78,7 +92,7 @@ KuppelAktion kuppelAktion;
 CheckKuppelAktion checkKuppelAktion;
 Lok gleisSperrung[9];
 Lok weichenSperrung[3];
-byte nachricht[6]; // fürs auditing
+Nachricht nachricht; // f√ºrs auditing
 Lok lok;
 
 /* Prototypen fuer lokale Funktionen ****************************************/
@@ -95,25 +109,66 @@ bit checkAnzahlWagons();
 bit checkPruefSensor(byte sensorNr);
 void setGleisabschnittGesperrt(byte gleisabschnittNr, bit gesperrt);
 void setStreckenbefehl(Streckenbefehl streckenbefehl);
+
+void setNachricht(FehlerCode fehlerCode);
+void setZustandFuerFahranweisung();
+
 void initLZ();
 void workLZ();
 
 /* Funktionsimplementierungen ***********************************************/
 
+void setNachricht(FehlerCode fehlerCode) {
+	switch(fehlerCode) {
+	case FEHLER_ZUSTAND:
+		nachricht[0] = fehlerCode;
+		nachricht[1] = zustand[LOK1];
+		nachricht[2] = zustand[LOK2];
+		nachricht[3] = lok;
+		nachricht[4] = kuppelAktion;
+		nachricht[5] = wagonsGezaehlt;
+		nachricht[6] = wagonsErwartet;
+		break;
+	default:
+		break;
+	}
+}
+
+void setZustandFuerAnweisung() {
+	switch(fahranweisung.fahrbefehl & 0x0E) {
+	/* Ausnahmsweise kein break, da auch
+	 * beim Anhalten f√ºr eine beliebige
+	 * Zeit zun√§chst in den betreffenden
+	 * Gleisabschnitt eingefahren werden 
+	 * muss*/
+	case FB_FAHREN:
+	case FB_HALTEN:
+		zustand[lok] = FAHREND;
+		break;
+	case FB_ANKUPPELN:
+		zustand[lok] = ANKUPPELND;
+		break;
+	case FB_ABKUPPELN:
+		zustand[lok] = ABKUPPELND;
+		break;
+	default:
+		// error msg
+		break;
+	}
+}
+
 void initLZ() {
 	int i=0;
 	wiederholen[LOK1] = FALSE;
 	wiederholen[LOK2] = FALSE;
-	Fahranweisung tmp;
-	tmp.fahrbefehl = 0;
-	tmp.gleisabschnittNr = 0;
 	for(i=0;i<3;++i) {
-		fahranweisung[i] = tmp;
+		fahranweisung[i].fahrbefehl = 0;
+		fahranweisung[i].gleisabschnittNr = 0;
 	}
 	nextFahranweisung = 0;
 	zustand[LOK1] = HOLT_FAHRANWEISUNG;
 	zustand[LOK2] = HOLT_FAHRANWEISUNG;
-	zeit = 0xFFFF; // höchster wert
+	zeit = 0xFFFF; // h√∂chster Wert
 	wagonsErwartet = 0;
 	wagonsGezaehlt = 0;
 	kuppelAktion = KEINE;
@@ -130,51 +185,92 @@ void initLZ() {
 }
 
 void workLZ() {
+	int lok=0;
 	byte gleisabschnittNr = 0;
 	Fahranweisung fahranweisung = { 0, 0 }; // Fahrbefehl-Typ definieren?
-	for(int lok=LOK1;lok<=LOK2;++lok) {
-		if(zustand[lok] == HOLT_FAHRANWEISUNG) {
+	for(lok=LOK1;lok<=LOK2;++lok) {		
+		switch(zustand[lok]) {
+		case HOLT_FAHRANWEISUNG:
 			if(wiederholen) {
 				fahranweisung = getNeueFahranweisung();
-				// TODO;
 			}
 			else {
 				fahranweisung = getAlteFahranweisung();
-				// TODO;
 			}
 			gleisabschnittNr = fahranweisung.gleisabschnittNr;
 			if(checkBefahrbarkeit(gleisabschnittNr) == TRUE) {
-				// feststellen, welcher fahrbefehl
-				// zustand setzen
+				setZustandFuerFahranweisung();
 			}
 			else {
-				//setStreckenbefehl(); Streckenbefehl setzen
 				zustand[lok] = ANGEHALTEN;
-			}			
-		}		
-		switch(zustand[lok]) {
-			case FAHREND:
-				break;
-			case WARTEND:
-				break;
-			case ANGEHALTEN:
-				break;
-			case ANKUPPELND:
-				break;
-			case ABKUPPELND:
-				break;
-			case HOLT_FAHRANWEISUNG:
-
-			default:
-				nachricht[0] = zustand[LOK1];
-				nachricht[1] = zustand[LOK2];
-				nachricht[2] = lok;
-				nachricht[3] = kuppelAktion;
-				nachricht[4] = wagonsGezaehlt;
-				nachricht[5] = wagonsErwartet;
-				nachricht[6] = ERROR_ZUSTAND;				
-				hello(nachricht,MODULE_ID);
-				break;
+			}
+			break;
+		case FAHREND:
+			// TODO Fahrgeschwindigkeit einlegen
+			
+			if(	(checkZielpositionErreicht() == TRUE && 
+				 checkKuppelAktion == JETZT &&
+				 checkAnzahlWagons() == FALSE) || 
+			
+				(checkZielpositionErreicht() == FALSE &&
+				kuppelAktion == ANKUPPELN &&
+				checkPruefSensor(PRUEFSENSOR_NR) == TRUE)) {
+					
+					if(kuppelAktion == ANKUPPELN) {
+						kuppelAktion = KEINE;
+					}
+					
+					wiederholen[lok] = TRUE;
+					zustand[lok] = HOLT_FAHRANWEISUNG;
+			}
+			else {
+				// TODO gerade verlassenes gleis sperren
+				if(checkKuppelAktion == BEIM_NAECHSTEN_MAL) {
+					checkKuppelAktion = JETZT;
+				}
+				else {
+					checkKuppelAktion = NIE;
+				}
+				
+				if(fahranweisung.fahrbefehl & 0x0E == FB_HALTEN) {
+					zustand[lok] = WARTEND;
+				}
+				else {
+					zustand[lok] = HOLT_FAHRANWEISUNG;
+				}
+			}
+			break;
+		case WARTEND:
+			if(checkZeit() == FALSE) {
+				zustand[lok] = HOLT_FAHRANWEISUNG;
+			}
+			break;
+		case ANGEHALTEN:
+			if(checkBefahrbarkeit(gleisabschnittNr) == TRUE) {
+				setZustandFuerFahranweisung();
+			}
+			break;
+		case ANKUPPELND:
+			// ankuppelgeschwindigkeit einlegen
+			if(checkZielpositionErreicht() == TRUE) {
+				kuppelAktion = ANKUPPELN;
+			}
+			checkKuppelAktion = BEIM_NAECHSTEN_MAL;
+			wiederholen = false;
+			break;
+		case ABKUPPELND:
+			// abkuppelgeschwindigkeit einlegen
+			if(checkZielpositionErreicht() == TRUE) {
+				kuppelAktion = ABKUPPELN;
+			}
+			// gerade verlassenen gleisabschnitt entsperren
+			checkKuppelAktion = BEIM_NAECHSTEN_MAL;
+			wiederholen = false;
+			break;
+		default:
+			setNachricht(FEHLER_ZUSTAND);
+			hello(nachricht,MODULE_ID);
+			break;
 		}
 	}
 }
