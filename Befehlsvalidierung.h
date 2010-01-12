@@ -8,7 +8,6 @@
  *
  *        Autor:        Vitali Voroth
  *
- *
  *        Modul:        Befehlsvalidierung, 1.0
  *
  *        Beschreibung:	Prüft Streckenbefehle der Leitzentrale auf Gültigkeit
@@ -22,7 +21,19 @@
 
 /* Globale Makrodefinitionen ************************************************/
 
+#ifndef BV_ANZAHL_GLEISABSCHNITTE
+#define BV_ANZAHL_GLEISABSCHNITTE 9
+#endif
+#ifndef BV_ANZAHL_WEICHEN
+#define BV_ANZAHL_WEICHEN 3
+#endif
+#ifndef BV_ANZAHL_ZUEGE
+#define BV_ANZAHL_ZUEGE 2
+#endif
+
+
 /* Globale Typdefinitionen **************************************************/
+
 typedef struct Gleisabschnitt_struct 
 { 
 	byte nr;
@@ -41,10 +52,10 @@ typedef struct Gleisabschnitt_struct
 
 /* Deklaration von globalen Variablen ***************************************/
 
-Gleisabschnitt BV_streckentopologie[];
-byte BV_gleisBelegung[];
-byte BV_weichenBelegung[];
-byte BV_zugPosition[];
+extern Gleisabschnitt BV_streckentopologie[BV_ANZAHL_GLEISABSCHNITTE + 1];
+extern byte BV_gleisBelegung[BV_ANZAHL_GLEISABSCHNITTE + 1];
+extern byte BV_weichenBelegung[BV_ANZAHL_WEICHEN + 1];
+extern byte BV_zugPosition[BV_ANZAHL_ZUEGE];
 
 /* Deklaration von globalen Funktionen **************************************/
 
