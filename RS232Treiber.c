@@ -20,12 +20,14 @@
  ****************************************************************************/
 
 /* Includes *****************************************************************/
-
 #include<stdio.h>
 #include<RS232Treiber.h>
 #include<Betriebsmittelverwaltung.h>
 
 /* Definition globaler Konstanten *******************************************/
+void konvertLok();
+void konvertWeiche();
+void konvertEntkoppler();
 
 /* Definition globaler Variablen ********************************************/
 
@@ -75,7 +77,7 @@ DataReceivedInterrupt () interrupt 4 //Interruptfunktion
 				//Keine Sendebestaetigung
 				else 
 				{
-					EV_RS232_Streckenbefehl.RS232_EV_failure = receive_buffer[1];		
+					EV_RS232_streckenbefehl.Fehler = receive_buffer[1];		
 				}
 			}
 		} 
@@ -111,9 +113,9 @@ void workRS232()
 	//CTS Pin = 0x00 = LI101F ist empfangsbereit
 	if(rs232_enabled == 0x00) 
 	{
-		EV_RS232_Streckenbefehl.Lok = 0xFF;
-		EV_RS232_Streckenbefehl.Weiche = 0xFF;
-		EV_RS232_Streckenbefehl.Entkuppler != 0xFF;
+		EV_RS232_streckenbefehl.Lok = 0xFF;
+		EV_RS232_streckenbefehl.Weiche = 0xFF;
+		EV_RS232_streckenbefehl.Entkoppler = 0xFF;
 		return;
 	}
 	
@@ -123,18 +125,18 @@ void workRS232()
 		called_without_sent_answer++;
 		if( called_without_sent_answer == maxfailures)
 		{
-			EV_RS232_Streckenbefehl.RS232_EV_failure = 0x04;
+			EV_RS232_streckenbefehl.Fehler = 0x04;
 		}
 		return;
 	}
 	
 	called_without_sent_answer = 0x00;
 	
-	if(RS232_CTSPIN == 0) 
+	if(RS232TREIBER_CTSPIN == 0) 
 	{
 		cts_pin_false = 0x00;
 		
-		//Daten Daten mehr zu versenden
+		//Keine Daten mehr zu versenden
 		if(sende_counter == 0x00) 
 		{
 			//Empfangsbestaetigung des letzten Befehls vom LI101F erhalten
@@ -142,20 +144,20 @@ void workRS232()
 			{
 				byte commandposition = 0xFF;
 				//Lok Befehl
-				if(EV_RS232_Streckenbefehl.Lok != 0xFF) {
+				if(EV_RS232_streckenbefehl.Lok != 0xFF) {
 					commandposition = 0x00;
 				}
 				else
 				{
 					//Weichen-Befehl
-					if(EV_RS232_Streckenbefehl.Weiche != 0xFF) 
+					if(EV_RS232_streckenbefehl.Weiche != 0xFF) 
 					{
 						commandposition = 0x01;
 					}
 					else
 					{	
 						//Entkupplungs-Befehl
-						if(EV_RS232_Streckenbefehl.Entkuppler != 0xFF) 
+						if(EV_RS232_streckenbefehl.Entkoppler != 0xFF) 
 						{
 							commandposition = 0x02;
 						}
@@ -173,7 +175,7 @@ void workRS232()
 								break;
 					
 					//Entkupplungs Befehl
-					case 0x02: 	konvertEntkuppler();
+					case 0x02: 	konvertEntkoppler();
 								break;
 					
 					//Kein Befehl vorhanden
@@ -185,7 +187,7 @@ void workRS232()
 		while(sende_counter > 0x00)
 		{
 			//CTS bereit
-			if(RS232_CTSPIN == 0) 
+			if(RS232TREIBER_CTSPIN == 0) 
 			{
 				SBUF = sende_buffer[sende_counter-1];
 				while(TI == 0) {
@@ -199,13 +201,13 @@ void workRS232()
 				int verzoegerung = 0;
 				while(verzoegerung  < 2000)
 				{
-					if(RS232_CTSPIN == 1) 
+					if(RS232TREIBER_CTSPIN == 1) 
 					{
 						cts_pin_false++;
 						//Maximaler Fehleranzahl erreicht?
 						if(cts_pin_false == maxfailures)
 						{
-							EV_RS232_Streckenbefehl.RS232_EV_failure = 0x04;	
+							EV_RS232_streckenbefehl.Fehler = 0x04;	
 						}
 						return;
 					}
@@ -214,21 +216,21 @@ void workRS232()
 			}
 		}
 		//Befehl abgeschickt, entsprechenden Eintrag im Shared-Memory auf 0xFF setzen
-		if(EV_RS232_Streckenbefehl.Lok != 0xFF) 
+		if(EV_RS232_streckenbefehl.Lok != 0xFF) 
 		{
-			EV_RS232_Streckenbefehl.Lok = 0xFF;
+			EV_RS232_streckenbefehl.Lok = 0xFF;
 		}
 		else
 		{
 			//Weichen-Befehl
-			if(EV_RS232_Streckenbefehl.Weiche != 0xFF) 
+			if(EV_RS232_streckenbefehl.Weiche != 0xFF) 
 			{
-				EV_RS232_Streckenbefehl.Weiche = 0xFF;
+				EV_RS232_streckenbefehl.Weiche = 0xFF;
 			}
 			else
 			{	
 				//Entkupplungs-Befehl
-				if(EV_RS232_Streckenbefehl.Entkuppler != 0xFF) 
+				if(EV_RS232_streckenbefehl.Entkoppler != 0xFF) 
 				{
 					if(entkupplerActive == 0x01)
 					{
@@ -236,7 +238,7 @@ void workRS232()
 					}
 					else 
 					{
-						EV_RS232_Streckenbefehl.Entkuppler = 0xFF;
+						EV_RS232_streckenbefehl.Entkoppler = 0xFF;
 					}
 				}
 			}
@@ -249,7 +251,7 @@ void workRS232()
 		//Maximaler Fehleranzahl erreicht?
 		if(cts_pin_false == maxfailures)
 		{
-			EV_RS232_Streckenbefehl.RS232_EV_failure = 0x04;	
+			EV_RS232_streckenbefehl.Fehler = 0x04;	
 		}
 		
 	}
@@ -258,23 +260,26 @@ void workRS232()
 //Konvertiert Streckenbefehl aus dem Shared-Memory ins XpressNet-Format
 void konvertLok()
 {
+	byte v;
+
 	//Lok soll gestoppt werden 0000 00XX
-	if((EV_RS232_Streckenbefehl.Lok >> 2) == 0x00)
+	if((EV_RS232_streckenbefehl.Lok >> 2) == 0x00)
 	{
 		sende_counter = 0x04;
 		sende_buffer[3] = 0x92; //Header
 		sende_buffer[2] = 0x00;//Daten 1
 		
-		if((0x01 & EV_RS232_Streckenbefehl.Lok) == 0x01)
+		if((0x01 & EV_RS232_streckenbefehl.Lok) == 0x01)
 		{
-			sende_buffer[1] = Lok1_address//Daten 2
+			sende_buffer[1] = Lok1_address;//Daten 2
 		}
 		else
 		{
-			sende_buffer[1] = Lok2_address//Daten 2
+			sende_buffer[1] = Lok2_address;//Daten 2
 		}
 		
 		sende_buffer[0] = (sende_buffer[3] ^ sende_buffer[2]) ^ sende_buffer[1];
+		return;
 	}
 
 	sende_counter = 0x06;
@@ -282,29 +287,29 @@ void konvertLok()
 	sende_buffer[4] = 0x13;
 	sende_buffer[3] = 0x00;
 
-	//Lok1 mit Adresse 0x01
-	else if((0x01 & EV_RS232_Streckenbefehl.Lok) == 0) {
-		sende_buffer[2] = Lok1_address;
-	
-		//Lok2 mit Adresse 0x01
-		else if((0x01 & EV_RS232_Streckenbefehl.Lok) == 1) {
-			sende_buffer[2] = Lok2_address;
+	//Lok1 mit Adresse 0x00
+	if((0x01 & EV_RS232_streckenbefehl.Lok) == 0x00) 
+	{
+		sende_buffer[2] = Lok1_address;		  	
 		
-		}
+	}  //Lok2 mit Adresse 0x01
+	else if((0x01 & EV_RS232_streckenbefehl.Lok) == 0x01) 
+	{
+		sende_buffer[2] = Lok2_address;	
 	}
 	
 	//Geschwindigkeit ermitteln
-	byte v = 0x03 & (EV_RS232_Streckenbefehl.Lok  >> 2);
+	v = 0x03 & (EV_RS232_streckenbefehl.Lok  >> 2);
 	
 	if(v == 0x01) {
-		sende_buffer[1] = ((0x02 & EV_RS232_Streckenbefehl.Lok) << 6 ) | V_Abkuppeln;
+		sende_buffer[1] = ((0x02 & EV_RS232_streckenbefehl.Lok) << 6 ) | V_Abkuppeln;
 	}
 	else {
 		if (v == 0x02) {
-			sende_buffer[1] = ((0x02 & EV_RS232_Streckenbefehl.Lok) << 6 ) | V_Ankuppeln;
+			sende_buffer[1] = ((0x02 & EV_RS232_streckenbefehl.Lok) << 6 ) | V_Ankuppeln;
 		}
 		else {
-			sende_buffer[1] = ((0x02 & EV_RS232_Streckenbefehl.Lok) << 6 ) | V_Fahrt;
+			sende_buffer[1] = ((0x02 & EV_RS232_streckenbefehl.Lok) << 6 ) | V_Fahrt;
 		}
 	}
 	
@@ -313,22 +318,24 @@ void konvertLok()
 
 void konvertWeiche() //getestet
 {
+	byte BB;
+	
 	sende_counter = 0x04;
 	sende_buffer[3] = 0x52; //Header
 		
 	//Weiche bestimmen
-	byte BB;
-	if(EV_RS232_Streckenbefehl.Weiche >> 1 == 0x01)
+	
+	if(EV_RS232_streckenbefehl.Weiche >> 1 == 0x01)
 	{
 		sende_buffer[2] = W1_address >> 2;	
 		BB = W1_address % 4;	
 	}
-	else if(EV_RS232_Streckenbefehl.Weiche >> 1 == 0x02)
+	else if(EV_RS232_streckenbefehl.Weiche >> 1 == 0x02)
 	{
 		sende_buffer[2] = W2_address >> 2;
 		BB = W2_address % 4;
 	}
-	else if(EV_RS232_Streckenbefehl.Weiche >> 1 == 0x03)
+	else if(EV_RS232_streckenbefehl.Weiche >> 1 == 0x03)
 	{
 		sende_buffer[2] = W3_address >> 2;
 		BB = W3_address % 4;
@@ -336,32 +343,34 @@ void konvertWeiche() //getestet
 	BB = BB << 1;
 
 	//Abbiegen
-	if((0x01 & EV_RS232_Streckenbefehl.Weiche) == 0x01)
+	if((0x01 & EV_RS232_streckenbefehl.Weiche) == 0x01)
 	{
 		sende_buffer[1] = 0x80 + (0x09 | BB);//Daten 2
 	}
 	//Gerade aus
 	else
 	{
-		sende_buffer[1] = 0x80 + (0x08 | BB)//Daten 2
+		sende_buffer[1] = 0x80 + (0x08 | BB);//Daten 2
 	}
 	
 	sende_buffer[0] = (sende_buffer[3] ^ sende_buffer[2]) ^ sende_buffer[1];	  
 }
 
-void konvertEntkuppler()
-{
+void konvertEntkoppler()
+{	 
+	byte BB;
+	
 	sende_counter = 0x04;
 	sende_buffer[3] = 0x52; //Header
 
 	//Entkuppler bestimmen
-	byte BB;
-	if(EV_RS232_Streckenbefehl.Weiche >> 1 == 0x01)
+	
+	if(EV_RS232_streckenbefehl.Weiche >> 1 == 0x01)
 	{
 		sende_buffer[2] = EK1_address >> 2;	
 		BB = EK1_address % 4;	
 	}
-	else if(EV_RS232_Streckenbefehl.Weiche >> 1 == 0x02)
+	else if(EV_RS232_streckenbefehl.Weiche >> 1 == 0x02)
 	{
 		sende_buffer[2] = EK2_address >> 2;
 		BB = EK2_address % 4;
@@ -376,7 +385,7 @@ void konvertEntkuppler()
 	//entkupplerActive = 0x00 -> "Heben" Befehl erzeugen
 	else
 	{
-		sende_buffer[1] = 0x80 + (0x08 | BB)//Daten 2
+		sende_buffer[1] = 0x80 + (0x08 | BB);//Daten 2
 	}
 	
 	sende_buffer[0] = (sende_buffer[3] ^ sende_buffer[2]) ^ sende_buffer[1];	  
@@ -385,7 +394,7 @@ void konvertEntkuppler()
 
 void initRS232() 
 {
-	if(RS232_CTSPIN == 0)
+	if(RS232TREIBER_CTSPIN == 0)
 	{
 		rs232_enabled = 0x01;
 	}
@@ -394,7 +403,7 @@ void initRS232()
 		rs232_enabled = 0x00;
 	}
 	
-	EV_RS232_streckenbefehl.RS232_EV_failure = 0x00;
+	EV_RS232_streckenbefehl.Fehler = 0x00;
 	SM0 = 0; 
 	SM1 = 1;	
 	RI = 0;
@@ -406,5 +415,27 @@ void initRS232()
 	REN = 1;
 	BD = 1;
 }
+/*
+void main(void)
+{
+   int i = 50000;
+
+   initRS232();
+
+   EV_RS232_streckenbefehl.Lok = 0x02; 
+	
+   workRS232();
+   
+   while(i > 0)
+   	i--;
+   i = 50000;
+
+   workRS232();
+   workRS232();
+   workRS232();
+
+   while(1);
+}	*/
+
 
 
