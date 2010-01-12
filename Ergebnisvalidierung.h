@@ -2,7 +2,7 @@
 #define ERGEBNISVALIDIERUNG_H
 /*****************************************************************************
  *
- *        Dateiname:    ergebnisvalidierung.h
+ *        Dateiname:    Ergebnisvalidierung.h
  *
  *        Projekt:      Sichere Eisenbahnsteuerung
  *

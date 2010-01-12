@@ -2,7 +2,7 @@
 #define EV_TEST_HEADER_H
 /*****************************************************************************
  *
- *        Dateiname:    ev_test_header.h
+ *        Dateiname:    EV_test_header.h
  *
  *        Projekt:      Sichere Eisenbahnsteuerung
  *

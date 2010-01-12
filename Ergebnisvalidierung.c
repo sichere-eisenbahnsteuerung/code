@@ -1,6 +1,6 @@
 /*****************************************************************************
  *
- *        Dateiname:    ergebnisvalidierung.c
+ *        Dateiname:    Ergebnisvalidierung.c
  *
  *        Projekt:      Sichere Eisenbahnsteuerung
  *
@@ -20,13 +20,14 @@
  ****************************************************************************/
 
 /* Includes *****************************************************************/
-#include <REG515C.H>
-// TODO: includes korrigieren
-#include "EV_test_header.h"
 #include "Ergebnisvalidierung.h"
+// TODO: include einkommentieren
+//#include "Betriebsmittelverwaltung.h"
 
+// TODO: includes entfernen
+#include <REG515C.H>
+#include "EV_test_header.h"
 #include <stdio.h>
-//#include <string.h>
 
 /* Definition globaler Konstanten *******************************************/
 
@@ -58,8 +59,22 @@ static Streckenbefehl internerStreckenbefehl = {LEER, LEER, LEER, LEER};
 // SSC-Treiber
 static Streckenbefehl externerStreckenbefehl = {LEER, LEER, LEER, LEER};
 
+// Gibt an, ob ein neuer Streckenbefehl von der Befehlsvalidierung vorhanden ist
+boolean isBVNew = FALSE;
+
+// Gibt an, ob ein neuer Sreckenbefehl vom SSC-Treiber vorhanden ist,
+boolean isSSCNew = FALSE;
+
 /* Prototypen fuer lokale Funktionen ****************************************/
-// TODO: Wie funktionieren die Prototypen???
+boolean isStreckenbefehlResetted(Streckenbefehl *track);
+boolean processExternalStreckenbefehl(void);
+boolean streckenbefehleEqual(Streckenbefehl *track1, Streckenbefehl *track2);
+void initEV(void);
+void processInternalStreckenbefehl(void);
+void resetStreckenbefehl(Streckenbefehl *track);
+void workEV();
+
+
 
 /* Funktionsimplementierungen ***********************************************/
 /*
@@ -75,11 +90,11 @@ void initEV(void)
 	internerStreckenbefehl.Lok = LEER;
 	internerStreckenbefehl.Weiche = LEER;
 	internerStreckenbefehl.Entkoppler = LEER;
-	internerStreckenbefehl.Fehler = LEER;
+	internerStreckenbefehl.Fehler = 0;
 	externerStreckenbefehl.Lok = LEER;
 	externerStreckenbefehl.Weiche = LEER;
 	externerStreckenbefehl.Entkoppler = LEER;
-	externerStreckenbefehl.Fehler = LEER;
+	externerStreckenbefehl.Fehler = 0;
 }
 
 /*
@@ -118,10 +133,10 @@ boolean isStreckenbefehlResetted(Streckenbefehl *track)
 void resetStreckenbefehl(Streckenbefehl *track)
 {
 	// Streckenbefehl zuruecksetzen
-	// Der Fehler ist irrelevant und wird nicht zurueckgesetzt.
 	track->Lok = LEER;
 	track->Weiche = LEER;
 	track->Entkoppler = LEER;
+	track->Fehler = 0;
 }
 
 /*
@@ -136,6 +151,14 @@ void resetStreckenbefehl(Streckenbefehl *track)
 */
 boolean streckenbefehleEqual(Streckenbefehl *track1, Streckenbefehl *track2)
 {
+	// Ueberpruefung, ob jeweils ein neuer Streckenbefehl von der
+	// Befehlsvalidierung und dem SSC-Treiber
+	if(isBVNew && isSSCNew)
+	{
+		// Zuruecksetzen des Zaehlers, 
+		streckenbefehleUngleich = 0;
+	}
+
 	// Vergleichen der beiden Streckenbefehle
 	if(track1->Lok == track2->Lok &&
 	   track1->Weiche == track2->Weiche &&
@@ -182,7 +205,7 @@ boolean checkForCommunicationErrors(void)
 {
 	// Ueberpruefung, ob der Fehleranteil des Shared Memory vom
 	// RS232-Treiber zurueckgesetzt ist.
-	if(RS232_EV_streckenbefehl.Fehler != 0x00)
+	if(RS232_EV_streckenbefehl.Fehler != 0)
 	{
 		// Falls nicht, wird der Fehlercode an das Auditing System
 		// uebermittelt, ...
@@ -196,7 +219,7 @@ boolean checkForCommunicationErrors(void)
 
 	// Ueberpruefung, ob der Fehleranteil des Shared Memory vom
 	// SSC-Treiber zurueckgesetzt ist.
-	if(SSC_EV_streckenbefehl.Fehler != LEER)
+	if(SSC_EV_streckenbefehl.Fehler != 0)
 	{
 		// Falls nicht, wird der Fehlercode an das Auditing System
 		// uebermittelt, ...
@@ -306,19 +329,26 @@ boolean checkForCommunicationErrors(void)
 */
 void processInternalStreckenbefehl(void)
 {
+	isBVNew = FALSE;
+
 	// Neuer Streckenbefehl im Shared Memory von der Befehlsvalidierung?
 	if(isStreckenbefehlResetted(&BV_EV_streckenbefehl))
 	{
-		// Falls nicht wird die Funktion verlassen
+		// Falls kein neuner Streckenbefehl vorhanden ist,
+		// wird die Funktion verlassen
 		return;
 	}
 
 	// Shared Memory von der Befehlsvalidierung in lokaler Variable 
 	// fuer spaeter Ueberpruefungen speichern
 	internerStreckenbefehl = BV_EV_streckenbefehl;
+	
 	// Shared Memory von der Befehlsvalidierung zuruecksetzen
 	resetStreckenbefehl(&BV_EV_streckenbefehl);
 	
+	// Signalisieren, dass ein neuer Streckenbefehl vorhanden ist
+	isBVNew = TRUE;
+
 	// Ueberpruefung, ob der Shared Memory zum SSC-Treiber 
 	// zurueckgesetzt ist.
 	if(isStreckenbefehlResetted(&EV_SSC_streckenbefehl))
@@ -348,23 +378,30 @@ void processInternalStreckenbefehl(void)
 */
 boolean processExternalStreckenbefehl(void)
 {
+	isSSCNew = FALSE;
+
 	// Neuer Streckenbefehl im Shared Memory vom SSC-Treiber?
 	if(!isStreckenbefehlResetted(&SSC_EV_streckenbefehl))
 	{
 		// Falls ja Shared Memory vom SSC-Treiber in lokaler 
 		// Variable fuer spaeter Ueberpruefungen speichern
 		externerStreckenbefehl = SSC_EV_streckenbefehl;
+
 		// Shared Memory vom SSC-Treiber zuruecksetzen
 		resetStreckenbefehl(&SSC_EV_streckenbefehl);
+
+		// Signalisieren, dass ein neuer Streckenbefehl vorhanden ist
+		isSSCNew = TRUE;
+
 		// Funktion mit Wert TRUE verlassen
 		return TRUE;
 	}
 
 	// Falls sich kein neuer Streckenbefehl im Shared Memory befindet,
-	// wird ueberprueft, ob der interne Streckenbefehl zurueckgesetzt ist.
-	if(!isStreckenbefehlResetted(&internerStreckenbefehl))
+	// wird ueberprueft, ob der interne Streckenbefehl neu ist.
+	if(isBVNew)
 	{
-		// Falls nicht wird die Funktion mit dem Wert TRUE verlassen
+		// Falls ja wird die Funktion mit dem Wert TRUE verlassen
 		return TRUE;
 	}
 
@@ -455,7 +492,7 @@ void workEV(void)
 }
 
 
-// Dient nur zu Testzwecken und bedarf deshalb keine weiterne Kommentare.
+// Dient nur zu Testzwecken und bedarf deshalb keiner weiteren Kommentare.
 int main(void)
 {
 
