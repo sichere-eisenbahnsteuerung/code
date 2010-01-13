@@ -9,7 +9,7 @@
  *        Autor:        Matthias Buﬂ
  *		  Datum:		13.01.2010
  *
- *        Modul:        SSC, 0.7
+ *        Modul:        SSC, 0.8
  *
  *        Beschreibung:
  *        Die Headerdatei definiert die globalen Funktionen
