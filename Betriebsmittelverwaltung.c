@@ -4,10 +4,10 @@
  *
  *        Projekt:      Sichere Eisenbahnsteuerung
  *
- *        Autor:        Altan Gottwald, Vitali Voroth
+ *        Autor:        Altan Gottwald, Vitali Voroth, Jan-Christopher Icken
  *
  *
- *        Modul:        Betriebsmittelverwaltung, ver 0.3
+ *        Modul:        Betriebsmittelverwaltung, ver 0.4
  *
  *        Beschreibung:
  *        Init aller Module
@@ -64,14 +64,15 @@ byte AS_msg_counter = LEER;
 //P4.1 bis P4.4 für SSC reserviert
 //P4.6 und P4.7 für CAN reserviert
 
-sbit S88_PS = P1^6; 
+
+/*sbit S88_PS = P1^6; 
 sbit S88_RESET = P1^7;     
 sbit S88_CLK = P3^2;
 sbit S88_Data = P3^3;
 sbit NOTAUS_PIN	= P3^4;
 sbit RS232TREIBER_CTSPIN = P3^5;
 sbit AS_PORT_I2C_SDA = P3^6;
-sbit AS_PORT_I2C_SCL = P3^7;
+sbit AS_PORT_I2C_SCL = P3^7;*/
 
 /* Lokale Makros ************************************************************/
 

@@ -6,21 +6,21 @@
  *
  *        Projekt:      Sichere Eisenbahnsteuerung
  *
- *        Autor:        Altan Gottwald, Vitali Voroth
+ *        Autor:        Altan Gottwald, Vitali Voroth, Jan-Christopher Icken
  *
  *
- *        Modul:        Betriebsmittelverwaltung, ver 0.4
+ *        Modul:        Betriebsmittelverwaltung, ver 0.5
  *
  *        Beschreibung:
  *        Belegung von Ressourcen
  *        unsigned char sind als typedef bye definiert
  *        Timer0 wird vom SW verwendet
- *        ________________________________________________________________
+ *        Benennenung der verwendeten Ports
  *        ________________________________________________________________
  *        ________________________________________________________________
  *
  ****************************************************************************/
-
+#include <reg515c.h>
 /* Globale Makrodefinitionen ************************************************/
 
 #define TRUE 1 
@@ -58,8 +58,8 @@ extern Sensordaten S88_BV_sensordaten;
 extern Streckenbefehl BV_EV_streckenbefehl;
 extern Streckenbefehl SCC_EV_streckenbefehl;
 extern Streckenbefehl EV_SSC_streckenbefehl;
-extern byte EV_SSC_failure;
-extern byte SSC_EV_failure; 
+//extern byte EV_SSC_failure; //Ueberfluessig, weil schon integriert im Streckenbefehl
+//extern byte SSC_EV_failure; //Ueberfluessig, weil schon integriert im Streckenbefehl
 extern byte SW_status_array[6];
 extern Streckenbefehl EV_RS232_streckenbefehl;
 extern byte AS_msg_counter;
@@ -75,14 +75,27 @@ extern byte AS_msg_counter;
 //Pins
 //P4.1 bis P4.4 für SSC reserviert
 //P4.6 und P4.7 für CAN reserviert
-extern bit S88_PS;
+/*extern bit S88_PS;
 extern bit S88_RESET;
 extern bit S88_CLK;
 extern bit S88_Data;
 extern bit NOTAUS_PIN;
 extern bit RS232TREIBER_CTSPIN;
 extern bit AS_PORT_I2C_SDA;
-extern bit AS_PORT_I2C_SCL;
+extern bit AS_PORT_I2C_SCL;*/
+
+/**
+* sbit Zuweisung muss in einer Headerdatei erfolgen
+* siehe: http://www.keil.com/support/docs/1317.htm
+**/
+sbit S88_PS = P1^6; 
+sbit S88_RESET = P1^7;     
+sbit S88_CLK = P3^2;
+sbit S88_Data = P3^3;
+sbit NOTAUS_PIN	= P3^4;
+sbit RS232TREIBER_CTSPIN = P3^5;
+sbit AS_PORT_I2C_SDA = P3^6;
+sbit AS_PORT_I2C_SCL = P3^7;
 
 /* Deklaration von globalen Funktionen **************************************/
 
