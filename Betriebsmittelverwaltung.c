@@ -20,8 +20,6 @@
  ****************************************************************************/
 
 /* Includes *****************************************************************/
-#include <reg515c.h>
-#include <stdio.h>
 #include "Betriebsmittelverwaltung.h"
 
 // #include "Notaus.h"
