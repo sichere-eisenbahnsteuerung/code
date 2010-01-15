@@ -8,9 +8,9 @@
  *
  *        Modul:        Befehlsvalidierung, 1.0
  *
- *        Beschreibung:	Prüft Streckenbefehle der Leitzentrale auf Gültigkeit
- *			Leitet Sensordaten vom S88-Treiber an die Leitzentrale
- *			Macht ein Not-Aus bei kritischem Zustand auf Strecke
+ *        Beschreibung:	Prueft Streckenbefehle der Leitzentrale auf Gueltigkeit.
+ *			Leitet Sensordaten vom S88-Treiber an die Leitzentrale.
+ *			Macht ein Not-Aus bei kritischem Zustand auf Strecke.
  *
  ****************************************************************************/
 
@@ -18,7 +18,6 @@
 
 #include "Betriebsmittelverwaltung.h"
 #include "Befehlsvalidierung.h"
-#include <stdio.h>
 
 /* Definition globaler Konstanten *******************************************/
 
@@ -42,7 +41,7 @@ static Gleisabschnitt streckentopologie[BV_ANZAHL_GLEISABSCHNITTE + 1];
 
 static byte gleisBelegung[BV_ANZAHL_GLEISABSCHNITTE + 1] =
 	{	0,0,
-		3,	// Abschn. 2: Drei Güterwaggons
+		3,	// Abschn. 2: Drei Gueterwaggons
 		0,0,0,	
 		3,	// Abschn. 7: Lok1 inkl. zwei Passagierwaggons
 		1,	// Abschn. 8: Rangierlokomotive
@@ -59,17 +58,32 @@ static byte weichenStellung[BV_ANZAHL_WEICHEN + 1] =
 		0,0,0,0	// Alle Weichen im Initialzustand nach links
 	};	
 
-static byte zugPosition[BV_ANZAHL_ZUEGE +1] = 
+static byte zugPosition[BV_ANZAHL_ZUEGE] = // #0 = Lok1, #1 = Lok2
 	{
-		0,7,8
+		7,8
+	};
+static byte zugGeschwindigkeit[BV_ANZAHL_ZUEGE] =
+	{
+		0,0
+	};
+	
+static byte zugRichtung[BV_ANZAHL_ZUEGE] =
+	{
+		0,0
 	};
 	
 /* Prototypen fuer lokale Funktionen ****************************************/
 
 // TODO write some docu for those
-bit checkStreckenTopologie(void);
 void copyStreckenTopologie(void);
+boolean checkStreckenTopologie(void);
+boolean checkSensorDaten(void);
+
+
 void defineStreckenTopologie(void);
+boolean zugNebenSensor(byte sensorNr, byte *zugNr, byte *richtung);
+boolean sucheNachbarn(byte sensorNr, byte *nextAbs, byte *prevAbs,
+				byte *nSwitch, byte *pSwitch);
 
 /* Funktionsimplementierungen ***********************************************/
 
@@ -87,19 +101,20 @@ void initBV(void)
 
 void workBV(void)
 {
-	b1 = ++gleisBelegung[1];
-	b2 = --gleisBelegung[2];
-	b3 = b1 + b2;
-	printf("b3 = %d \n", (int)b3);
+	S88_BV_sensordaten.Byte0 = 128;
+	S88_BV_sensordaten.Byte1 = 0x3;
+	
 	checkStreckenTopologie();
+	checkSensorDaten();
 }
 
-bit checkStreckenTopologie(void)
+/* Im Moduldesign beschriebene Funktionen .. */
+boolean checkStreckenTopologie(void)
 {
 	byte z = 1;
 	bit ret = TRUE;
 	
-	// Variablen kürzen ... :/
+	// Variablen kuerzen ... :/
 	Gleisabschnitt *my = streckentopologie;
 	Gleisabschnitt *his = BV_streckentopologie;
 	
@@ -119,25 +134,121 @@ bit checkStreckenTopologie(void)
 	
 	for (z = 1; z < BV_ANZAHL_GLEISABSCHNITTE; z++)
 	{
-		BV_gleisBelegung[z] = gleisBelegung[z];
+		ret &= (BV_gleisBelegung[z] == gleisBelegung[z]);
 	}
+	if (ret == FALSE) return FALSE;
 	
 	for (z = 1; z < BV_ANZAHL_WEICHEN; z++)
 	{
-		BV_weichenBelegung[z] = weichenBelegung[z];
+		ret &= (BV_weichenBelegung[z] = weichenBelegung[z]);
 	}
+	if (ret == FALSE) return FALSE;
 	
 	for (z = 1; z < BV_ANZAHL_ZUEGE; z++)
 	{
-		BV_zugPosition[z] = zugPosition[z];
+		ret &= (BV_zugPosition[z] = zugPosition[z]);
 	}
+	return ret;
+}
+
+boolean checkSensorDaten(void)
+{
+	byte z, inkr;
+	byte mask;
+	byte sensoren[16];
+	
+	// wenn Fehler-Byte gesetzt ist, FALSE zurueckgeben
+	if (S88_BV_sensordaten.Fehler != 0)
+	{
+		//TODO: Auditing-System Bescheid geben!
+		return FALSE;
+	}
+	
+	// wenn keine neuen Sensordaten vorhanden, Funktion verlassen
+	if (S88_BV_sensordaten.Byte0 == LEER && S88_BV_sensordaten.Byte1 == LEER)
+	{
+		return TRUE;
+	}
+	
+	// sonst Streckenabbild aktualisieren
+	
+		// einzelne Sensoren aus den beiden Bytes des Sensors holen
+	mask = 1;
+	for (z = 0; z < 8; z++)
+	{
+		sensoren[z] 	= ((S88_BV_sensordaten.Byte0 & mask) != 0);
+		sensoren[z+8]	= ((S88_BV_sensordaten.Byte1 & mask) != 0);
+		mask = mask << 1;
+	}
+	
+		// Nun die Einzelnen Sensoren anschauen
+	for (z = 1; z <= 16; z++)
+	{
+		byte nextAbs, prevAbs, nSwitch, pSwitch, zugNr, richtung;
+		
+		// Wenn Sensor nicht belegt, naechsten Schleifendurchlauf.
+		if (sensoren[z-1] == 0) continue; // weniger Verschachtelung
+		
+		// sonst: Sensor belegt, es gibt was zu tun..
+
+		// Ist eigentlich ein Zug bei diesem Sensor? Welcher? Richtung?
+		if (zugNebenSensor(z, &zugNr, &richtung) == FALSE) {
+			//TODO: Auditing-System Bescheid geben!
+			return FALSE;
+		}
+		
+		// Suche die Nachbar-Abschnitte und -Weichen des Sensors
+		sucheNachbarn(z, &nextAbs, &prevAbs, &nSwitch, &pSwitch);
+		
+		// Fahrtrichtung des Zuges? 0 = rueckwaerts, 1 = vorwaerts
+		inkr = (richtung == 1) ? 1 : -1;
+		
+		if (nextAbs != 0) gleisBelegung[nextAbs] += inkr;
+		if (prevAbs != 0) gleisBelegung[prevAbs] -= inkr;
+		if (nSwitch != 0) weichenBelegung[nSwitch] += inkr;
+		if (pSwitch != 0) weichenBelegung[pSwitch] -= inkr;
+		
+		// Wenn Sensor neben einer Weiche, folgenden Abschnitt bestimmen
+		if (nextAbs == 0) 
+		{
+			nextAbs = streckentopologie[prevAbs].next1;
+			
+			// Mehr als ein Nachfolger? Weiche anschauen!
+			if (	(streckentopologie[prevAbs].next2 != 0) &&
+				(weichenStellung[nSwitch] == 1)	) // rechts
+			{
+				nextAbs = streckentopologie[prevAbs].next2;
+			}
+		}
+
+		if (prevAbs == 0) 
+		{
+			prevAbs = streckentopologie[nextAbs].prev1;
+			
+			// Mehr als ein Nachfolger? Weiche anschauen!
+			if (	(streckentopologie[nextAbs].prev2 != 0) &&
+				(weichenStellung[pSwitch] == 1)	) // rechts
+			{
+				prevAbs = streckentopologie[nextAbs].prev2;
+			}
+		}
+		
+		
+		// Position des Zuges aendern?
+		
+	}
+
+
+	
 	return TRUE;
 }
 
+/* Weitere Hilfsfunktionen */
 void copyStreckenTopologie(void)
 {
-	byte z = 1;
+	byte z = 0;
 	
+	// TODO: this might be easier
 	for (z = 1; z < BV_ANZAHL_GLEISABSCHNITTE; z++)
 	{
 		BV_streckentopologie[z].nr  = streckentopologie[z].nr;
@@ -268,3 +379,106 @@ void defineStreckenTopologie(void)
 	streckentopologie[9].nextSensor = 13;
 	streckentopologie[9].prevSensor = 14;
 }
+
+boolean zugNebenSensor(byte sensorNr, byte *zugNr, byte *richtung)
+{
+	byte zug1 = zugPosition[0];
+	byte zug2 = zugPosition[1];
+	
+	// Maximal drei Nachbarabschnitte eines Sensors
+	byte pos1 = 0;
+	byte pos2 = 0;
+	byte pos3 = 0;
+	
+	switch(sensorNr) 
+	{
+	case 1:
+		pos1 = 1;	pos2 = 2;	pos3 = 7;	break;
+	case 2:
+		pos1 = 1;	pos2 = 2;	pos3 = 0;	break;
+	case 3:
+		pos1 = 2;	pos2 = 3;	pos3 = 0;	break;
+	case 4:
+		pos1 = 3;	pos2 = 4;	pos3 = 0;	break;
+	case 5:
+		pos1 = 3;	pos2 = 4;	pos3 = 7;	break;
+	case 6:
+		pos1 = 4;	pos2 = 5;	pos3 = 0;	break;
+	case 7:
+		pos1 = 5;	pos2 = 6;	pos3 = 0;	break;
+	case 8:
+		pos1 = 6;	pos2 = 1;	pos3 = 0;	break;
+	case 9:	
+		pos1 = 6;	pos2 = 1;	pos3 = 8;	break;
+	case 10:
+		pos1 = 1;	pos2 = 7;	pos3 = 0;	break;
+	case 11:
+		pos1 = 7;	pos2 = 4;	pos3 = 0;	break;
+	case 12:
+		pos1 = 8;	pos2 = 1;	pos3 = 0;	break;
+	case 13:	
+		pos1 = 9;	pos2 = 8;	pos3 = 0;	break;
+	case 14:	
+		pos1 = 9;	pos2 = 0;	pos3 = 0;	break;
+	default:
+		pos1 = 0;	pos2 = 0;	pos3 = 0;	break;
+	};
+	
+	if ( (zug1 == pos1) || (zug1 == pos2) || (zug1 == pos3) )
+	{
+		*zugNr = 0;
+		*richtung = zugRichtung[0];
+		return TRUE;
+	}
+	else if ( (zug2 == pos1) || (zug2 == pos2) || (zug2 == pos3) )
+	{
+		*zugNr = 1;
+		*richtung = zugRichtung[1];
+		return TRUE;
+	}
+	else
+	{
+		return FALSE;
+	};
+}
+
+boolean sucheNachbarn(byte sensorNr, byte *nextAbs, byte *prevAbs,
+				byte *nSwitch, byte *pSwitch)
+{
+	byte z;
+	*nextAbs = 0; *prevAbs = 0; *nSwitch = 0; *pSwitch = 0;
+	
+	// Streckentopologie nach dem Sensor durchsuchen..
+	for (z = 1; z < BV_ANZAHL_GLEISABSCHNITTE; z++) {
+		if (streckentopologie[z].nextSensor == sensorNr)
+		{
+			*prevAbs = z;
+		}
+		
+		if (streckentopologie[z].prevSensor == sensorNr)
+		{
+			*nextAbs = z;
+		}
+	}
+	
+	// das sollte eigentlich nicht passieren
+	if (*nextAbs == 0 && *prevAbs == 0)
+	{
+		//TODO: Auditing-System Bescheid geben!
+		return FALSE;
+	}
+	
+	// wenn next oder prev gleich 0, liegt der Sensor neben einer Weiche
+	if (*nextAbs == 0)
+	{
+		*nSwitch = streckentopologie[*prevAbs].nextSwitch;
+	}
+	
+	if (*prevAbs == 0)
+	{
+		*pSwitch = streckentopologie[*nextAbs].prevSwitch;
+	}
+	
+	return TRUE;
+}
+
