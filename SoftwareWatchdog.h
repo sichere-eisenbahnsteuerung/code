@@ -19,6 +19,10 @@
  *        - Zu viel verstrichene Zeit zwischen Rueckmeldungen
  *        - Pruefung auf gleiche Statusmeldungen von Modulen
  *
+ *        Diese Headerdatei ist fuer das Modul Betriebsmittelverwaltung
+ *        vorgesehen. Sie enthaellt die Prototypen fuer die
+ *        Schnittstellen initSW und hello.
+ *
  ****************************************************************************/
 
 

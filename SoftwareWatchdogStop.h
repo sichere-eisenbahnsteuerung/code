@@ -19,6 +19,10 @@
  *        - Zu viel verstrichene Zeit zwischen Rueckmeldungen
  *        - Pruefung auf gleiche Statusmeldungen von Modulen
  *
+ *        Diese Headerdatei ist fuer das Modul Not-Aus-Treiber
+ *        vorgesehen. Sie enthaellt den Prototypen fuer die
+ *        Schnittstelle stopSW.
+ *
  ****************************************************************************/
 
 

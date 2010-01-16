@@ -19,6 +19,11 @@
  *        - Zu viel verstrichene Zeit zwischen Rueckmeldungen
  *        - Pruefung auf gleiche Statusmeldungen von Modulen
  *
+ *        Diese Headerdatei ist fuer die Module Leitzentrale,
+ *        Befehlsvalidierung, Ergebnisvalidierung, S88-Treiber,
+ *        SSC-Treiber, RS232-Treiber und Auditing System vorgesehen. Sie
+ *        enthaellt den Prototypen fuer die Schnittstelle helloModul.
+ *
  ****************************************************************************/
 
 
