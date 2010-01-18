@@ -50,6 +50,18 @@ typedef enum {
 } Lok;
 
 typedef enum {
+	STAND = 0x0,
+	FAHRT_GESCHW = 0x04,
+	ANKUPPEL_GESCHW = 0x08,
+	ABKUPPEL_GESCHW = 0x0C
+} Geschwindigkeit;
+
+typedef enum {
+	RUECKWAERTS = 0x0,
+	VORWAERTS = 0x02
+} Richtung
+
+typedef enum {
 	FAHREND,
 	WARTEND,
 	ANGEHALTEN,
@@ -76,7 +88,7 @@ typedef enum {
 
 /* Lokale Konstanten ********************************************************/
 
-#define MODULE_ID 0 // frs auditing und sw watchdogg
+#define MODULE_ID 0 // fürs auditing und sw watchdog
 #define PRUEFSENSOR_NR 14
 
 /* Lokale Variablen *********************************************************/
@@ -91,7 +103,7 @@ byte wagonsGezaehlt;
 KuppelAktion kuppelAktion;
 CheckKuppelAktion checkKuppelAktion;
 Lok gleisSperrung[9];
-Lok weichenSperrung[3];
+//Lok weichenSperrung[3];
 Nachricht nachricht; // fürs auditing
 Lok lok;
 
@@ -100,6 +112,7 @@ Lok lok;
 Fahranweisung getNeueFahranweisung();
 Fahranweisung getAlteFahranweisung();
 Sensordaten getSensordaten();
+Richtung getRichtung(byte zielNr);
 bit checkBefahrbarkeit(byte gleisabschnittNr);
 bit checkZielpositionErreicht();
 bit checkZeit();
@@ -118,6 +131,24 @@ void workLZ();
 
 /* Funktionsimplementierungen ***********************************************/
 
+void setGleisabschnittGesperrt(byte gleisabschnittNr, bit gesperrt) {
+	gleisGesperrt[gleisabschnittNr] = gesperrt ? lok : KEINE;
+}
+
+Richtung getRichtung(byte zielNr) {
+	if( BV_streckentopologie[BV_zugposition[lok]].next1 == zielNr ||
+	BV_streckentopologie[BV_zugposition[lok]].next2 == zielNr) {
+		return VORWAERTS;
+	}
+	else {
+		return RUECKWAERTS;
+	}
+}
+
+void setStreckenbefehl(Streckenbefehl streckenbefehl) {
+	LZ_BV_streckenbefehl = streckenbefehl;
+}
+
 void setNachricht(FehlerCode fehlerCode) {
 	switch(fehlerCode) {
 	case FEHLER_ZUSTAND:
@@ -128,6 +159,15 @@ void setNachricht(FehlerCode fehlerCode) {
 		nachricht[4] = kuppelAktion;
 		nachricht[5] = wagonsGezaehlt;
 		nachricht[6] = wagonsErwartet;
+		break;
+	case FEHLER_FAHRBEFEHL:
+		nachricht[0] = fehlerCode;
+		nachricht[1] = zustand[LOK1];
+		nachricht[2] = zustand[LOK2];
+		nachricht[3] = lok;
+		nachricht[4] = fahranweisung.fahrbefehl;
+		nachricht[5] = BV_zugposition[LOK1];
+		nachricht[6] = BV_zugposition[LOK2];
 		break;
 	default:
 		break;
@@ -142,17 +182,36 @@ void setZustandFuerAnweisung() {
 	 * Gleisabschnitt eingefahren werden 
 	 * muss*/
 	case FB_FAHREN:
+		// Fahrgeschwindigkeit einlegen
+		streckenbefehl.Fehler = LEER;
+		streckenbefehl.Entkoppler = LEER;
+		streckenbefehl.Weiche = LEER;
+		streckenbefehl.Lok = FAHR_GESCHW || getRichtung(lok,gleisabschnittNr) || lok;
+		setStreckenbefehl(streckenbefehl);
 	case FB_HALTEN:
 		zustand[lok] = FAHREND;
 		break;
 	case FB_ANKUPPELN:
+		// Ankuppelgeschwindigkeit einlegen
+		streckenbefehl.Entkoppler = LEER;
+		streckenbefehl.Fehler = LEER;
+		streckenbefehl.Weiche = LEER;
+		streckenbefehl.Lok = ANKUPPEL_GESCHW || getRichtung(lok,gleisabschnittNr) || lok;
+		setStreckenbefehl(streckenbefehl);
 		zustand[lok] = ANKUPPELND;
 		break;
 	case FB_ABKUPPELN:
+		// Abkuppelgeschwindigkeit einlegen
+		streckenbefehl.Entkoppler = LEER;
+		streckenbefehl.Fehler = LEER;
+		streckenbefehl.Weiche = LEER;
+		streckenbefehl.Lok = ABKUPPEL_GESCHW || getRichtung(lok,gleisabschnittNr) || lok;
+		setStreckenbefehl(streckenbefehl);
 		zustand[lok] = ABKUPPELND;
 		break;
 	default:
-		// error msg
+		setNachricht(FEHLER_ZUSTAND);
+		hello(nachricht,MODULE_ID);
 		break;
 	}
 }
@@ -176,9 +235,6 @@ void initLZ() {
 	for(i=0;i<9;++i) {
 		gleisSperrung[i] = KEINE;
 	}
-	for(i=0;i<3;++i) {
-		weichenSperrung[i] = KEINE;
-	}
 	for(i=0;i<6;++i) {
 		nachricht[i] = 0;
 	}
@@ -186,11 +242,14 @@ void initLZ() {
 
 void workLZ() {
 	int lok=0;
+	byte verlassenerGleisabschnitt = 0;
 	byte gleisabschnittNr = 0;
 	Fahranweisung fahranweisung = { 0, 0 }; // Fahrbefehl-Typ definieren?
+	Streckenbefehl streckenbefehl;
 	for(lok=LOK1;lok<=LOK2;++lok) {		
 		switch(zustand[lok]) {
 		case HOLT_FAHRANWEISUNG:
+			verlassenerGleisabschnitt = gleisabschnittNr;
 			if(wiederholen) {
 				fahranweisung = getNeueFahranweisung();
 			}
@@ -202,12 +261,16 @@ void workLZ() {
 				setZustandFuerFahranweisung();
 			}
 			else {
+				// Zug anhalten (Evtl. in checkBefahrbarkeit verschieben?)
+				streckenbefehl.Entkoppler = LEER;
+				streckenbefehl.Fehler = LEER;
+				streckenbefehl.Weiche = LEER;
+				streckenbefehl.Lok = STAND|| getRichtung(lok,gleisabschnittNr) || lok;
+				setStreckenbefehl(streckenbefehl);
 				zustand[lok] = ANGEHALTEN;
 			}
 			break;
 		case FAHREND:
-			// TODO Fahrgeschwindigkeit einlegen
-			
 			if(	(checkZielpositionErreicht() == TRUE && 
 				 checkKuppelAktion == JETZT &&
 				 checkAnzahlWagons() == FALSE) || 
@@ -224,7 +287,7 @@ void workLZ() {
 					zustand[lok] = HOLT_FAHRANWEISUNG;
 			}
 			else {
-				// TODO gerade verlassenes gleis sperren
+				setGleisabschnittGesperrt(verlassenerGleisabschnitt,FALSE);
 				if(checkKuppelAktion == BEIM_NAECHSTEN_MAL) {
 					checkKuppelAktion = JETZT;
 				}
@@ -250,22 +313,26 @@ void workLZ() {
 				setZustandFuerFahranweisung();
 			}
 			break;
-		case ANKUPPELND:
-			// ankuppelgeschwindigkeit einlegen
+		case ANKUPPELND:			
 			if(checkZielpositionErreicht() == TRUE) {
 				kuppelAktion = ANKUPPELN;
+				setGleisabschnittGesperrt(verlassenerGleisabschnitt,FALSE);
+				checkKuppelAktion = BEIM_NAECHSTEN_MAL;
+				wiederholen = false;
 			}
-			checkKuppelAktion = BEIM_NAECHSTEN_MAL;
-			wiederholen = false;
 			break;
 		case ABKUPPELND:
-			// abkuppelgeschwindigkeit einlegen
 			if(checkZielpositionErreicht() == TRUE) {
+				// Abkuppeln
+				streckenbefehl.Entkoppler = LEER;
+				streckenbefehl.Fehler = LEER;
+				streckenbefehl.Weiche = LEER;
+				streckenbefehl.Lok = LEER;
 				kuppelAktion = ABKUPPELN;
+				setGleisabschnittGesperrt(verlassenerGleisabschnitt,FALSE);
+				checkKuppelAktion = BEIM_NAECHSTEN_MAL;
+				wiederholen = false;
 			}
-			// gerade verlassenen gleisabschnitt entsperren
-			checkKuppelAktion = BEIM_NAECHSTEN_MAL;
-			wiederholen = false;
 			break;
 		default:
 			setNachricht(FEHLER_ZUSTAND);
