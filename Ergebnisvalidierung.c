@@ -21,13 +21,7 @@
 
 /* Includes *****************************************************************/
 #include "Ergebnisvalidierung.h"
-// TODO: include einkommentieren
-//#include "Betriebsmittelverwaltung.h"
-
-// TODO: includes entfernen
-#include <REG515C.H>
-#include "EV_test_header.h"
-#include <stdio.h>
+#include "Betriebsmittelverwaltung.h"
 
 /* Definition globaler Konstanten *******************************************/
 
@@ -73,8 +67,6 @@ void initEV(void);
 void processInternalStreckenbefehl(void);
 void resetStreckenbefehl(Streckenbefehl *track);
 void workEV();
-
-
 
 /* Funktionsimplementierungen ***********************************************/
 /*
@@ -184,7 +176,9 @@ boolean streckenbefehleEqual(Streckenbefehl *track1, Streckenbefehl *track2)
 	// Sind die Streckenbefehle ungleich und hat der Zaehler einen Wert
 	// groesser gleich 3, wird ein Fehlercode an das Auditing System 
 	// uebermittelt, ...
-	send_msg(3,2);
+
+// TODO: Auditingfunktion
+//	send_msg(3,2);
 	// ein Not-Aus eingeleitet ...
 	emergency_off();
 	// und die Funktion mit dem Wert FALSE verlassen, um das Modul
@@ -205,11 +199,13 @@ boolean checkForCommunicationErrors(void)
 {
 	// Ueberpruefung, ob der Fehleranteil des Shared Memory vom
 	// RS232-Treiber zurueckgesetzt ist.
-	if(RS232_EV_streckenbefehl.Fehler != 0)
+	if(EV_RS232_streckenbefehl.Fehler != 0)
 	{
 		// Falls nicht, wird der Fehlercode an das Auditing System
 		// uebermittelt, ...
-		send_msg(RS232_EV_streckenbefehl.Fehler,2);
+
+// TODO: Auditingfunktion
+//		send_msg(RS232_EV_streckenbefehl.Fehler,2);
 		// ein Not-Aus eingeleitet ...
 		emergency_off();
 		// und die Funktion mit dem Wert TRUE verlassen. 
@@ -223,7 +219,9 @@ boolean checkForCommunicationErrors(void)
 	{
 		// Falls nicht, wird der Fehlercode an das Auditing System
 		// uebermittelt, ...
-		send_msg(SSC_EV_streckenbefehl.Fehler,2);
+
+// TODO: Auditingfunktion
+//		send_msg(SSC_EV_streckenbefehl.Fehler,2);
 		// ein Not-Aus eingeleitet ...
 		emergency_off();
 		// und die Funktion mit dem Wert TRUE verlassen. 
@@ -264,7 +262,9 @@ boolean checkForCommunicationErrors(void)
 		{
 			// wird ein Fehlercode an das Auditing System 
 			// uebermittelt, ...
-			send_msg(3,2);
+
+// TODO: Auditingfunktion
+//			send_msg(3,2);
 			// ein Not-Aus eingeleitet ...
 			emergency_off();
 			// und die Funktion mit dem Wert TRUE verlassen. 
@@ -306,7 +306,9 @@ boolean checkForCommunicationErrors(void)
 		{
 			// wird ein Fehlercode an das Auditing System 
 			// uebermittelt, ...
-			send_msg(3,2);
+
+// TODO: Auditingfunktion
+//			send_msg(3,2);
 			// ein Not-Aus eingeleitet ...
 			emergency_off();
 			// und die Funktion mit dem Wert TRUE verlassen. 
@@ -458,7 +460,7 @@ void workEV(void)
 */
 	// Daraufhin werden der interne und der externe Streckenbefehl 
 	// miteinander verglichen.
-	if(streckenbefehleEqual(&internerStreckenbefehl, &externerStreckenbefehl))
+	if(!streckenbefehleEqual(&internerStreckenbefehl, &externerStreckenbefehl))
 	{
 		// Sind diese nicht gleich, wird das Modul verlassen.
 		return;
@@ -489,23 +491,4 @@ void workEV(void)
 * Interne Variablen zuruecksetzen
 */
 	initEV();
-}
-
-
-// Dient nur zu Testzwecken und bedarf deshalb keiner weiteren Kommentare.
-int main(void)
-{
-
-// TODO: entfernen
-
-  SCON = 0x52;    /* SCON */                   /* setup serial port control */
-  TMOD = 0x20;    /* TMOD */                   /* hardware (2400 BAUD @12MHZ) */
-  TCON = 0x69;    /* TCON */
-  TH1 =  0xf3;    /* TH1  */
-
-
-	initEV();
-	workEV();
-
-	return 0;
 }
