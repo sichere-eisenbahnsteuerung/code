@@ -24,6 +24,9 @@
 #ifndef BV_ANZAHL_GLEISABSCHNITTE
 #define BV_ANZAHL_GLEISABSCHNITTE 9
 #endif
+#ifndef BV_ANZAHL_ENTKOPPLER
+#define BV_ANZAHL_ENTKOPPLER 2
+#endif
 #ifndef BV_ANZAHL_WEICHEN
 #define BV_ANZAHL_WEICHEN 3
 #endif
@@ -31,6 +34,16 @@
 #define BV_ANZAHL_ZUEGE 2
 #endif
 
+// Geschwindigkeiten.. noch festzulegen und vielleicht wo anders definieren?
+#ifndef BV_V_VOLLGAS
+#define BV_V_VOLLGAS 62
+#endif
+#ifndef BV_V_ABKUPPELN
+#define BV_V_ABKUPPELN 10
+#endif
+#ifndef BV_V_ANKUPPELN
+#define BV_V_ANKUPPELN 20
+#endif
 
 /* Globale Typdefinitionen **************************************************/
 

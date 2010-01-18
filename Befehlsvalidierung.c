@@ -18,6 +18,8 @@
 
 #include "Betriebsmittelverwaltung.h"
 #include "Befehlsvalidierung.h"
+#include "Notaus.h"
+//#include <stdio.h>	// only for tests with printf
 
 /* Definition globaler Konstanten *******************************************/
 
@@ -35,6 +37,9 @@ byte BV_zugPosition[BV_ANZAHL_ZUEGE];
 /* Lokale Konstanten ********************************************************/
 
 /* Lokale Variablen *********************************************************/
+
+byte BV_next_state = 0;
+byte BV_criticalStateCounter = 0;
 
 	/* Gleis-Topologie und -Zaehler */
 static Gleisabschnitt streckentopologie[BV_ANZAHL_GLEISABSCHNITTE + 1];
@@ -69,43 +74,97 @@ static byte zugGeschwindigkeit[BV_ANZAHL_ZUEGE] =
 	
 static byte zugRichtung[BV_ANZAHL_ZUEGE] =
 	{
-		0,0
+		1,1
 	};
 	
 /* Prototypen fuer lokale Funktionen ****************************************/
 
-// TODO write some docu for those
-void copyStreckenTopologie(void);
+// TODO: write some docu for those
 boolean checkStreckenTopologie(void);
 boolean checkSensorDaten(void);
+boolean sendSensorDaten(void);
+boolean checkStreckenBefehl(void);
+void sendStreckenBefehl(void);
 
-
+// Hilfsfunktionen
+void copyStreckenBelegung(void);
 void defineStreckenTopologie(void);
 boolean zugNebenSensor(byte sensorNr, byte *zugNr, byte *richtung);
 boolean sucheNachbarn(byte sensorNr, byte *nextAbs, byte *prevAbs,
 				byte *nSwitch, byte *pSwitch);
+boolean checkKritischerZustand(void);
 
 /* Funktionsimplementierungen ***********************************************/
 
-byte b1, b2, b3;
-
 void initBV(void)
 {
-	//TODO: remove temp test
-	b1 = 10;
-	b2 = 20;	
+	defineStreckenTopologie();	// intern
+	copyStreckenBelegung();		// fuer die LZ
 	
-	defineStreckenTopologie();
-	copyStreckenTopologie();
+	// Das ist zum Testen, wenn echte Daten kommen, kommt das weg.
+	S88_BV_sensordaten.Byte0 = 0;
+	S88_BV_sensordaten.Byte1 = 12;
 }
 
 void workBV(void)
 {
-	S88_BV_sensordaten.Byte0 = 128;
-	S88_BV_sensordaten.Byte1 = 0x3;
+	switch (BV_next_state)
+	{
+	case 0:
+		// Wenn keine neuen Sensordaten eingetroffen, gibt's nix zu tun
+		if (	(S88_BV_sensordaten.Byte0) == LEER && 
+			(S88_BV_sensordaten.Byte1) == LEER)
+		{
+			BV_next_state = 2;	// Streckenbefehl holen
+			break;
+		}
+		
+		// Wenn Sensordaten nicht in Orndung, Notaus generieren
+		if (	(checkSensorDaten() == FALSE) || 
+			(sendSensorDaten() == FALSE) )
+		{
+			emergency_off();
+			break;
+		}
+		
+		// Wenn neue Sensordaten in Ordndung
+		BV_next_state = 1;		// Gleisbild pruefen
+		break;
+		
+	case 1:
+		// Gleisbild auf kritische Zustaende pruefen
+		if (checkKritischerZustand() == FALSE)
+		{
+			emergency_off();
+			break;
+		}
+		
+		// keine kritischen Zustaende erkannt
+		BV_next_state = 2;		// Streckenbefehl holen
+		break;
+		
+	case 2:
+		// Streckenbefehl ueberpruefen und (wenn OK) an EV senden
+		if (checkStreckenBefehl() == TRUE)
+		{
+			sendStreckenBefehl();
+		}
+		
+		BV_next_state = 0;		// Sensordaten holen
+		break;
 	
-	checkStreckenTopologie();
-	checkSensorDaten();
+	case 3:
+		// Wenn Kopien der Streckentopologie manipuliert wurden
+		if (checkStreckenTopologie() == FALSE)
+		{
+			emergency_off();
+			break;
+		}
+		
+		BV_next_state = 2;		// Streckenbefehl holen
+		break;
+	}
+	
 }
 
 /* Im Moduldesign beschriebene Funktionen .. */
@@ -118,6 +177,7 @@ boolean checkStreckenTopologie(void)
 	Gleisabschnitt *my = streckentopologie;
 	Gleisabschnitt *his = BV_streckentopologie;
 	
+	// TODO: geht es die Struktur einfach mit == zu vergleichen?
 	for (z = 1; z < BV_ANZAHL_GLEISABSCHNITTE; z++)
 	{
 		ret &= (his[z].nr == my[z].nr);
@@ -140,21 +200,20 @@ boolean checkStreckenTopologie(void)
 	
 	for (z = 1; z < BV_ANZAHL_WEICHEN; z++)
 	{
-		ret &= (BV_weichenBelegung[z] = weichenBelegung[z]);
+		ret &= (BV_weichenBelegung[z] == weichenBelegung[z]);
 	}
 	if (ret == FALSE) return FALSE;
 	
 	for (z = 1; z < BV_ANZAHL_ZUEGE; z++)
 	{
-		ret &= (BV_zugPosition[z] = zugPosition[z]);
+		ret &= (BV_zugPosition[z] == zugPosition[z]);
 	}
 	return ret;
 }
 
 boolean checkSensorDaten(void)
 {
-	byte z, inkr;
-	byte mask;
+	byte z, inkr, mask;
 	byte sensoren[16];
 	
 	// wenn Fehler-Byte gesetzt ist, FALSE zurueckgeben
@@ -184,7 +243,7 @@ boolean checkSensorDaten(void)
 		// Nun die Einzelnen Sensoren anschauen
 	for (z = 1; z <= 16; z++)
 	{
-		byte nextAbs, prevAbs, nSwitch, pSwitch, zugNr, richtung;
+		byte nextAbs, prevAbs, nSwitch, pSwitch, zugNr, richtung, pos;
 		
 		// Wenn Sensor nicht belegt, naechsten Schleifendurchlauf.
 		if (sensoren[z-1] == 0) continue; // weniger Verschachtelung
@@ -192,7 +251,8 @@ boolean checkSensorDaten(void)
 		// sonst: Sensor belegt, es gibt was zu tun..
 
 		// Ist eigentlich ein Zug bei diesem Sensor? Welcher? Richtung?
-		if (zugNebenSensor(z, &zugNr, &richtung) == FALSE) {
+		if (zugNebenSensor(z, &zugNr, &richtung) == FALSE)
+		{
 			//TODO: Auditing-System Bescheid geben!
 			return FALSE;
 		}
@@ -215,7 +275,7 @@ boolean checkSensorDaten(void)
 			
 			// Mehr als ein Nachfolger? Weiche anschauen!
 			if (	(streckentopologie[prevAbs].next2 != 0) &&
-				(weichenStellung[nSwitch] == 1)	) // rechts
+				(weichenStellung[nSwitch] == 1)	)
 			{
 				nextAbs = streckentopologie[prevAbs].next2;
 			}
@@ -227,40 +287,238 @@ boolean checkSensorDaten(void)
 			
 			// Mehr als ein Nachfolger? Weiche anschauen!
 			if (	(streckentopologie[nextAbs].prev2 != 0) &&
-				(weichenStellung[pSwitch] == 1)	) // rechts
+				(weichenStellung[pSwitch] == 1)	)
 			{
 				prevAbs = streckentopologie[nextAbs].prev2;
 			}
 		}
-		
-		
+				
 		// Position des Zuges aendern?
-		
+		pos = zugPosition[zugNr];			// alte Position
+		if ( (pos == prevAbs) && (richtung == 1) )	// vorwaerts
+		{
+			zugPosition[zugNr] = nextAbs;
+		}
+		else if ( ( pos == nextAbs) && (richtung == 0) )// rueckwaerts
+		{
+			zugPosition[zugNr] = prevAbs;
+		}
 	}
-
-
 	
 	return TRUE;
 }
 
+boolean sendSensorDaten(void)
+{
+	// wenn keine neuen Sensordaten vorhanden, nichts zu tun
+	if (S88_BV_sensordaten.Byte0 == LEER && S88_BV_sensordaten.Byte1 == LEER)
+	{
+		return TRUE;
+	}
+	
+	// wenn die LZ die alten Sensordaten noch nicht verarbeitet hat, Fehler
+	if (BV_LZ_sensordaten.Byte0 != LEER || BV_LZ_sensordaten.Byte1 != LEER)
+	{
+		//TODO: Auditing-System Bescheid geben!
+		return FALSE;
+	}
+	
+	// sonst Sensordaten an die Leitzentrale weiterleiten
+	BV_LZ_sensordaten = S88_BV_sensordaten;
+	return TRUE;
+}
+
+boolean checkStreckenBefehl(void)
+{
+	byte weicheNr, entkopplerNr;
+	// Wenn Befehl leer ist, nichts weiter pruefen
+	if (	(LZ_BV_streckenbefehl.Entkoppler == LEER) &&
+		(LZ_BV_streckenbefehl.Weiche == LEER) &&
+		(LZ_BV_streckenbefehl.Lok == LEER) )
+	{			
+		return FALSE;
+	}
+
+	// --------------- Syntax-Checks --------------- 
+	
+	// beim Lok-Befehl ist jede Byte-Belegung gueltig.
+		
+	// beim Entkoppler-Befehl pruefen, ob die Entkoppler-Nr gueltig ist.
+	if (LZ_BV_streckenbefehl.Entkoppler != LEER)
+	{
+		entkopplerNr = (LZ_BV_streckenbefehl.Entkoppler  & 254) >> 1;
+		if (entkopplerNr > BV_ANZAHL_ENTKOPPLER)
+		{
+			//TODO: Auditing System bescheid geben
+			return FALSE;
+		}
+	}
+	
+	// beim Weichen-Befehl pruefen, ob die WeichenNr gueltig ist.
+	if (LZ_BV_streckenbefehl.Weiche != LEER)
+	{
+		weicheNr = (LZ_BV_streckenbefehl.Weiche & 254) >> 1;
+		if (weicheNr > BV_ANZAHL_WEICHEN)
+		{
+			//TODO: Auditing System bescheid geben
+			return FALSE;
+		}
+	}
+	
+	// --- Pruefung, ob unsicherer Zustand eintreten wuerde ---
+	
+	// Entkoppeln nur bei entsprechender Geschwindigkeit erlaubt
+	if (LZ_BV_streckenbefehl.Entkoppler != LEER)
+	{
+		byte v1 = zugGeschwindigkeit[0];
+		byte v2 = zugGeschwindigkeit[1];
+		byte zug1 = zugPosition[0];
+		byte zug2 = zugPosition[1];
+		
+		switch (entkopplerNr)
+		{
+		case 1:
+			if ( (zug1 == 2 || zug1 == 3) && (v1 != BV_V_ABKUPPELN) )
+			{
+				//TODO: Auditing-System Bescheid geben!
+				return FALSE;
+			}
+			if ( (zug2 == 2 || zug2 == 3) && (v2 != BV_V_ABKUPPELN) )
+			{
+				//TODO: Auditing-System Bescheid geben!
+				return FALSE;
+			}
+			break;
+		case 2:
+			if ( (zug1 == 8 || zug1 == 9) && (v1 != BV_V_ABKUPPELN) )
+			{
+				//TODO: Auditing-System Bescheid geben!
+				return FALSE;
+			}
+			if ( (zug2 == 8 || zug2 == 9) && (v2 != BV_V_ABKUPPELN) )
+			{
+				//TODO: Auditing-System Bescheid geben!
+				return FALSE;
+			}
+			break;
+		}
+	}
+	
+	// Weiche darf nur gestellt werden, wenn sie nicht belegt ist
+	//TODO: Nur stellen, wenn kein Zug auf die Weiche zufaehrt. (siehe 6.3)
+	if (LZ_BV_streckenbefehl.Weiche != LEER)
+	{
+		if (weichenBelegung[weicheNr] != 0)
+		{
+			//TODO: Auditing-System Bescheid geben!
+			return FALSE;
+		}
+	}
+	
+	// Pruefen ob der Lok-Befehl einen unsicheren Zustand hervorruft
+	if (LZ_BV_streckenbefehl.Lok != LEER)
+	{
+		byte zugNr = LZ_BV_streckenbefehl.Lok & 1;
+		byte richtung = (LZ_BV_streckenbefehl.Lok & 2) >> 1;
+		byte geschw = (LZ_BV_streckenbefehl.Lok & 252) >> 2;
+		byte zugPos = zugPosition[zugNr];
+		Gleisabschnitt gleis, zielGleis;
+		byte ziel, weiche, wStell;
+		
+		// Zielgleis und etwaige Weiche auf dem Weg dahin bestimmen
+		gleis = streckentopologie[zugPos];
+		if (richtung == 1)
+		{
+			ziel = gleis.next1;
+			weiche = gleis.nextSwitch;
+			wStell = weichenStellung[weiche];
+			if ((gleis.next2 != 0) && (wStell == 1))
+			{
+				ziel = gleis.next2;
+			}
+		}
+
+		if (richtung == 0)
+		{
+			ziel = gleis.prev1;
+			weiche = gleis.prevSwitch;
+			wStell = weichenStellung[weiche];
+			if ((gleis.prev2 != 0) && (wStell == 1))
+			{
+				ziel = gleis.prev2;
+			}
+		}
+		
+		// Wenn Zielgleis belegt, darf man nur lansgsam reinfahren
+		if ( (gleisBelegung[ziel] != 0) && (geschw != BV_V_ANKUPPELN) )
+		{
+			//TODO: Auditing-System Bescheid geben!
+			return FALSE;
+		}
+		
+		// Egal ob Zielgleis belegt: die Weiche dahin muss frei sein!
+		if ( (weiche != 0) && (weichenBelegung[weiche] != 0) )
+		{
+			//TODO: Auditing-System Bescheid geben!
+			return FALSE;
+		}
+		
+		// Weichenstellung pruefen, wenn man von hinten kommt.
+		zielGleis = streckentopologie[ziel];
+		if ( (weiche != 0) && (richtung == 1) && (gleis.next2 == 0) )
+		{
+			if ( (zugPos == zielGleis.prev1) && (wStell == 1) )
+			{
+				//TODO: Auditing-System Bescheid geben!
+				return FALSE;
+			}
+			else if ( (zugPos == zielGleis.prev2) && (wStell == 0) )
+			{
+				//TODO: Auditing-System Bescheid geben!
+				return FALSE;
+			}
+		}
+		else if ((weiche != 0) && (richtung == 0) && (gleis.prev2 == 0))
+		{
+			if ( (zugPos == zielGleis.next1) && (wStell == 1) )
+			{
+				//TODO: Auditing-System Bescheid geben!
+				return FALSE;
+			}
+			else if ( (zugPos == zielGleis.next2) && (wStell == 0) )
+			{
+				//TODO: Auditing-System Bescheid geben!
+				return FALSE;
+			}
+		}		
+	}
+
+	return TRUE;
+}
+
+void sendStreckenBefehl(void)
+{
+	// wenn neuer Streckenbefehl vorhanden ist, (Shared Memory nicht leer)
+	if (	(LZ_BV_streckenbefehl.Entkoppler != LEER) ||
+		(LZ_BV_streckenbefehl.Weiche != LEER) ||
+		(LZ_BV_streckenbefehl.Lok != LEER) )
+	{
+		// Streckenbefehl an Ergebnisvalidierung weiterleiten
+		BV_EV_streckenbefehl = LZ_BV_streckenbefehl;
+		
+		// Shared Memory von der Leitzentrale leeren
+		LZ_BV_streckenbefehl.Entkoppler = LEER;
+		LZ_BV_streckenbefehl.Weiche = LEER;
+		LZ_BV_streckenbefehl.Lok = LEER;
+		BV_LZ_bestaetigung = 1;
+	}
+}
+
+
 /* Weitere Hilfsfunktionen */
-void copyStreckenTopologie(void)
+void copyStreckenBelegung(void)
 {
 	byte z = 0;
-	
-	// TODO: this might be easier
-	for (z = 1; z < BV_ANZAHL_GLEISABSCHNITTE; z++)
-	{
-		BV_streckentopologie[z].nr  = streckentopologie[z].nr;
-		BV_streckentopologie[z].next1 = streckentopologie[z].next1;
-		BV_streckentopologie[z].next2 = streckentopologie[z].next2;
-		BV_streckentopologie[z].prev1 = streckentopologie[z].prev1;
-		BV_streckentopologie[z].prev2 = streckentopologie[z].prev2;
-		BV_streckentopologie[z].nextSwitch = streckentopologie[z].nextSwitch;
-		BV_streckentopologie[z].prevSwitch = streckentopologie[z].prevSwitch;
-		BV_streckentopologie[z].nextSensor = streckentopologie[z].nextSensor;
-		BV_streckentopologie[z].prevSensor = streckentopologie[z].prevSensor;
-	}
 	
 	for (z = 1; z < BV_ANZAHL_GLEISABSCHNITTE; z++)
 	{
@@ -277,8 +535,11 @@ void copyStreckenTopologie(void)
 		BV_zugPosition[z] = zugPosition[z];
 	}
 }
+
 void defineStreckenTopologie(void)
 {
+	byte z;
+	
 	// TODO: Let somebody review this!
 	// Gleisabschnitt 1
 	streckentopologie[1].nr = 1;
@@ -378,6 +639,11 @@ void defineStreckenTopologie(void)
 	streckentopologie[9].prevSwitch = 0;
 	streckentopologie[9].nextSensor = 13;
 	streckentopologie[9].prevSensor = 14;
+	
+	for (z = 1; z < BV_ANZAHL_GLEISABSCHNITTE; z++)
+	{
+		BV_streckentopologie[z] = streckentopologie[z];
+	}
 }
 
 boolean zugNebenSensor(byte sensorNr, byte *zugNr, byte *richtung)
@@ -424,6 +690,7 @@ boolean zugNebenSensor(byte sensorNr, byte *zugNr, byte *richtung)
 		pos1 = 0;	pos2 = 0;	pos3 = 0;	break;
 	};
 	
+	//TODO: Was, wenn Zuege auf benachbarten Abschnitten (z.B. 1 und 2)
 	if ( (zug1 == pos1) || (zug1 == pos2) || (zug1 == pos3) )
 	{
 		*zugNr = 0;
@@ -482,3 +749,7 @@ boolean sucheNachbarn(byte sensorNr, byte *nextAbs, byte *prevAbs,
 	return TRUE;
 }
 
+boolean checkKritischerZustand(void)
+{
+	return TRUE;
+}
