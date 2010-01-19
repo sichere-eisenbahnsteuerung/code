@@ -18,7 +18,6 @@
 /* Includes *****************************************************************/
 #include "SSCTreiber.h"
 #include "Betriebsmittelverwaltung.h"
-#include<reg515C.h>
 
 
 /* Definition globaler Konstanten *******************************************/
@@ -47,6 +46,9 @@ byte status = 0;
 byte temp_streckenbefehl[3];
 
 /* Prototypen fuer lokale Funktionen ****************************************/
+void streckenbefehlAn_EVsenden();
+void datenLesen();
+void kollisionVerarbeiten();
 
 /* Funktionsimplementierungen ***********************************************/
 
@@ -140,15 +142,15 @@ boolean checkNeuerStreckenbefehl()
 {	
 	if(EV_SSC_streckenbefehl.Lok == 255 && EV_SSC_streckenbefehl.Weiche == 255 && EV_SSC_streckenbefehl.Entkoppler == 255) 
 	{
-		return false;
+		return FALSE;
 	}
 	else
 	{
-		return true;
+		return TRUE;
 	}
 }
 
-/// bei gelesenem Streckenbefehl wird true übergeben, bei zu sendendem false
+/// bei gelesenem Streckenbefehl wird true uebergeben, bei zu sendendem false
 void befehlAufGueltigkeitPruefen(boolean lesen) 
 {
 	//zu lesender Streckenbefehl
@@ -157,13 +159,13 @@ void befehlAufGueltigkeitPruefen(boolean lesen)
 		if (temp_streckenbefehl[0] == 255 && temp_streckenbefehl[1] == 255 && temp_streckenbefehl[2] == 255)
 		{				
 			//kritischer Fehler (128 - 255) setzen
-			SCC_EV_streckenbefehl.Fehler == 255;
+			SSC_EV_streckenbefehl.Fehler = 255;
 		}
 		
-		streckenbefehlAN_EVsenden();
+		streckenbefehlAn_EVsenden();
 	
 	}
-	/*  //Prüfung, ob nur Einsen vorhanden macht wenig Sinn. Für Erweitung erstmal nicht gelöscht
+	/*  //Pruefung, ob nur Einsen vorhanden macht wenig Sinn. Fuer Erweitung erstmal nicht gelöscht
 	else//zu sendender Streckenbefehl
 	{
 		
@@ -177,7 +179,7 @@ void befehlAufGueltigkeitPruefen(boolean lesen)
 
 void streckenbefehlAn_EVsenden()
 {
-	//prüfen, ob SSC_EV_streckenbefehl zum Überschreiben freigegeben wurde
+	//pruefen, ob SSC_EV_streckenbefehl zum Ueberschreiben freigegeben wurde
 	if(SSC_EV_streckenbefehl.Lok == 255 &&  SSC_EV_streckenbefehl.Weiche == 255 && SSC_EV_streckenbefehl.Entkoppler == 255)
 	{
 		SSC_EV_streckenbefehl.Lok = temp_streckenbefehl[0];
@@ -198,12 +200,16 @@ void streckenbefehlAn_EVsenden()
 /// wobei entweder Daten empfangen oder eine Kollision festgestellt wurde
 SSCinterrupt() interrupt 18
 {	
-	//überprüfen, welcher Interrupt vorliegt und danach entsprechnete Funktion aufrufen
-	if (TC = 1)
+	//Ueberpruefen, welcher Interrupt vorliegt und danach entsprechnete Funktion aufrufen
+
+	//bitweise UND des TC (LSB) und 00000001
+	if (SCF & 0x01 )
 	{		
 		datenLesen();
 	}
-	if (WCOL = 1)
+
+	//bitweise UND des WCOL und 00000010
+	if (SCF & 0x02)
 	{
 		kollisionVerarbeiten();		
 	}
@@ -216,8 +222,16 @@ void kollisionVerarbeiten()
 	byteToSendDekrementieren();
 	byteToReceiveDekrementieren();
 	
-	//Kollisionsbit zuruecksetzen
-	WCOL = 0;
+	//Kollisionsbit (WCOL) zuruecksetzen
+	if (SCF & 0x01)	//TC gesetzt
+	{
+		SCF = 0x01;
+	}
+	else
+	{
+		SCF = 0x00;
+	}
+	
 }
 
 /// liest das empfangene Byte ein
@@ -227,24 +241,32 @@ void datenLesen()
 	switch(byteToReceive)
 	{
 		case 1:			
-			temp_steckenbefehl[0] = SRB;
+			temp_streckenbefehl[0] = SRB;
 			byteToReceiveInkrementieren();			
 			break;
 		
 		case 2:			
-			temp_steckenbefehl[1] = SRB;
+			temp_streckenbefehl[1] = SRB;
 			byteToReceiveInkrementieren();				
 			break;
 		
 		case 3: 			
-			temp_steckenbefehl[2] = SRB;
+			temp_streckenbefehl[2] = SRB;
 			byteToReceiveInkrementieren();	
-			befehlAufGueltigkeitPruefen(true);							
+			befehlAufGueltigkeitPruefen(TRUE);							
 			break;
 	}
 	
 	//Transmission Compleded-Bit zuruecksetzen
-	TC = 0;
+	if (SCF & 0x02) //Kollisionsbit (WCOL) gesetzt
+	{
+		SCF = 0x02;
+	}
+	else
+	{
+		SCF = 0x00;
+	}
+		
 }
 
 /*boolen byteAufGueltigkeitPruefen(Byte a)
@@ -270,13 +292,10 @@ void datenSenden()
 		//erstes Byte
 		case 1:	
 			if(checkNeuerStreckenbefehl())
-			{
-				if(befehlAufGueltigkeitPruefen(false))
-				{
-					//erstes Byte senden
-					STB = EV_SSC_streckenbefehl.Lok;
-					byteToSendInkrementieren();
-				}
+			{										  								
+				//erstes Byte senden
+				STB = EV_SSC_streckenbefehl.Lok;
+				byteToSendInkrementieren();
 			}
 			break;
 		
@@ -304,7 +323,9 @@ void datenSenden()
 			}
 			break;
 				
-		default://Fehlermeldung oder gar nichts
+		default:
+			;//Fehlermeldung oder gar nichts
+	}
 }
 
 /// Hauptmethode des Moduls,
@@ -318,7 +339,7 @@ void workSSC()
 			break;
 		
 		case 10:
-			streckenbefehlAN_EVsenden();
+			streckenbefehlAn_EVsenden();
 			break;
 			
 		default:
