@@ -56,7 +56,7 @@ extern Sensordaten BV_LZ_sensordaten;
 extern byte BV_LZ_bestaetigung;
 extern Sensordaten S88_BV_sensordaten;
 extern Streckenbefehl BV_EV_streckenbefehl;
-extern Streckenbefehl SCC_EV_streckenbefehl;
+extern Streckenbefehl SSC_EV_streckenbefehl;
 extern Streckenbefehl EV_SSC_streckenbefehl;
 //extern byte EV_SSC_failure; //Ueberfluessig, weil schon integriert im Streckenbefehl
 //extern byte SSC_EV_failure; //Ueberfluessig, weil schon integriert im Streckenbefehl
