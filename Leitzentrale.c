@@ -83,6 +83,11 @@ typedef enum {
 } KuppelAktion;
 
 typedef enum {
+	GERADEAUS,
+	ABBIEGEN
+} Weichenstellung
+
+typedef enum {
 	FEHLER_ZUSTAND // Unmöglicher Zustand
 } FehlerCode;
 
@@ -94,8 +99,9 @@ typedef enum {
 /* Lokale Variablen *********************************************************/
 
 bit wiederholen[2];
-Fahranweisung fahranweisung[3];
+Fahranweisung fahranweisungRingpuffer[3];
 byte nextFahranweisung;
+Fahranweisung fahranweisung;
 Zustand zustand[2];
 int zeit;
 byte wagonsErwartet;
@@ -126,10 +132,93 @@ void setStreckenbefehl(Streckenbefehl streckenbefehl);
 void setNachricht(FehlerCode fehlerCode);
 void setZustandFuerFahranweisung();
 
+byte getNextWeiche(byte zielNr);
+Weichenstellung getWeichenStellung(byte zielNr) {
+	/*
+	 * TODO (a better version)
+	 * dirty hack, funktioniert mit aktueller topologie
+	 * lösung unabhängig von der topologie nicht möglich
+	 * mit aktueller streckentopologie-definition (?),
+	 * xpressnet lässt nur geradeaus und abbiegen zu,
+	 * nicht aber links und rechts als weichenstellung
+	 */
+	return zielNr + BV_zugposition[lok] < 8 ? GERADEAUS : ABBIEGEN;
+}
+
 void initLZ();
 void workLZ();
 
 /* Funktionsimplementierungen ***********************************************/
+
+bit checkGesperrt(byte gleisabschnittNr) {
+	return (gleisSperrung[gleisabschnittNr] == KEINE) ? FALSE : TRUE;
+}
+
+Weichenstellung getWeichenStellung(byte zielNr) {
+	
+}
+
+byte getNextWeiche(byte zielNr) {
+	Richtung richtung = getRichtung(gleisabschnittNr);
+	byte switchNr;
+	if(richtung == VORWAERTS) {
+		switchNr = BV_streckentopologie[gleisabschnittNr].prevSwitch;
+	}
+	else {
+		switchNr = BV_streckentopologie[gleisabschnittNr].nextSwitch;
+	}
+	return switchNr;
+}
+
+bit checkBelegt(byte gleisabschnittNr) {
+	byte switchNr;
+	if(BV_gleisbelegung[gleisabschnittNr] == 0) {
+		switchNr = getNextWeiche(gleisabschnittNr);
+		if(switchNr == 0 || BV_weichenbelegung[switchNr] == 0) {
+			return FALSE;
+		}
+		else {
+			return TRUE;
+		}
+	}
+	else {
+		return TRUE;
+	}
+}
+
+bit checkBefahrbarkeit(byte gleisabschnittNr) {
+	byte fahrbefehl;
+	byte switchNr;
+	Streckenbefehl streckenbefehl;
+	if(checkBelegt(gleisabschnittNr) == FALSE && checkGesperrt(gleisabschnittNr) == FALSE) {
+		setGleisabschnittGesperrt(gleisabschnittNr, TRUE);
+	}
+	else {
+		fahrbefehl = fahranweisung.fahrbefehl & 0x0E;
+		if(fahrbefehl == FB_FAHREN || fahrbefehl == FB_HALTEN) {
+			return FALSE;
+		}
+		else {
+			/*
+			 * Es wird davon ausgegangen, dass Lok1 nicht
+			 * rangiert und deswegen die Lok ist, die ein Einfahren
+			 * in den Gleisabschnitt verhindern könnte.
+			 */
+			if(BV_zugposition[LOK1] == gleisabschnittNr) {
+				return FALSE;
+			}
+		}
+	}
+	switchNr = getNextWeiche(gleisabschnittNr);
+	if(switchNr != 0) {
+		streckenbefehl.Fehler = LEER;
+		streckenbefehl.Lok = LEER;
+		streckenbefehl.Entkoppler = LEER;
+		streckenbefehl.Weiche = (switchNr << 1) + getWeichenstellung(gleisabschnittNr);
+		setStreckenbefehl(streckenbefehl);
+	}
+	return TRUE;
+}
 
 void setGleisabschnittGesperrt(byte gleisabschnittNr, bit gesperrt) {
 	gleisGesperrt[gleisabschnittNr] = gesperrt ? lok : KEINE;
@@ -175,6 +264,7 @@ void setNachricht(FehlerCode fehlerCode) {
 }
 
 void setZustandFuerAnweisung() {
+	Streckenbefehl streckenbefehl;
 	switch(fahranweisung.fahrbefehl & 0x0E) {
 	/* Ausnahmsweise kein break, da auch
 	 * beim Anhalten für eine beliebige
@@ -244,7 +334,6 @@ void workLZ() {
 	int lok=0;
 	byte verlassenerGleisabschnitt = 0;
 	byte gleisabschnittNr = 0;
-	Fahranweisung fahranweisung = { 0, 0 }; // Fahrbefehl-Typ definieren?
 	Streckenbefehl streckenbefehl;
 	for(lok=LOK1;lok<=LOK2;++lok) {		
 		switch(zustand[lok]) {
