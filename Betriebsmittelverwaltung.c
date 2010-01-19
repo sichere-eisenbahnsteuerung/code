@@ -42,7 +42,7 @@ Sensordaten BV_LZ_sensordaten = {LEER,LEER,0};
 byte BV_LZ_bestaetigung = LEER; 
 Sensordaten S88_BV_sensordaten = {LEER,LEER,0};
 Streckenbefehl BV_EV_streckenbefehl = {LEER,LEER,LEER,0};
-Streckenbefehl SCC_EV_streckenbefehl = {LEER,LEER,LEER,0};
+Streckenbefehl SSC_EV_streckenbefehl = {LEER,LEER,LEER,0};
 Streckenbefehl EV_SSC_streckenbefehl = {LEER,LEER,LEER,0};
 byte EV_SSC_failure = LEER;
 byte SSC_EV_failure = LEER; 
@@ -51,16 +51,16 @@ Streckenbefehl EV_RS232_streckenbefehl = {LEER,LEER,LEER,0};
 byte AS_msg_counter = LEER;
 
 /**
-   Interrupt 1 für SW
-   Interrupt 4 für RS232
-   Interrupt 18 für S88
+   Interrupt 1 f¸r SW
+   Interrupt 4 f¸r RS232
+   Interrupt 18 f¸r S88
 **/
 
 //EAL = 1; //enable all interrupts
 
 //Pins
-//P4.1 bis P4.4 für SSC reserviert
-//P4.6 und P4.7 für CAN reserviert
+//P4.1 bis P4.4 f¸r SSC reserviert
+//P4.6 und P4.7 f¸r CAN reserviert
 
 
 /*sbit S88_PS = P1^6; 
@@ -111,7 +111,7 @@ void main (void)
 	for(;;)	//Endlosschleife der aufrufe, s. "C-Programmierung"
 	{
 // 		workLZ();		//modulaufruf
-// 		hello();		//beim SW rückmelden
+// 		hello();		//beim SW r¸ckmelden
 // 		workRS232();
 // 		hello();
 // 		workS88();
