@@ -20,7 +20,7 @@
 
 
 /* Globale Makrodefinitionen ************************************************/
-
+// Topologie
 #ifndef BV_ANZAHL_GLEISABSCHNITTE
 #define BV_ANZAHL_GLEISABSCHNITTE 9
 #endif
@@ -34,22 +34,18 @@
 #define BV_ANZAHL_ZUEGE 2
 #endif
 
-// Geschwindigkeiten.. noch festzulegen und vielleicht wo anders definieren?
+// Geschwindigkeiten
 #ifndef BV_V_VOLLGAS
-#define BV_V_VOLLGAS 62
-#endif
-#ifndef BV_V_ABKUPPELN
-#define BV_V_ABKUPPELN 10
+#define BV_V_VOLLGAS 3
 #endif
 #ifndef BV_V_ANKUPPELN
-#define BV_V_ANKUPPELN 20
+#define BV_V_ANKUPPELN 2
 #endif
-
-#ifndef BV_MAX_WAGGONS
-#define BV_MAX_WAGGONS 4
+#ifndef BV_V_ABKUPPELN
+#define BV_V_ABKUPPELN 1
 #endif
-#ifndef BV_MAX_KRITISCH
-#define BV_MAX_KRITISCH 5
+#ifndef BV_V_STAND
+#define BV_V_STAND 0
 #endif
 
 

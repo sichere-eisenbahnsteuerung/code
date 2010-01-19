@@ -31,6 +31,12 @@ byte BV_weichenBelegung[BV_ANZAHL_WEICHEN + 1];
 byte BV_zugPosition[BV_ANZAHL_ZUEGE];
 
 /* Lokale Makros ************************************************************/
+#ifndef BV_MAX_WAGGONS
+#define BV_MAX_WAGGONS 4
+#endif
+#ifndef BV_MAX_KRITISCH
+#define BV_MAX_KRITISCH 5
+#endif
 
 /* Lokale Typen *************************************************************/
 
@@ -90,10 +96,11 @@ void sendStreckenBefehl(void);
 void copyStreckenBelegung(void);
 void defineStreckenTopologie(void);
 boolean zugNebenSensor(byte sensorNr, byte *zugNr, byte *richtung);
-boolean sucheNachbarn(byte sensorNr, byte *nextAbs, byte *prevAbs,
-				byte *nSwitch, byte *pSwitch);
+boolean sensorNachbarn(byte sensorNr, byte *nextAbs, byte *prevAbs,
+					byte *nSwitch, byte *pSwitch);
 boolean checkKritischerZustand(void);
-
+boolean weicheRichtig(byte zugPos, byte richtung, byte ziel, byte weiche);
+void zielGleisUndWeiche(byte zugPos, byte richtung, byte *ziel, byte *weiche);
 /* Funktionsimplementierungen ***********************************************/
 
 void initBV(void)
@@ -157,6 +164,12 @@ void workBV(void)
 		// Streckenbefehl ueberpruefen und (wenn OK) an EV senden
 		if (checkStreckenBefehl() == TRUE)
 		{
+			byte zugNr = LZ_BV_streckenbefehl.Lok & 1;
+			byte richtung = (LZ_BV_streckenbefehl.Lok & 2) >> 1;
+			byte geschw = (LZ_BV_streckenbefehl.Lok & 252) >> 2;
+			
+			zugRichtung[zugNr] = richtung;
+			zugGeschwindigkeit[zugNr] = geschw;
 			sendStreckenBefehl();
 		}
 		else
@@ -190,7 +203,7 @@ boolean checkStreckenTopologie(void)
 	byte z = 1;
 	bit ret = TRUE;
 	
-	// Variablen kuerzen ... :/
+	// Variablennamen kuerzen ... :/
 	Gleisabschnitt *my = streckentopologie;
 	Gleisabschnitt *his = BV_streckentopologie;
 	
@@ -275,7 +288,7 @@ boolean checkSensorDaten(void)
 		}
 		
 		// Suche die Nachbar-Abschnitte und -Weichen des Sensors
-		sucheNachbarn(z, &nextAbs, &prevAbs, &nSwitch, &pSwitch);
+		sensorNachbarn(z, &nextAbs, &prevAbs, &nSwitch, &pSwitch);
 		
 		// Fahrtrichtung des Zuges? 0 = rueckwaerts, 1 = vorwaerts
 		inkr = (richtung == 1) ? 1 : -1;
@@ -443,28 +456,10 @@ boolean checkStreckenBefehl(void)
 		byte ziel, weiche, wStell;
 		
 		// Zielgleis und etwaige Weiche auf dem Weg dahin bestimmen
+		zielGleisUndWeiche(zugPos, richtung, &ziel, &weiche);
+		zielGleis = streckentopologie[ziel];
 		gleis = streckentopologie[zugPos];
-		if (richtung == 1)
-		{
-			ziel = gleis.next1;
-			weiche = gleis.nextSwitch;
-			wStell = weichenStellung[weiche];
-			if ((gleis.next2 != 0) && (wStell == 1))
-			{
-				ziel = gleis.next2;
-			}
-		}
-
-		if (richtung == 0)
-		{
-			ziel = gleis.prev1;
-			weiche = gleis.prevSwitch;
-			wStell = weichenStellung[weiche];
-			if ((gleis.prev2 != 0) && (wStell == 1))
-			{
-				ziel = gleis.prev2;
-			}
-		}
+		wStell = weichenStellung[weiche];
 		
 		// Wenn Zielgleis belegt, darf man nur lansgsam reinfahren
 		if ( (gleisBelegung[ziel] != 0) && (geschw != BV_V_ANKUPPELN) )
@@ -481,33 +476,11 @@ boolean checkStreckenBefehl(void)
 		}
 		
 		// Weichenstellung pruefen, wenn man von hinten kommt.
-		zielGleis = streckentopologie[ziel];
-		if ( (weiche != 0) && (richtung == 1) && (gleis.next2 == 0) )
+		if (weicheRichtig(zugPos, richtung, ziel, weiche))
 		{
-			if ( (zugPos == zielGleis.prev1) && (wStell == 1) )
-			{
-				//TODO: Auditing-System Bescheid geben!
-				return FALSE;
-			}
-			else if ( (zugPos == zielGleis.prev2) && (wStell == 0) )
-			{
-				//TODO: Auditing-System Bescheid geben!
-				return FALSE;
-			}
+			//TODO: Auditing-System Bescheid geben!
+			return FALSE;
 		}
-		else if ((weiche != 0) && (richtung == 0) && (gleis.prev2 == 0))
-		{
-			if ( (zugPos == zielGleis.next1) && (wStell == 1) )
-			{
-				//TODO: Auditing-System Bescheid geben!
-				return FALSE;
-			}
-			else if ( (zugPos == zielGleis.next2) && (wStell == 0) )
-			{
-				//TODO: Auditing-System Bescheid geben!
-				return FALSE;
-			}
-		}		
 	}
 
 	return TRUE;
@@ -726,7 +699,7 @@ boolean zugNebenSensor(byte sensorNr, byte *zugNr, byte *richtung)
 	};
 }
 
-boolean sucheNachbarn(byte sensorNr, byte *nextAbs, byte *prevAbs,
+boolean sensorNachbarn(byte sensorNr, byte *nextAbs, byte *prevAbs,
 				byte *nSwitch, byte *pSwitch)
 {
 	byte z;
@@ -771,27 +744,114 @@ boolean checkKritischerZustand(void)
 	byte z;
 	boolean kritisch = FALSE;
 	
-	// Ein Zug faehrt mit Vollgas in Richtung eines belegten Abschnitts
 	for (z = 0; z < BV_ANZAHL_ZUEGE; z++)
 	{
+		byte zugPos = zugPosition[z];
+		byte geschw = zugGeschwindigkeit[z];
+		byte richtung = zugRichtung[z];
+		byte ziel, weiche;
 		
+		// Zielgleis und Weiche dahin bestimmen
+		zielGleisUndWeiche(zugPos, richtung, &ziel, &weiche);
+		
+		// Ein Zug faehrt mit Vollgas richtung eines belegten Abschnitts
+		if ( (geschw > BV_V_ANKUPPELN) && (gleisBelegung[ziel] != 0) )
+		{
+			//TODO: Auditing-System Bescheid geben!
+			kritisch = TRUE;
+			break;
+		}
+		
+		// Zuege in benachbarten Abschnitten bewegen sich aufeinander zu
+		if (ziel == zugPosition[ 1 - zugPos ])
+		{
+			// Ziel gleich der Position des anderen Zuges!
+			//TODO: Auditing-System Bescheid geben!
+			kritisch = TRUE;
+			break;
+		}
+		
+		// Ein Zug faehrt auf eine falsch gestellte Weiche zu
+		if (weicheRichtig(zugPos, richtung, ziel, weiche))
+		{
+			//TODO: Auditing-System Bescheid geben!
+			kritisch = TRUE;
+		}
 	}
-	
-	// Zwei Zuege in benachbarten Abschnitten bewegen sich aufeinander zu
-	
-	
-	// Ein Zug faehrt auf eine falsch gestellte Weiche zu
-	
 	
 	// Zu viele Waggons und Loks auf einem Abschnitt
 	for (z = 1; z < BV_ANZAHL_GLEISABSCHNITTE; z++) {
 		if (gleisBelegung[z] > BV_MAX_WAGGONS)
 		{
+			//TODO: Auditing-System Bescheid geben!
 			kritisch = TRUE;
 			break;
 		}
 	}
+		
+	return TRUE;
+}
+
+boolean weicheRichtig(byte zugPos, byte richtung, byte ziel, byte weiche)
+{
+	Gleisabschnitt gleis, zielGleis;
+	byte wStell = weichenStellung[weiche];
+	gleis = streckentopologie[zugPos];
+	zielGleis = streckentopologie[ziel];
 	
+	// Wenn da gar keine Weiche ist, Pruefung abbrechen
+	if (weiche == 0)
+	{
+		return TRUE;
+	}
+		
+	if ( (richtung == 1) && (gleis.next2 == 0) )
+	{
+		if ( (zugPos == zielGleis.prev1) && (wStell == 1) )
+		{
+			return FALSE;
+		}
+		else if ( (zugPos == zielGleis.prev2) && (wStell == 0) )
+		{
+			return FALSE;
+		}
+	}
+	else if ( (richtung == 0) && (gleis.prev2 == 0))
+	{
+		if ( (zugPos == zielGleis.next1) && (wStell == 1) )
+		{
+			return FALSE;
+		}
+		else if ( (zugPos == zielGleis.next2) && (wStell == 0) )
+		{
+			return FALSE;
+		}
+	}
 	
 	return TRUE;
+}
+
+void zielGleisUndWeiche(byte zugPos, byte richtung, byte *ziel, byte *weiche)
+{
+	Gleisabschnitt gleis;
+	gleis = streckentopologie[zugPos];
+	if (richtung == 1)
+	{
+		*ziel = gleis.next1;
+		*weiche = gleis.nextSwitch;
+		if ((gleis.next2 != 0) && (weichenStellung[*weiche] == 1))
+		{
+			*ziel = gleis.next2;
+		}
+	}
+
+	if (richtung == 0)
+	{
+		*ziel = gleis.prev1;
+		*weiche = gleis.prevSwitch;
+		if ((gleis.prev2 != 0) && (weichenStellung[*weiche] == 1))
+		{
+			*ziel = gleis.prev2;
+		}
+	}
 }
