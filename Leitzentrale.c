@@ -24,6 +24,7 @@
 
 #include "Betriebsmittelverwaltung.h"
 #include "Befehlsvalidierung.h"
+#include "Fahraufgabe.h"
 #include "Leitzentrale.h"
 
 /* Definition globaler Konstanten *******************************************/
@@ -95,12 +96,13 @@ typedef enum {
 
 #define MODULE_ID 0 // fürs auditing und sw watchdog
 #define PRUEFSENSOR_NR 14
+#define ANZAHL_LOKS 2
 
 /* Lokale Variablen *********************************************************/
 
 bit wiederholen[2];
-Fahranweisung fahranweisungRingpuffer[3];
-byte nextFahranweisung;
+Fahranweisung fahranweisungRingpuffer[ANZAHL_LOKS][3];
+byte nextFahranweisung[ANZAHL_LOKS];
 Fahranweisung fahranweisung;
 Zustand zustand[2];
 int zeit;
@@ -115,8 +117,10 @@ Lok lok;
 
 /* Prototypen fuer lokale Funktionen ****************************************/
 
-Fahranweisung getNeueFahranweisung();
-Fahranweisung getAlteFahranweisung();
+// Thomas' Funktion. Wird rausgeschmissen, sobald sein Modul fertig ist.
+Fahranweisung get_command(byte lok);
+
+Fahranweisung getFahranweisung();
 Sensordaten getSensordaten();
 Richtung getRichtung(byte zielNr);
 bit checkBefahrbarkeit(byte gleisabschnittNr);
@@ -138,6 +142,38 @@ void initLZ();
 void workLZ();
 
 /* Funktionsimplementierungen ***********************************************/
+
+Fahranweisung getNeueFahranweisung() {
+	Fahranweisung fa = get_command(lok);
+	fahranweisungRingpuffer[lok][nextFahranweisung] = fa;
+	nextFahranweisung[lok] = (nextFahranweisung[lok] + 1) % 3;
+	return fa;
+}
+
+Fahranweisung getAlteFahranweisung() {
+	Fahranweisung fa = fahranweisungRingpuffer[lok][nextFahranweisung];
+	nextFahranweisung[lok] = (nextFahranweisung[lok] + 1) % 3;
+	return fa;
+}
+
+Fahranweisung getFahranweisung() {
+	static byte lesen[2] = { 0, 0 };
+	static byte schreiben[2] = { 0, 0 };
+	Fahranweisung fa;
+	
+	if(wiederholen == true || lesen[lok] != schreiben[lok]) {
+		fa = fahranweisung[lok][lesen[lok]];
+		lesen[lok] = (nextFahranweisung[lok] + 1) % 3;
+	}
+	else {
+		fa = get_command(lok)
+		fahranweisung[lok][schreiben[lok]] = fa;
+		schreiben[lok] = (schreiben[lok] + 1) % 3;
+		lesen[lok] = schreiben[lok];
+	}
+	
+	return fa;
+}
 
 Weichenstellung getWeichenStellung(byte zielNr) {
 	/*
@@ -309,13 +345,15 @@ void setZustandFuerAnweisung() {
 
 void initLZ() {
 	int i=0;
+	int j=0;
 	wiederholen[LOK1] = FALSE;
 	wiederholen[LOK2] = FALSE;
-	for(i=0;i<3;++i) {
-		fahranweisung[i].fahrbefehl = 0;
-		fahranweisung[i].gleisabschnittNr = 0;
+	for(i=0;i<ANZAHL_LOKS;++i) {
+		for(j=0;j<3;++j) {
+			fahranweisungRingpuffer[i][j].fahrbefehl = 0;
+			fahranweisungRingpuffer[i][j].gleisabschnittNr = 0;
+		}
 	}
-	nextFahranweisung = 0;
 	zustand[LOK1] = HOLT_FAHRANWEISUNG;
 	zustand[LOK2] = HOLT_FAHRANWEISUNG;
 	zeit = 0xFFFF; // höchster Wert
@@ -340,12 +378,7 @@ void workLZ() {
 		switch(zustand[lok]) {
 		case HOLT_FAHRANWEISUNG:
 			verlassenerGleisabschnitt = gleisabschnittNr;
-			if(wiederholen) {
-				fahranweisung = getNeueFahranweisung();
-			}
-			else {
-				fahranweisung = getAlteFahranweisung();
-			}
+			fahranweisung = getFahranweisung();
 			gleisabschnittNr = fahranweisung.gleisabschnittNr;
 			if(checkBefahrbarkeit(gleisabschnittNr) == TRUE) {
 				setZustandFuerFahranweisung();
