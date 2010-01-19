@@ -42,6 +42,12 @@ byte temp_sensor_data;
 byte error;
 /* Prototypen fuer lokale Funktionen ****************************************/
 
+void get_sensor_data(void);
+void write_sensor_data(void);
+byte validate_sensor_data(void);  
+void send_error(byte error);
+void wait(byte times);
+
 /* Funktionsimplementierungen ***********************************************/
 void initS88(void) 
 {
@@ -97,13 +103,14 @@ void get_sensor_data() {
 void write_sensor_data() 
 {
 	temp_sensor_data = S88_Data; //Daten vom Dateneingang in temp Variable schreiben
+	temp_sensor_data = temp_sensor_data << 7;
 	if(sensor_count	< 0x08)
 	{
 		//In Byte0 vom struct Sensordaten schreiben
 		S88_BV_sensordaten.Byte0+= temp_sensor_data;
 		if(sensor_count < 0x07)
 		{
-			S88_BV_sensordaten.Byte0 = S88_BV_sensordaten.Byte0 << 1;
+			S88_BV_sensordaten.Byte0 = S88_BV_sensordaten.Byte0 >> 1;
 		}		
 		sensor_count++;
 
@@ -119,7 +126,7 @@ void write_sensor_data()
 		}
 		else
 		{
-			S88_BV_sensordaten.Byte1 = S88_BV_sensordaten.Byte1 << 1;
+			S88_BV_sensordaten.Byte1 = S88_BV_sensordaten.Byte1 >> 1;
 			sensor_count++;
 		}
 		
@@ -139,7 +146,7 @@ byte validate_sensor_data()
 
 void send_error(byte error)
 {
-	//Sende Error an Auditing System
+	S88_BV_sensordaten.Fehler = error;//Setze Error Flag im struct
 }
 
 void wait(byte times) {

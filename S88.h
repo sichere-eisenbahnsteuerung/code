@@ -22,6 +22,7 @@
  *
  ****************************************************************************/
 #include "Betriebsmittelverwaltung.h"
+#include "SoftwareWatchdogHelloModul.h"
 
 /* Globale Makrodefinitionen ************************************************/
 
@@ -34,11 +35,5 @@
 /* Deklaration von globalen Funktionen **************************************/
 void initS88(void); 
 void workS88(void); 
-void get_sensor_data(void);
-void write_sensor_data(void);
-byte validate_sensor_data(void);  
-void send_error(byte error);
-void wait(byte times);
-
 
 #endif /* s88_H */
