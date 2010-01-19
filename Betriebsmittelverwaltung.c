@@ -7,12 +7,12 @@
  *        Autor:        Altan Gottwald, Vitali Voroth, Jan-Christopher Icken
  *
  *
- *        Modul:        Betriebsmittelverwaltung, ver 0.4
+ *        Modul:        Betriebsmittelverwaltung, ver 0.5
  *
  *        Beschreibung:
  *        Init aller Module
  *        Aufruf aller Module
- *        ________________________________________________________________
+ *        _enum Konstanten für SW Modul IDs_______________________________________________________________
  *        ________________________________________________________________
  *        ________________________________________________________________
  *        ________________________________________________________________
@@ -28,12 +28,23 @@
 // #include "S88.h"
 // #include "SSC.h"
 // #include "Ergebnisvalidierung.h"
-   #include "Befehlsvalidierung.h"
+// #include "Befehlsvalidierung.h"
 // #include "Leitzentrale.h"
 // #include "Fahrprogramm.h"
 
-
 /* Definition globaler Konstanten *******************************************/
+/*
+  Modul IDs für SW
+
+  Leitzentrale - 0
+  Befehlsvalidierung - 1
+  Ergebnisvalidierung - 2
+  S88-Treiber - 3
+  SSC-Treiber - 4
+  RS232-Treiber - 5
+  Auditing System - 6
+*/
+enum module_id { LZ, BV, EV, S88, SSC, RS232, AS};
 
 /* Definition globaler Variablen ********************************************/
 
@@ -56,22 +67,6 @@ byte AS_msg_counter = LEER;
    Interrupt 18 f¸r S88
 **/
 
-//EAL = 1; //enable all interrupts
-
-//Pins
-//P4.1 bis P4.4 f¸r SSC reserviert
-//P4.6 und P4.7 f¸r CAN reserviert
-
-
-/*sbit S88_PS = P1^6; 
-sbit S88_RESET = P1^7;     
-sbit S88_CLK = P3^2;
-sbit S88_Data = P3^3;
-sbit NOTAUS_PIN	= P3^4;
-sbit RS232TREIBER_CTSPIN = P3^5;
-sbit AS_PORT_I2C_SDA = P3^6;
-sbit AS_PORT_I2C_SCL = P3^7;*/
-
 /* Lokale Makros ************************************************************/
 
 /* Lokale Typen *************************************************************/
@@ -86,7 +81,8 @@ sbit AS_PORT_I2C_SCL = P3^7;*/
 void main (void)
 {
 	EAL = 1; //enable all interrupts
-	//alles initialisieren
+	
+//alles initialisieren
 	
 // 	initNOTAUS();
 // 	initSW();
@@ -100,13 +96,12 @@ void main (void)
 // 	hello();
 // 	initEV();
 // 	hello();
- 	initBV();
+// 	initBV();
 // 	hello();
 // 	initLZ();
 // 	hello();
 // 	initFP();
-// 	hello();
-
+// 	hello(); 
 
 	for(;;)	//Endlosschleife der aufrufe, s. "C-Programmierung"
 	{
@@ -118,7 +113,7 @@ void main (void)
 // 		hello();
 // 		workSSC();
 // 		hello();
- 		workBV();
+// 		workBV();
 // 		hello();
 // 		workAS();
 // 		hello();
@@ -135,5 +130,4 @@ void main (void)
 // 		workAS();
 // 		hello();
 	}
-
 }

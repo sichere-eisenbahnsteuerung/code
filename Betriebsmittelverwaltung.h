@@ -49,6 +49,8 @@ typedef struct
 
 /* Deklaration von globalen Konstanten **************************************/
 
+//extern enum module_id; 
+
 /* Deklaration von globalen Variablen ***************************************/
 
 extern Streckenbefehl LZ_BV_streckenbefehl;
@@ -65,24 +67,16 @@ extern Streckenbefehl EV_RS232_streckenbefehl;
 extern byte AS_msg_counter;
 
 /**
-   Interrupt 1 für SW
-   Interrupt 4 für RS232
-   Interrupt 18 für S88
+   Interrupt 1 f¸r SW
+   Interrupt 4 f¸r RS232
+   Interrupt 18 f¸r S88
 **/
 
 //EAL = 1; //enable all interrupts
 
 //Pins
-//P4.1 bis P4.4 für SSC reserviert
-//P4.6 und P4.7 für CAN reserviert
-/*extern bit S88_PS;
-extern bit S88_RESET;
-extern bit S88_CLK;
-extern bit S88_Data;
-extern bit NOTAUS_PIN;
-extern bit RS232TREIBER_CTSPIN;
-extern bit AS_PORT_I2C_SDA;
-extern bit AS_PORT_I2C_SCL;*/
+//P4.1 bis P4.4 f¸r SSC reserviert
+//P4.6 und P4.7 f¸r CAN reserviert
 
 /**
 * sbit Zuweisung muss in einer Headerdatei erfolgen
