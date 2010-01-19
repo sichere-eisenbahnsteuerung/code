@@ -133,6 +133,12 @@ void setNachricht(FehlerCode fehlerCode);
 void setZustandFuerFahranweisung();
 
 byte getNextWeiche(byte zielNr);
+
+void initLZ();
+void workLZ();
+
+/* Funktionsimplementierungen ***********************************************/
+
 Weichenstellung getWeichenStellung(byte zielNr) {
 	/*
 	 * TODO (a better version)
@@ -144,11 +150,6 @@ Weichenstellung getWeichenStellung(byte zielNr) {
 	 */
 	return zielNr + BV_zugposition[lok] < 8 ? GERADEAUS : ABBIEGEN;
 }
-
-void initLZ();
-void workLZ();
-
-/* Funktionsimplementierungen ***********************************************/
 
 bit checkGesperrt(byte gleisabschnittNr) {
 	return (gleisSperrung[gleisabschnittNr] == KEINE) ? FALSE : TRUE;
