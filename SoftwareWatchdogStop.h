@@ -38,7 +38,7 @@
 
 /* Deklaration von globalen Funktionen **************************************/
 
-void stopSW();
+void stopSW(void);
 
 
 #endif /* SOFTWAREWATCHDOGSTOP_H */

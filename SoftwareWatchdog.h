@@ -21,7 +21,9 @@
  *
  *        Diese Headerdatei ist fuer das Modul Betriebsmittelverwaltung
  *        vorgesehen. Sie enthaellt die Prototypen fuer die
- *        Schnittstellen initSW und hello.
+ *        Schnittstellen initSW und hello. Ausserdem enthaellt sie die
+ *        Startwerte fuer die Konfiguration von Timer0:
+ *        SW_T0_STARTWERT_LO und SW_T0_STARTWERT_HI.
  *
  ****************************************************************************/
 
@@ -31,34 +33,46 @@
 /* Globale Makrodefinitionen ************************************************/
 
 // Zeitfensterkonfiguration des Hardwarezaehlers
-#define SW_ZEITFENSTER		2
+#ifndef SW_ZEITFENSTER
+	#define SW_ZEITFENSTER		2
+#endif
 /*
  * Groesse des Zeitfensters in 10 ms.
  */  
 
-#define SW_TAKTRATE_C515C	12000000
+#ifndef SW_TAKTRATE_C515C
+	#define SW_TAKTRATE_C515C	12000000
+#endif
 /*
  * Taktrate des Mikrocontrollers C515C in MHz.
  */  
 
-#define SW_TAKTZYKLEN_C515C	(6)
+#ifndef SW_TAKTZYKLEN_C515C
+	#define SW_TAKTZYKLEN_C515C	(6)
+#endif
 /*
  * Zyklen pro Takt des Mikrocontrollers C515C.
  */  
 
-#define SW_TIMER0_STARTWERT	(0xffff - ((SW_ZEITFENSTER * SW_TAKTRATE_C515C) / (SW_TAKTZYKLEN_C515C * 100)))
+#ifndef SW_TIMER0_STARTWERT
+	#define SW_TIMER0_STARTWERT	(0xffff - ((SW_ZEITFENSTER * SW_TAKTRATE_C515C) / (SW_TAKTZYKLEN_C515C * 100)))
+#endif
 /*
  * Startwert fuer Timer0: 0x63bf.
  */  
 
-#define SW_T0_STARTWERT_LO (SW_TIMER0_STARTWERT & 0x00ff)
+#ifndef SW_T0_STARTWERT_LO
+	#define SW_T0_STARTWERT_LO (SW_TIMER0_STARTWERT & 0x00ff)
+#endif
 /*
  * Startwert fuer Timer0 (unteres Bit): 0xbf.
  */  
 
-#define SW_T0_STARTWERT_HI ((SW_TIMER0_STARTWERT & 0xff00) >> 8)
+#ifndef SW_T0_STARTWERT_HI
+	#define SW_T0_STARTWERT_HI ((SW_TIMER0_STARTWERT & 0xff00) >> 8)
+#endif
 /*
- * Startwert fuer Timer0 (obrers Bit): 0x63.
+ * Startwert fuer Timer0 (oberes Bit): 0x63.
  */  
 
 /* Globale Typdefinitionen **************************************************/
@@ -69,7 +83,7 @@
 
 /* Deklaration von globalen Funktionen **************************************/
 
-void initSW();
-void hello();
+void initSW(void);
+void hello(void);
 
 #endif /* SOFTWAREWATCHDOG_H */

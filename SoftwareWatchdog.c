@@ -22,7 +22,7 @@
 /* Includes *****************************************************************/
 
 #include "SoftwareWatchdog.h"
-#include "NotAusTreiber.h"
+#include "Notaus.h"
 #include "Betriebsmittelverwaltung.h"
 
 /* Definition globaler Konstanten *******************************************/
@@ -166,7 +166,7 @@ void stopSW()
  * 0x000B. Bestimmung der Interruptnummer durch die Formel:
  * Nummer = (Interruptvektoradresse-3) / 8
  * Nummer = 1
- * Quelle: C fuer den Mikrocontroller C515C
+ * Quelle: C fuer den Mikrocontroller 80C515C
  * 
  * Wird dieser Interrupt ausgeloest, so wird der Not-Aus-Treiber kontaktiert
  * und somit der Programmfluss angehalten.
