@@ -22,6 +22,8 @@
 /* Includes *****************************************************************/
 #include "Ergebnisvalidierung.h"
 #include "Betriebsmittelverwaltung.h"
+#include "AuditingSystemSendMsg.h"
+#include "Notaus.h"
 
 /* Definition globaler Konstanten *******************************************/
 
@@ -54,18 +56,19 @@ static Streckenbefehl internerStreckenbefehl = {LEER, LEER, LEER, LEER};
 static Streckenbefehl externerStreckenbefehl = {LEER, LEER, LEER, LEER};
 
 // Gibt an, ob ein neuer Streckenbefehl von der Befehlsvalidierung vorhanden ist
-boolean isBVNew = FALSE;
+static boolean isBVNew = FALSE;
 
 // Gibt an, ob ein neuer Sreckenbefehl vom SSC-Treiber vorhanden ist,
-boolean isSSCNew = FALSE;
+static boolean isSSCNew = FALSE;
 
 /* Prototypen fuer lokale Funktionen ****************************************/
-boolean isStreckenbefehlResetted(Streckenbefehl *track);
-boolean processExternalStreckenbefehl(void);
-boolean streckenbefehleEqual(Streckenbefehl *track1, Streckenbefehl *track2);
+static boolean isStreckenbefehlResetted(Streckenbefehl *track);
+static boolean processExternalStreckenbefehl(void);
+static boolean streckenbefehleEqual(Streckenbefehl *track1, Streckenbefehl *track2);
+static void processInternalStreckenbefehl(void);
+static void resetStreckenbefehl(Streckenbefehl *track);
+
 void initEV(void);
-void processInternalStreckenbefehl(void);
-void resetStreckenbefehl(Streckenbefehl *track);
 void workEV();
 
 /* Funktionsimplementierungen ***********************************************/
@@ -98,7 +101,7 @@ void initEV(void)
 		  FALSE falls nicht
 * Author	: Philip Weber
 */
-boolean isStreckenbefehlResetted(Streckenbefehl *track)
+static boolean isStreckenbefehlResetted(Streckenbefehl *track)
 {
 	// Ueberpruefung, ob der Streckenbefehl zurueckgesetzt ist.
 	// Der Fehler ist an dieser Stelle irrelevant.
@@ -122,7 +125,7 @@ boolean isStreckenbefehlResetted(Streckenbefehl *track)
 * Parameter	: track - Streckenbefehl
 * Author	: Philip Weber
 */
-void resetStreckenbefehl(Streckenbefehl *track)
+static void resetStreckenbefehl(Streckenbefehl *track)
 {
 	// Streckenbefehl zuruecksetzen
 	track->Lok = LEER;
@@ -141,7 +144,7 @@ void resetStreckenbefehl(Streckenbefehl *track)
 		  FALSE falls nicht.
 * Author	: Philip Weber
 */
-boolean streckenbefehleEqual(Streckenbefehl *track1, Streckenbefehl *track2)
+static boolean streckenbefehleEqual(Streckenbefehl *track1, Streckenbefehl *track2)
 {
 	// Ueberpruefung, ob jeweils ein neuer Streckenbefehl von der
 	// Befehlsvalidierung und dem SSC-Treiber
@@ -178,7 +181,7 @@ boolean streckenbefehleEqual(Streckenbefehl *track1, Streckenbefehl *track2)
 	// uebermittelt, ...
 
 // TODO: Auditingfunktion
-//	send_msg(3,2);
+	//send_msg(3,2);
 	// ein Not-Aus eingeleitet ...
 	emergency_off();
 	// und die Funktion mit dem Wert FALSE verlassen, um das Modul
@@ -195,7 +198,7 @@ boolean streckenbefehleEqual(Streckenbefehl *track1, Streckenbefehl *track2)
 		  FALSE falls nicht.
 * Author	: Philip Weber
 */
-boolean checkForCommunicationErrors(void)
+static boolean checkForCommunicationErrors(void)
 {
 	// Ueberpruefung, ob der Fehleranteil des Shared Memory vom
 	// RS232-Treiber zurueckgesetzt ist.
@@ -205,7 +208,7 @@ boolean checkForCommunicationErrors(void)
 		// uebermittelt, ...
 
 // TODO: Auditingfunktion
-//		send_msg(RS232_EV_streckenbefehl.Fehler,2);
+//		send_msg(&EV_RS232_streckenbefehl.Fehler,2);
 		// ein Not-Aus eingeleitet ...
 		emergency_off();
 		// und die Funktion mit dem Wert TRUE verlassen. 
@@ -329,7 +332,7 @@ boolean checkForCommunicationErrors(void)
 		  zum SSC-Treiber geschrieben.
 * Author	: Philip Weber
 */
-void processInternalStreckenbefehl(void)
+static void processInternalStreckenbefehl(void)
 {
 	isBVNew = FALSE;
 
@@ -378,7 +381,7 @@ void processInternalStreckenbefehl(void)
 		  	Streckenbefehl neu sind 
 * Author	: Philip Weber
 */
-boolean processExternalStreckenbefehl(void)
+static boolean processExternalStreckenbefehl(void)
 {
 	isSSCNew = FALSE;
 
