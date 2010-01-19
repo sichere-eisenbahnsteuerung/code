@@ -8,7 +8,7 @@
  *
  *        Autor:        Vitali Voroth
  *
- *        Modul:        Befehlsvalidierung, 1.0
+ *        Modul:        Befehlsvalidierung, 1.1
  *
  *        Beschreibung:	Prüft Streckenbefehle der Leitzentrale auf Gültigkeit
  *			Leitet Sensordaten vom S88-Treiber an die Leitzentrale
@@ -44,6 +44,14 @@
 #ifndef BV_V_ANKUPPELN
 #define BV_V_ANKUPPELN 20
 #endif
+
+#ifndef BV_MAX_WAGGONS
+#define BV_MAX_WAGGONS 4
+#endif
+#ifndef BV_MAX_KRITISCH
+#define BV_MAX_KRITISCH 5
+#endif
+
 
 /* Globale Typdefinitionen **************************************************/
 

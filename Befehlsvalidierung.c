@@ -6,7 +6,7 @@
  *
  *        Autor:        Vitali Voroth
  *
- *        Modul:        Befehlsvalidierung, 1.0
+ *        Modul:        Befehlsvalidierung, 1.1
  *
  *        Beschreibung:	Prueft Streckenbefehle der Leitzentrale auf Gueltigkeit.
  *			Leitet Sensordaten vom S88-Treiber an die Leitzentrale.
@@ -128,20 +128,30 @@ void workBV(void)
 		}
 		
 		// Wenn neue Sensordaten in Ordndung
-		BV_next_state = 1;		// Gleisbild pruefen
-		break;
+		else 
+		{
+			BV_next_state = 1;	// Gleisbild pruefen
+			break;
+		}
 		
 	case 1:
 		// Gleisbild auf kritische Zustaende pruefen
 		if (checkKritischerZustand() == FALSE)
 		{
-			emergency_off();
+			if (++BV_criticalStateCounter > BV_MAX_KRITISCH)
+			{
+				emergency_off();
+			}
 			break;
 		}
 		
 		// keine kritischen Zustaende erkannt
-		BV_next_state = 2;		// Streckenbefehl holen
-		break;
+		else
+		{
+			BV_criticalStateCounter = 0;
+			BV_next_state = 2;	// Streckenbefehl holen
+			break;
+		}
 		
 	case 2:
 		// Streckenbefehl ueberpruefen und (wenn OK) an EV senden
@@ -149,10 +159,12 @@ void workBV(void)
 		{
 			sendStreckenBefehl();
 		}
+		else
+		{
+			BV_next_state = 0;	// Sensordaten holen
+			break;
+		}
 		
-		BV_next_state = 0;		// Sensordaten holen
-		break;
-	
 	case 3:
 		// Wenn Kopien der Streckentopologie manipuliert wurden
 		if (checkStreckenTopologie() == FALSE)
@@ -160,9 +172,14 @@ void workBV(void)
 			emergency_off();
 			break;
 		}
-		
-		BV_next_state = 2;		// Streckenbefehl holen
-		break;
+		else
+		{
+			BV_next_state = 2;	// Streckenbefehl holen
+			break;
+		}
+	default: 
+		//TODO: Auditing-System Bescheid geben!
+		emergency_off();	// anderen Zustand darf es nicht geben.
 	}
 	
 }
@@ -751,5 +768,30 @@ boolean sucheNachbarn(byte sensorNr, byte *nextAbs, byte *prevAbs,
 
 boolean checkKritischerZustand(void)
 {
+	byte z;
+	boolean kritisch = FALSE;
+	
+	// Ein Zug faehrt mit Vollgas in Richtung eines belegten Abschnitts
+	for (z = 0; z < BV_ANZAHL_ZUEGE; z++)
+	{
+		
+	}
+	
+	// Zwei Zuege in benachbarten Abschnitten bewegen sich aufeinander zu
+	
+	
+	// Ein Zug faehrt auf eine falsch gestellte Weiche zu
+	
+	
+	// Zu viele Waggons und Loks auf einem Abschnitt
+	for (z = 1; z < BV_ANZAHL_GLEISABSCHNITTE; z++) {
+		if (gleisBelegung[z] > BV_MAX_WAGGONS)
+		{
+			kritisch = TRUE;
+			break;
+		}
+	}
+	
+	
 	return TRUE;
 }
