@@ -6,7 +6,7 @@
  *
  *        Projekt:      Sichere Eisenbahnsteuerung
  *
- *        Autor:        Felix Blueml
+ *        Autor:        Felix Theodor Blueml
  *
  *
  *        Modul:        Software Watchdog, Version 1.2
@@ -39,6 +39,15 @@
 
 /* Deklaration von globalen Funktionen **************************************/
 
+/*
+ * helloModul(byte module_id, byte status)
+ * Schnittstelle mit Statusmeldungen fuer Module mit zugeordneter Modulnummer.
+ * (Siehe dazu den Prototypen-Kommentar in der Header-Datei 
+ * SoftwareWatchdogHelloModul.h)
+ * Die Schnittstelle dient der Ueberwachung der Taetigkeiten der Module.
+ *
+ * Rueckgabe: Keine
+ */
 void helloModul(
 	byte module_id, /*
 	*
@@ -51,7 +60,7 @@ void helloModul(
 	*               5 = RS232-Treiber
 	*               6 = Auditing System
 	*  Direction  : in
-	*  Values     : 0-6			(Modulnummer)
+	*  Values     : 0-6		(Modulnummer)
 	*/  
 
 	byte status /*
@@ -59,11 +68,10 @@ void helloModul(
 	*  Description: Aktueller Status eines Moduls.
 	*  Direction  : in
 	*  Values     : 0-255		(Statusmeldung eines Moduls)
-	* 				Kein Modul darf 255 als erste Statusmeldung zur Laufzeit
-	*               melden.
+	* 				Kein Modul darf 255 als erste
+	*				Statusmeldung zur Laufzeit melden.
 	*/  
 );
-
 
 
 #endif /* SOFTWAREWATCHDOGHELLOMODUL_H */

@@ -6,7 +6,7 @@
  *
  *        Projekt:      Sichere Eisenbahnsteuerung
  *
- *        Autor:        Felix Blueml
+ *        Autor:        Felix Theodor Blueml
  *
  *
  *        Modul:        Auditing-System, Version 0.3
@@ -39,7 +39,27 @@
 
 /* Deklaration von globalen Funktionen **************************************/
 
+/*
+ * initAS()
+ * Schnittstelle nur fuer das Modul Betriebsmittelverwaltung. Die 
+ * Schnittstelle dient der Initialisierung der Steuerungsvariablen fuer den 
+ * Ringpuffer.
+ * 
+ * Rueckgabe: Keine
+ */
 void initAS(void);
+
+/*
+ * workAS()
+ * Schnittstelle nur fuer das Modul Betriebsmittelverwaltung. Die
+ * Schnittstelle dient dem Auslesen der Meldungen der Module aus dem
+ * Ringpuffer und deren Versendung ueber den I2C-Bus.
+ * Die Uebertragung eines komplett befuellten Puffers bedeutet, dass 105 Bytes
+ * (15 Meldungen) versendet werden sollen.
+ * 
+ * Rueckgabe: Keine
+ */
 void workAS(void);
+
 
 #endif /* AUDITINGSYSTEM_H */

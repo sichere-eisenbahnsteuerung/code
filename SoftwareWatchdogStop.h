@@ -6,7 +6,7 @@
  *
  *        Projekt:      Sichere Eisenbahnsteuerung
  *
- *        Autor:        Felix Blueml
+ *        Autor:        Felix Theodor Blueml
  *
  *
  *        Modul:        Software Watchdog, Version 1.2
@@ -38,6 +38,13 @@
 
 /* Deklaration von globalen Funktionen **************************************/
 
+/*
+ * stopSW()
+ * Schnittstelle nur fuer das Modul Not-Aus-Treiber. Die Schnittstelle dient 
+ * zum abschalten des Hardwarezaehlers.
+ *
+ * Rueckgabe: Keine
+ */
 void stopSW(void);
 
 

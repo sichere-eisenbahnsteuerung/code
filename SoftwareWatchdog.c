@@ -4,7 +4,7 @@
  *
  *        Projekt:      Sichere Eisenbahnsteuerung
  *
- *        Autor:        Felix Blueml
+ *        Autor:        Felix Theodor Blueml
  *
  *
  *        Modul:        Software Watchdog, Version 1.2
@@ -24,6 +24,7 @@
 #include "SoftwareWatchdog.h"
 #include "Notaus.h"
 #include "Betriebsmittelverwaltung.h"
+
 
 /* Definition globaler Konstanten *******************************************/
 
@@ -63,25 +64,31 @@ void initSW()
 	int i;
 	for(i=0; i<6; i++)
 	{
-		SW_status_array[i] = 0xff;	// Statusspeicher initialisieren
+		// Statusspeicher initialisieren
+		SW_status_array[i] = 0xff;
 	}
+	
+	TR0 = 0;		// Timer0 ersteinmal stoppen
+
 	TMOD &= ~(1<<3);	// setze GATE = 0; gebe Timer0 frei
 	TMOD &= ~(1<<2);	// setze C/T = 0; verwende die Timer Funktion
-	
+
 	// waehle Mode 0; verwende 16 Bit fuer den Zaehler
 	TMOD &= ~(1<<1);	// setze M1 = 0
 	TMOD |=  (1<<0);	// setze M0 = 1
-	
+
 	// Zeitfensterkonfiguration des Hardwarezaehlers
 	TL0 = SW_T0_STARTWERT_LO;
 	TH0 = SW_T0_STARTWERT_HI;
+
+	// "Timer 0 Overflow" gehoert zur Interruptgruppe 2, verwende IPx.1
+	// Gebe dem Timer0-Interrupt die hoechste Prioritaet
+	IP0 |= 0x02;		// setze IP0.1 = 1
+	IP1 |= 0x02;		// setze IP1.1 = 1
 	
-	PT = 1;				// Vergabe der hoechst moeglichen Prioritaet
-						// fuer den Timer0-Interrupt
+	ET0 = 1;		// Freigabe des Timer0-Interrupts
 	
-	ET0 = 1;			// Freigabe des Timer0-Interrupts
-	
-	TR0 = 1;			// Scharfschalten des Timer0
+	TR0 = 1;		// Scharfschalten des Timer0
 }
 
 /*
@@ -101,14 +108,14 @@ void initSW()
  */
 void hello()
 {
-	TR0 = 0;			// Timer0 stoppen
+	TR0 = 0;		// Timer0 stoppen
 	
 	// Zeitfensterkonfiguration des Hardwarezaehlers
 	// Timer0 resetten
 	TL0 = SW_T0_STARTWERT_LO;
 	TH0 = SW_T0_STARTWERT_HI;
 	
-	TR0 = 1;			// Scharfschalten des Timer0
+	TR0 = 1;		// Scharfschalten des Timer0
 }
 
 /*
@@ -157,7 +164,7 @@ void helloModul(byte module_id, byte status)
  */
 void stopSW()
 {
-	TR0 = 0;			// Timer0 stoppen
+	TR0 = 0;		// Timer0 stoppen
 }
 
 /*
@@ -175,5 +182,5 @@ void stopSW()
  */
 timer0overflow() interrupt 1
 {
-		emergency_off();	// Systemstopp!
+	emergency_off();	// Systemstopp!
 }

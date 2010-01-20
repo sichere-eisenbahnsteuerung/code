@@ -6,7 +6,7 @@
  *
  *        Projekt:      Sichere Eisenbahnsteuerung
  *
- *        Autor:        Felix Blueml
+ *        Autor:        Felix Theodor Blueml
  *
  *
  *        Modul:        Software Watchdog, Version 1.2
@@ -48,7 +48,7 @@
  */  
 
 #ifndef SW_TAKTZYKLEN_C515C
-	#define SW_TAKTZYKLEN_C515C	(6)
+	#define SW_TAKTZYKLEN_C515C	6
 #endif
 /*
  * Zyklen pro Takt des Mikrocontrollers C515C.
@@ -62,18 +62,19 @@
  */  
 
 #ifndef SW_T0_STARTWERT_LO
-	#define SW_T0_STARTWERT_LO (SW_TIMER0_STARTWERT & 0x00ff)
+	#define SW_T0_STARTWERT_LO	(SW_TIMER0_STARTWERT & 0x00ff)
 #endif
 /*
  * Startwert fuer Timer0 (unteres Bit): 0xbf.
  */  
 
 #ifndef SW_T0_STARTWERT_HI
-	#define SW_T0_STARTWERT_HI ((SW_TIMER0_STARTWERT & 0xff00) >> 8)
+	#define SW_T0_STARTWERT_HI	((SW_TIMER0_STARTWERT & 0xff00) >> 8)
 #endif
 /*
  * Startwert fuer Timer0 (oberes Bit): 0x63.
  */  
+
 
 /* Globale Typdefinitionen **************************************************/
 
@@ -83,7 +84,28 @@
 
 /* Deklaration von globalen Funktionen **************************************/
 
+/*
+ * initSW()
+ * Schnittstelle nur fuer das Modul Betriebsmittelverwaltung. Die 
+ * Schnittstelle dient der Initialisierung eines Speicherfeldes fuer die
+ * zuletzt gemeldeten Status der Module und der Scharfschaltung des
+ * Hardwarezaehlers.
+ *
+ * Rueckgabe: Keine
+ */
 void initSW(void);
+
+/*
+ * hello()
+ * Schnittstelle nur fuer das Modul Betriebsmittelverwaltung. Die
+ * Schnittstelle dient der Rueckmeldung innerhalb des vorgegebenen
+ * Zeitfensters zur Bewaeltigung von Aufgaben. (Siehe dazu das Makro
+ * Zeitfensterkonfiguration des Hardwarezaehlers in der Header-Datei
+ * SoftwareWatchdog.h)
+ *
+ * Rueckgabe: Keine
+ */
 void hello(void);
+
 
 #endif /* SOFTWAREWATCHDOG_H */

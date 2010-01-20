@@ -4,7 +4,7 @@
  *
  *        Projekt:      Sichere Eisenbahnsteuerung
  *
- *        Autor:        Felix Blueml
+ *        Autor:        Felix Theodor Blueml
  *
  *
  *        Modul:        Auditing-System, Version 0.3
@@ -30,6 +30,40 @@
 
 /* Definition globaler Variablen ********************************************/
 
+static byte AS_msg_array[15][7];
+/*
+ *  Description: Ringpuffer zum speichern der Statusmeldungen der Module.
+ *  Values     : [0-14][0]:    0 = Leitzentrale
+ *                             1 = Befehlsvalidierung
+ *                             2 = Ergebnisvalidierung
+ *                            16 = Leitzentrale, Pufferueberlauf
+ *                            17 = Befehlsvalidierung, Pufferueberlauf
+ *                            18 = Ergebnisvalidierung, Pufferueberlauf
+ *               (Modulnummer und ggf. Flag fuer Pufferueberlauf)
+ *               
+ *               [0-14][1-6]: 0-255	(Statusmeldung)
+ *               (Siehe die Beschreibung des jeweiligen Moduls)
+ */
+
+static byte AS_read_next_msg;
+/*
+ *  Description: Lesezeiger ("OUT-­Index") fuer den Ringpuffer.
+ *  Values     : 0-14	(Lesezeiger)
+ */
+
+static byte AS_fill_next_msg;
+/*
+ *  Description: Schreibezeiger ("IN-­Index") fuer den Ringpuffer.
+ *  Values     : 0-14	(Schreibezeiger)
+ */
+
+static byte AS_msg_counter;
+/*
+ *  Description: Fuellstandzaehler fuer den Ringpuffer.
+ *  Values     : 0-15	(Anzahl der Elemente im Ringpuffer)
+ */
+
+
 /* Lokale Makros ************************************************************/
 
 #ifndef _nop_
@@ -54,14 +88,14 @@
  */
 
 #ifndef SCL
-    sbit SCL = AS_PORT_I2C_SCL;
+	#define SCL	AS_PORT_I2C_SCL
 #endif
 /*
  * I2C-SCL-Anschluss des C515C
  */
 
 #ifndef SDA
-    sbit SDA = AS_PORT_I2C_SDA;
+	#define SDA	AS_PORT_I2C_SDA
 #endif
 /*
  * I2C-SDA-Anschluss des C515C
@@ -81,9 +115,94 @@ byte _i2c_error;
  *               2   = SCL konnte nicht gesetzt werden
  *               255 = Kein Fehler
  *               (Fehlerarten)
- */  
+ */
+
 
 /* Prototypen fuer lokale Funktionen ****************************************/
+
+// Uebernommene Funktionen aus der Datei I2C_SW.C //
+
+/*
+ * _I2CBitDly()
+ * wait 4.7uS, or thereabouts
+ * tune to xtal. This works at 11.0592MHz
+ * 
+ * Rueckgabe: Keine
+ */
+void _I2CBitDly(void);
+
+/*
+ * _I2CSCLHigh()
+ * set SCL high, and wait for it to go high
+ * 
+ * Rueckgabe: Keine
+ */
+void _I2CSCLHigh(void);
+ 
+/*
+ * I2CSendAddr(byte addr, byte rd)
+ * 
+ * 
+ * Rueckgabe: Keine
+ */
+void I2CSendAddr(
+	byte addr, /*
+	*
+	*  Description: Adresse des Geraetes, mit dem ueber I2C kommuniziert
+	*               werden soll.
+	*               addr / 2 entspricht der Adresse des gewuenschten
+	*		Geraets.
+	*  Direction  : in
+	*  Values     : 0-255 (?)	(Adresse*2)
+	*/  
+
+	byte rd /*
+	*
+	*  Description: Legt die gewuenschte Richtung der Kommunikation fest.
+	*  Direction  : in
+	*  Values     : 0 = schreibend
+	*               1 = lesend
+	*/  
+);
+
+/*
+ * I2CSendByte(byte bt)
+ * 
+ * 
+ * Rueckgabe: Keine
+ */
+void I2CSendByte(
+	byte bt /*
+	*
+	*  Description: Byte, dass ueber I2C versendet werden soll.
+	*  Direction  : in
+	*  Values     : 0-255		(Byte)
+	*/  
+);
+
+// /*
+//  * _I2CGetByte(byte lastone)
+//  * 
+//  * 
+//  * Rueckgabe: byte
+//  */
+// byte _I2CGetByte(byte lastone /*
+// 	*
+// 	*  Description: Schalter zur Auswahl zwischen Funktionalitaeten.
+// 	*  Direction  : in
+// 	*  Values     : 0 = Funktion "Byte lesen"
+// 	*               1 = Funktion "Letztes Byte lesen"
+// 	*/  
+// );
+
+/*
+ * I2CSendStop()
+ * 
+ * 
+ * Rueckgabe: Keine
+ */
+void I2CSendStop(void);
+
 
 /* Funktionsimplementierungen ***********************************************/
 
@@ -94,7 +213,7 @@ byte _i2c_error;
  * Ringpuffer.
  * 
  * Nach Aufruf dieser Schnittstelle werden die Bytes AS_read_next_msg, 
- * AS_fill_next_msg und AS_msg_counter jeweils auf 00H gesetzt.
+ * AS_fill_next_msg und AS_msg_counter jeweils auf 00h gesetzt.
  * 
  * Rueckgabe: Keine
  * 
@@ -144,10 +263,12 @@ void initAS()
  */
 void send_msg(byte msg[6], byte module_id)
 {
+	byte i;
 	// Enthaellt AS_fill_next_msg falschen Wert?
 	if(AS_fill_next_msg >= 15)
 	{
-		// Sicherstellen, dass nicht wahllos in den Speicher geschrieben wird
+		// Sicherstellen, dass nicht wahllos in den Speicher
+		// geschrieben wird
 		AS_fill_next_msg = 0;
 	}
 	
@@ -168,7 +289,6 @@ void send_msg(byte msg[6], byte module_id)
 	// speichere Modulnummer
 	AS_msg_array[AS_fill_next_msg][0] = module_id;
 	
-	byte i;
 	for(i=1; i<7; i++)
 	{
 		// speichere Statusmeldung
@@ -190,7 +310,6 @@ void send_msg(byte msg[6], byte module_id)
  * Ringpuffer und deren Versendung ueber den I2C-Bus.
  * Die Uebertragung eines komplett befuellten Puffers bedeutet, dass 105 Bytes
  * (15 Meldungen) versendet werden sollen.
-/* Prototypen fuer lokale Funktionen *****************************************
  * 
  * Nach Aufruf dieser Schnittstelle wird ueberprueft, ob der Ringpuffer leer
  * ist. Wenn dem so ist, muessen keine Daten untersucht werden und der Vorgang
@@ -222,6 +341,10 @@ void send_msg(byte msg[6], byte module_id)
  */
 void workAS()
 {
+	// Zeitmesser; dient der Verhinderung des Ueberschreitens des
+	// vorgegebenen Zeitfensters von 20 ms
+	byte timer = 0;
+
 	// Keine Elemente im Puffer zum versenden?
 	if(!AS_msg_counter)
 	{
@@ -232,16 +355,14 @@ void workAS()
 	// Enthaellt AS_read_next_msg falschen Wert?
 	if(AS_read_next_msg >= 15)
 	{
-		// Sicherstellen, dass nicht wahllos irgendwelche Werte aus dem
-		// Speicher gelesen werden
+		// Sicherstellen, dass nicht wahllos irgendwelche Werte aus
+		// dem Speicher gelesen werden
 		AS_read_next_msg = 0;
 	}
 	
-	// Zeitmesser; dient der Verhinderung des Ueberschreitens des
-	// vorgegebenen Zeitfensters von 20 ms
-	byte timer = 0;
 	
-	// Versuche eine schreibende Verbindung zum Arduino mit der Adresse 4 herzustellen
+	// Versuche eine schreibende Verbindung zum Arduino mit der Adresse 4
+	// herzustellen
 	_i2c_error = 255; // Status: Kein Fehler
 	do
 	{
@@ -255,8 +376,8 @@ void workAS()
 			return;
 		}
 	}
-	while(_i2c_error != 255);	// Wiederhole, solange Fehler aufgetreten
-	
+	while(_i2c_error != 255);	// Wiederhole, solange Fehler
+					// aufgetreten
 	
 	// Leere den Ringpuffer und versende die Daten
 	for(AS_msg_counter; AS_msg_counter>0; AS_msg_counter--)
@@ -264,11 +385,14 @@ void workAS()
 		byte i;
 		for(i=0; i<7; i++)
 		{
-			// Versuche ein Byte aus dem Ringpuffer an den Arduino zu versenden
+			// Versuche ein Byte aus dem Ringpuffer an den Arduino
+			// zu versenden
 			_i2c_error = 255; // Status: Kein Fehler
 			do
 			{
-				I2CSendByte(AS_msg_array[AS_read_next_msg][i]);
+				I2CSendByte(
+					AS_msg_array[AS_read_next_msg][i]
+				);
 				timer += 2; // Relative Zeitmessung
 				
 				// Gesamtzeit ueberschritten?
@@ -278,7 +402,8 @@ void workAS()
 					return;
 				}
 			}
-			while(_i2c_error != 255);	// Wiederhole, solange Fehler aufgetreten
+			while(_i2c_error != 255);	// Wiederhole, solange
+							// Fehler aufgetreten
 		}
 		
 		// Eine komplette Statusmeldung wurde versendet,
@@ -293,7 +418,7 @@ void workAS()
 	{
 		I2CSendStop();
 		timer += 1; // Relative Zeitmessung
-					
+		
 		// Gesamtzeit ueberschritten?
 		if(timer > 215)
 		{
@@ -301,11 +426,13 @@ void workAS()
 			return;
 		}
 	}
-	while(_i2c_error != 255);	// Wiederhole, solange Fehler aufgetreten
+	while(_i2c_error != 255);	// Wiederhole, solange Fehler
+					// aufgetreten
 }
 
 
-// Uebernommene Funktionen aus der Datei I2C_SW.C
+// Uebernommene Funktionen aus der Datei I2C_SW.C //
+
 /*
  * _I2CBitDly()
  * wait 4.7uS, or thereabouts
@@ -317,7 +444,7 @@ void workAS()
  */
 void _I2CBitDly()
 {
-	_nop_;	// delay is 5.4uS, only 4.3uS without
+	_nop_;		// delay is 5.4uS, only 4.3uS without
 	return;
 }
 
@@ -338,7 +465,8 @@ void _I2CSCLHigh()
 		err++;
 		if(!err)
 		{
-			_i2c_error &= 0x02;	// SCL stuck, something's holding it down
+			// SCL stuck, something's holding it down
+			_i2c_error &= 0x02;
 			return;
 		}
 	}
@@ -356,7 +484,7 @@ void I2CSendAddr(byte addr, byte rd)
 {
 	SCL = 1;
 	_I2CBitDly();
-	SDA = 0;				// generate start
+	SDA = 0;		// generate start
 	_I2CBitDly();
 	SCL = 0;
 	_I2CBitDly();
@@ -378,7 +506,8 @@ void I2CSendByte(byte bt)
 	{
 		if(bt & 0x80)
 		{
-			SDA = 1;		// send each bit, MSB first
+			// send each bit, MSB first
+			SDA = 1;
 		}
 		else
 		{
@@ -390,12 +519,13 @@ void I2CSendByte(byte bt)
 		_I2CBitDly();
 		bt = bt << 1;
 	}
-	SDA = 1;				// listen for ACK
+	SDA = 1;		// listen for ACK
 	_I2CSCLHigh();
 	_I2CBitDly();
 	if(SDA)
 	{
-		_i2c_error &= 0x01;	// ack didn't happen, may be nothing out there
+		// ack didn't happen, may be nothing out there
+		_i2c_error &= 0x01;
 	}
 	SCL = 0;
 	_I2CBitDly();
@@ -413,7 +543,7 @@ void I2CSendByte(byte bt)
 // {
 // 	register unsigned char i, res;
 // 	res = 0;
-// 	for(i=0;i<8;i++)		// each bit at a time, MSB first
+// 	for(i=0;i<8;i++)	// each bit at a time, MSB first
 // 	{
 // 		_I2CSCLHigh();
 // 		_I2CBitDly();
@@ -425,7 +555,7 @@ void I2CSendByte(byte bt)
 // 		SCL = 0;
 // 		_I2CBitDly();
 // 	}
-// 	SDA = lastone;			// send ACK according to 'lastone'
+// 	SDA = lastone;		// send ACK according to 'lastone'
 // 	_I2CSCLHigh();
 // 	_I2CBitDly();
 // 	SCL = 0;
@@ -438,7 +568,7 @@ void I2CSendByte(byte bt)
  * I2CSendStop()
  * 
  * 
- * Rueckgabe: byte
+ * Rueckgabe: Keine
  * 
  * Autor: -
  */
