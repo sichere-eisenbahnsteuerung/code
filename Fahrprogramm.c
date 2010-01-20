@@ -21,7 +21,6 @@
 
 /* Includes *****************************************************************/
 #include "Fahrprogramm.h"
-#include "Leitzentrale.h"
 #include "Betriebsmittelverwaltung.h"
 
 /* Definition globaler Konstanten *******************************************/
