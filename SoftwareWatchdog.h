@@ -44,7 +44,7 @@
 	#define SW_TAKTRATE_C515C	12000000
 #endif
 /*
- * Taktrate des Mikrocontrollers C515C in MHz.
+ * Taktrate des Mikrocontrollers C515C in Hz.
  */  
 
 #ifndef SW_TAKTZYKLEN_C515C
@@ -100,8 +100,7 @@ void initSW(void);
  * Schnittstelle nur fuer das Modul Betriebsmittelverwaltung. Die
  * Schnittstelle dient der Rueckmeldung innerhalb des vorgegebenen
  * Zeitfensters zur Bewaeltigung von Aufgaben. (Siehe dazu das Makro
- * Zeitfensterkonfiguration des Hardwarezaehlers in der Header-Datei
- * SoftwareWatchdog.h)
+ * Zeitfensterkonfiguration des Hardwarezaehlers oben in dieser Header-Datei)
  *
  * Rueckgabe: Keine
  */

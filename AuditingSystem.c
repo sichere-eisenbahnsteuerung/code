@@ -28,51 +28,6 @@
 
 /* Definition globaler Konstanten *******************************************/
 
-/* Definition globaler Variablen ********************************************/
-
-static byte AS_msg_array[15][7];
-/*
- *  Description: Ringpuffer zum speichern der Statusmeldungen der Module.
- *  Values     : [0-14][0]:    0 = Leitzentrale
- *                             1 = Befehlsvalidierung
- *                             2 = Ergebnisvalidierung
- *                            16 = Leitzentrale, Pufferueberlauf
- *                            17 = Befehlsvalidierung, Pufferueberlauf
- *                            18 = Ergebnisvalidierung, Pufferueberlauf
- *               (Modulnummer und ggf. Flag fuer Pufferueberlauf)
- *               
- *               [0-14][1-6]: 0-255	(Statusmeldung)
- *               (Siehe die Beschreibung des jeweiligen Moduls)
- */
-
-static byte AS_read_next_msg;
-/*
- *  Description: Lesezeiger ("OUT-­Index") fuer den Ringpuffer.
- *  Values     : 0-14	(Lesezeiger)
- */
-
-static byte AS_fill_next_msg;
-/*
- *  Description: Schreibezeiger ("IN-­Index") fuer den Ringpuffer.
- *  Values     : 0-14	(Schreibezeiger)
- */
-
-static byte AS_msg_counter;
-/*
- *  Description: Fuellstandzaehler fuer den Ringpuffer.
- *  Values     : 0-15	(Anzahl der Elemente im Ringpuffer)
- */
-
-
-/* Lokale Makros ************************************************************/
-
-#ifndef _nop_
-	#define _nop_	;
-#endif
-/*
- * Leeranweisung zum Zeitvertreib.
- */
-
 #ifndef WRITE
 	#define WRITE	0
 #endif
@@ -99,6 +54,52 @@ static byte AS_msg_counter;
 #endif
 /*
  * I2C-SDA-Anschluss des C515C
+ */
+
+
+/* Definition globaler Variablen ********************************************/
+
+static byte AS_msg_array[15][7];
+/*
+ *  Description: Ringpuffer zum speichern der Statusmeldungen der Module.
+ *  Values     : [0-14][0]:    0 = Leitzentrale
+ *                             1 = Befehlsvalidierung
+ *                             2 = Ergebnisvalidierung
+ *                            16 = Leitzentrale, Pufferueberlauf
+ *                            17 = Befehlsvalidierung, Pufferueberlauf
+ *                            18 = Ergebnisvalidierung, Pufferueberlauf
+ *               (Modulnummer und ggf. Flag fuer Pufferueberlauf)
+ *               
+ *               [0-14][1-6]: 0-255	(Statusmeldung)
+ *               (Siehe die Beschreibung des jeweiligen Moduls)
+ */
+
+static byte AS_read_next_msg;
+/*
+ *  Description: Lesezeiger ("OUT-Index") fer den Ringpuffer.
+ *  Values     : 0-14	(Lesezeiger)
+ */
+
+static byte AS_fill_next_msg;
+/*
+ *  Description: Schreibezeiger ("IN-Index") fuer den Ringpuffer.
+ *  Values     : 0-14	(Schreibezeiger)
+ */
+
+static byte AS_msg_counter;
+/*
+ *  Description: Fuellstandzaehler fuer den Ringpuffer.
+ *  Values     : 0-15	(Anzahl der Elemente im Ringpuffer)
+ */
+
+
+/* Lokale Makros ************************************************************/
+
+#ifndef _nop_
+	#define _nop_	;
+#endif
+/*
+ * Leeranweisung zum Zeitvertreib.
  */
 
 
@@ -186,7 +187,8 @@ void I2CSendByte(
 //  * 
 //  * Rueckgabe: byte
 //  */
-// byte _I2CGetByte(byte lastone /*
+// byte _I2CGetByte(
+// 	byte lastone /*
 // 	*
 // 	*  Description: Schalter zur Auswahl zwischen Funktionalitaeten.
 // 	*  Direction  : in
@@ -319,12 +321,12 @@ void send_msg(byte msg[6], byte module_id)
  * Dadurch soll sichergestellt werden, dass im Folgenden nicht wahllose Werte
  * aus dem Speicher gelesen werden.
  * Der Zeitmesser timer wird mit 0 initialisiert und im Folgenden bei jeder
- * I2C-Uebertragung auf den Wert 215 überprueft. Wird dieser überstiegen,
+ * I2C-Uebertragung auf den Wert 216 ueberprueft. Wird dieser ueberstiegen,
  * wird der Vorgang beendet.
  * Es wird wiederholt versucht die I2C-Bus-Verbindung zum Mikrocontroller
  * "Arduino Duemilanove" herzustellen. Dazu wird die Funktion
  * I2CSendAddr(addr, rd) mit den Parametern (2, WRITE) benutzt. Bei jedem
- * Versuch wird der Zeitmesser um 4 erhoeht. 
+ * Versuch wird der Zeitmesser um 5 erhoeht. 
  * Danach wird versucht, solange der Ringpuffer nicht leer ist, die naechsten
  * 7 Daten aus dem Ringpuffer an der Stelle des Lesezeigers AS_read_next_msg
  * mit Hilfe der Funktion I2CSendByte(bt) zu versenden. Bei jedem
@@ -367,10 +369,10 @@ void workAS()
 	do
 	{
 		I2CSendAddr(2, WRITE);
-		timer += 4; // Relative Zeitmessung
+		timer += 5; // Relative Zeitmessung
 		
 		// Gesamtzeit ueberschritten?
-		if(timer > 215)
+		if(timer > 216)
 		{
 			// Abbruch!
 			return;
@@ -396,7 +398,7 @@ void workAS()
 				timer += 2; // Relative Zeitmessung
 				
 				// Gesamtzeit ueberschritten?
-				if(timer > 215)
+				if(timer > 216)
 				{
 					// Abbruch!
 					return;
@@ -420,7 +422,7 @@ void workAS()
 		timer += 1; // Relative Zeitmessung
 		
 		// Gesamtzeit ueberschritten?
-		if(timer > 215)
+		if(timer > 216)
 		{
 			// Abbruch!
 			return;

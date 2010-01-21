@@ -42,8 +42,6 @@
 /*
  * helloModul(byte module_id, byte status)
  * Schnittstelle mit Statusmeldungen fuer Module mit zugeordneter Modulnummer.
- * (Siehe dazu den Prototypen-Kommentar in der Header-Datei 
- * SoftwareWatchdogHelloModul.h)
  * Die Schnittstelle dient der Ueberwachung der Taetigkeiten der Module.
  *
  * Rueckgabe: Keine

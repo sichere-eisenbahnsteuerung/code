@@ -83,8 +83,8 @@ void initSW()
 
 	// "Timer 0 Overflow" gehoert zur Interruptgruppe 2, verwende IPx.1
 	// Gebe dem Timer0-Interrupt die hoechste Prioritaet
-	IP0 |= 0x02;		// setze IP0.1 = 1
-	IP1 |= 0x02;		// setze IP1.1 = 1
+	IP0 |= (1<<1);		// setze IP0.1 = 1
+	IP1 |= (1<<1);		// setze IP1.1 = 1
 	
 	ET0 = 1;		// Freigabe des Timer0-Interrupts
 	
