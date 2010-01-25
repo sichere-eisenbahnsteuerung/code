@@ -18,6 +18,8 @@
 
 #include "Betriebsmittelverwaltung.h"
 #include "Befehlsvalidierung.h"
+#include "SoftwareWatchdogHelloModul.h"
+#include "AuditingSystemSendMsg.h"
 #include "Notaus.h"
 //#include <stdio.h>	// only for tests with printf
 
@@ -31,6 +33,9 @@ byte BV_weichenBelegung[BV_ANZAHL_WEICHEN + 1];
 byte BV_zugPosition[BV_ANZAHL_ZUEGE];
 
 /* Lokale Makros ************************************************************/
+#ifndef BV_MODULE_ID
+#define BV_MODULE_ID 1
+#endif
 #ifndef BV_MAX_WAGGONS
 #define BV_MAX_WAGGONS 4
 #endif
@@ -40,12 +45,21 @@ byte BV_zugPosition[BV_ANZAHL_ZUEGE];
 
 /* Lokale Typen *************************************************************/
 
+typedef enum {
+	Z_RETURN_FROM_WORK = 1
+} Zustand;
+
+typedef enum {
+	F_KEIN_FEHLER = 0
+} Fehler;
+
 /* Lokale Konstanten ********************************************************/
 
 /* Lokale Variablen *********************************************************/
 
-byte BV_next_state = 0;
-byte BV_criticalStateCounter = 0;
+static byte BV_next_state = 0;
+static byte BV_criticalStateCounter = 0;
+static byte BV_nachricht[6] = {0, 0, 0, 0, 0, 0};
 
 	/* Gleis-Topologie und -Zaehler */
 static Gleisabschnitt streckentopologie[BV_ANZAHL_GLEISABSCHNITTE + 1];
@@ -82,27 +96,67 @@ static byte zugRichtung[BV_ANZAHL_ZUEGE] =
 	{
 		1,1
 	};
-	
+
 /* Prototypen fuer lokale Funktionen ****************************************/
 
-// TODO: write some docu for those
-boolean checkStreckenTopologie(void);
-boolean checkSensorDaten(void);
-boolean sendSensorDaten(void);
-boolean checkStreckenBefehl(void);
-void sendStreckenBefehl(void);
+/* checkStreckenTopologie()
+ * Vergleicht die originale Streckentopologie mit der globalen Kopie,
+ * die der Leitzentrale zur Verfügung gestellt wird.
+ * Gibt TRUE zurück, wenn Kopie nicht vom Original abweicht, sonst FALSE.
+ */
+static boolean checkStreckenTopologie(void);
+
+/* checkSensorDaten()
+ * Überprüft die Sensordaten des S88-Treibers und aktualisiert
+ * das Streckenabbild entsprechend, wenn sie richtig sind.
+ * Sensordaten müssen vorher im Shared Memory zwischen S88-Treiber und BV sein.
+ * Gibt TRUE zurück, wenn Sensordaten gültig und konsistent sind, sonst FALSE.
+ */
+static boolean checkSensorDaten(void);
+
+/* sendSensorDaten()
+ * Leitet die S88-Sensordaten an die Leitzentrale weiter (schreibt sie
+ * in den Shared Memory zwischen Befehlsvalidierung und Leitzentrale).
+ * Gültige Sensordaten müssen vorher im SM zwischen S88-Treiber und BV sein.
+ * Gibt TRUE zurück, wenn Sensordaten im Shared Memory
+ * zwischen Befehlsvalidierung und Leitzentrale leer waren, sonst FALSE.
+ * Der Shared Memory zwischen S88-Treiber und Befehlsvalidierung wird geleert.
+ */
+static boolean sendSensorDaten(void);
+
+/* checkStreckenBefehl()
+ * Überprüft den Streckenbefehl der Leitzentrale zunächst auf syntaktische
+ * Korrektheit und dann darauf, dass er keinen unsicheren Zustand auslöst.
+ * Streckenbefehl muss vorher im Shared Memory zwischen LZ und BV sein.
+ * Gibt TRUE zurück, wenn der Streckenbefehl gültig und sicher ist, sonst FALSE.
+ */
+static boolean checkStreckenBefehl(void);
+
+/* sendStreckenBefehl()
+ * Sendet den Streckenbefehl der Leitzentrale an die Ergebnisvalidierung.
+ * Ein gültiger und sicherer Streckenbefehl muss vorher im Shared Memory
+ * zwischen Leitzentrale und Befehlsvalidierung sein
+ * Der Streckenbefehl im Shared Memory zwischen LZ und BV wird geleert
+ * und die Bestätigung = 1 gesetzt.
+ * Der Streckenbefehl wird in den Shared Memory zwischen Befehlsvalidierung
+ * und Ergebnisvalidierung geschrieben, vorhandene alte werden überschrieben.
+ */
+static void sendStreckenBefehl(void);
 
 // Hilfsfunktionen
-void copyStreckenBelegung(void);
-void defineStreckenTopologie(void);
-boolean zugNebenSensor(byte sensorNr, byte *zugNr, byte *richtung);
-boolean sensorNachbarn(byte sensorNr, byte *nextAbs, byte *prevAbs,
+static void copyStreckenBelegung(void);
+static void defineStreckenTopologie(void);
+static boolean zugNebenSensor(byte sensorNr, byte *zugNr, byte *richtung);
+static boolean sensorNachbarn(byte sensorNr, byte *nextAbs, byte *prevAbs,
 					byte *nSwitch, byte *pSwitch);
-boolean checkKritischerZustand(void);
-boolean weicheRichtig(byte zugPos, byte richtung, byte ziel, byte weiche);
-void zielGleisUndWeiche(byte zugPos, byte richtung, byte *ziel, byte *weiche);
+static boolean checkKritischerZustand(void);
+static boolean weicheRichtig(byte zugPos, byte richtung, byte ziel, byte weiche);
+static void zielGleisUndWeiche(byte zugPos, byte richtung, byte *ziel, byte *weiche);
+static void setNachricht(Zustand zustand, Fehler fehler);
+
 /* Funktionsimplementierungen ***********************************************/
 
+/* Globale Funktionen .. */
 void initBV(void)
 {
 	defineStreckenTopologie();	// intern
@@ -130,6 +184,7 @@ void workBV(void)
 		if (	(checkSensorDaten() == FALSE) || 
 			(sendSensorDaten() == FALSE) )
 		{
+			//TODO: Auditing-System Bescheid geben!
 			emergency_off();
 			break;
 		}
@@ -147,19 +202,19 @@ void workBV(void)
 		{
 			if (++BV_criticalStateCounter > BV_MAX_KRITISCH)
 			{
+				//TODO: Auditing-System Bescheid geben!
 				emergency_off();
 			}
 			break;
 		}
-		
-		// keine kritischen Zustaende erkannt
 		else
 		{
+			// keine kritischen Zustaende erkannt
 			BV_criticalStateCounter = 0;
 			BV_next_state = 2;	// Streckenbefehl holen
 			break;
 		}
-		
+				
 	case 2:
 		// Streckenbefehl ueberpruefen und (wenn OK) an EV senden
 		if (checkStreckenBefehl() == TRUE)
@@ -172,16 +227,15 @@ void workBV(void)
 			zugGeschwindigkeit[zugNr] = geschw;
 			sendStreckenBefehl();
 		}
-		else
-		{
-			BV_next_state = 0;	// Sensordaten holen
-			break;
-		}
+		
+		BV_next_state = 0;		// Sensordaten holen
+		break;
 		
 	case 3:
 		// Wenn Kopien der Streckentopologie manipuliert wurden
 		if (checkStreckenTopologie() == FALSE)
 		{
+			//TODO: Auditing-System Bescheid geben!
 			emergency_off();
 			break;
 		}
@@ -195,10 +249,15 @@ void workBV(void)
 		emergency_off();	// anderen Zustand darf es nicht geben.
 	}
 	
+	//TODO: evtl. noch den criticalStateCounter shiften und dazupacken?
+	helloModul(BV_MODULE_ID, BV_next_state); 
+	
+	setNachricht(Z_RETURN_FROM_WORK,F_KEIN_FEHLER);
+	send_msg(BV_nachricht, BV_MODULE_ID);
 }
 
-/* Im Moduldesign beschriebene Funktionen .. */
-boolean checkStreckenTopologie(void)
+/* Im Moduldesign beschriebene lokale Funktionen .. */
+static boolean checkStreckenTopologie(void)
 {
 	byte z = 1;
 	bit ret = TRUE;
@@ -241,7 +300,7 @@ boolean checkStreckenTopologie(void)
 	return ret;
 }
 
-boolean checkSensorDaten(void)
+static boolean checkSensorDaten(void)
 {
 	byte z, inkr, mask;
 	byte sensoren[16];
@@ -338,7 +397,7 @@ boolean checkSensorDaten(void)
 	return TRUE;
 }
 
-boolean sendSensorDaten(void)
+static boolean sendSensorDaten(void)
 {
 	// wenn keine neuen Sensordaten vorhanden, nichts zu tun
 	if (S88_BV_sensordaten.Byte0 == LEER && S88_BV_sensordaten.Byte1 == LEER)
@@ -358,7 +417,7 @@ boolean sendSensorDaten(void)
 	return TRUE;
 }
 
-boolean checkStreckenBefehl(void)
+static boolean checkStreckenBefehl(void)
 {
 	byte weicheNr, entkopplerNr;
 	// Wenn Befehl leer ist, nichts weiter pruefen
@@ -486,7 +545,7 @@ boolean checkStreckenBefehl(void)
 	return TRUE;
 }
 
-void sendStreckenBefehl(void)
+static void sendStreckenBefehl(void)
 {
 	// wenn neuer Streckenbefehl vorhanden ist, (Shared Memory nicht leer)
 	if (	(LZ_BV_streckenbefehl.Entkoppler != LEER) ||
@@ -505,8 +564,8 @@ void sendStreckenBefehl(void)
 }
 
 
-/* Weitere Hilfsfunktionen */
-void copyStreckenBelegung(void)
+/* Weitere Hilfsfunktionen .. */
+static void copyStreckenBelegung(void)
 {
 	byte z = 0;
 	
@@ -526,7 +585,7 @@ void copyStreckenBelegung(void)
 	}
 }
 
-void defineStreckenTopologie(void)
+static void defineStreckenTopologie(void)
 {
 	byte z;
 	
@@ -630,13 +689,14 @@ void defineStreckenTopologie(void)
 	streckentopologie[9].nextSensor = 13;
 	streckentopologie[9].prevSensor = 14;
 	
+	// Kopie für die LZ erstellen
 	for (z = 1; z < BV_ANZAHL_GLEISABSCHNITTE; z++)
 	{
 		BV_streckentopologie[z] = streckentopologie[z];
 	}
 }
 
-boolean zugNebenSensor(byte sensorNr, byte *zugNr, byte *richtung)
+static boolean zugNebenSensor(byte sensorNr, byte *zugNr, byte *richtung)
 {
 	byte zug1 = zugPosition[0];
 	byte zug2 = zugPosition[1];
@@ -699,7 +759,7 @@ boolean zugNebenSensor(byte sensorNr, byte *zugNr, byte *richtung)
 	};
 }
 
-boolean sensorNachbarn(byte sensorNr, byte *nextAbs, byte *prevAbs,
+static boolean sensorNachbarn(byte sensorNr, byte *nextAbs, byte *prevAbs,
 				byte *nSwitch, byte *pSwitch)
 {
 	byte z;
@@ -739,7 +799,7 @@ boolean sensorNachbarn(byte sensorNr, byte *nextAbs, byte *prevAbs,
 	return TRUE;
 }
 
-boolean checkKritischerZustand(void)
+static boolean checkKritischerZustand(void)
 {
 	byte z;
 	boolean kritisch = FALSE;
@@ -792,7 +852,7 @@ boolean checkKritischerZustand(void)
 	return TRUE;
 }
 
-boolean weicheRichtig(byte zugPos, byte richtung, byte ziel, byte weiche)
+static boolean weicheRichtig(byte zugPos, byte richtung, byte ziel, byte weiche)
 {
 	Gleisabschnitt gleis, zielGleis;
 	byte wStell = weichenStellung[weiche];
@@ -831,7 +891,7 @@ boolean weicheRichtig(byte zugPos, byte richtung, byte ziel, byte weiche)
 	return TRUE;
 }
 
-void zielGleisUndWeiche(byte zugPos, byte richtung, byte *ziel, byte *weiche)
+static void zielGleisUndWeiche(byte zugPos, byte richtung, byte *ziel, byte *weiche)
 {
 	Gleisabschnitt gleis;
 	gleis = streckentopologie[zugPos];
@@ -854,4 +914,14 @@ void zielGleisUndWeiche(byte zugPos, byte richtung, byte *ziel, byte *weiche)
 			*ziel = gleis.prev2;
 		}
 	}
+}
+
+static void setNachricht(Zustand zustand, Fehler fehler)
+{
+	BV_nachricht[0] = zustand;
+	BV_nachricht[1] = fehler;
+	BV_nachricht[2] = BV_next_state;
+	BV_nachricht[3] = BV_criticalStateCounter;
+	BV_nachricht[4] = zugPosition[0];
+	BV_nachricht[5] = zugPosition[1];
 }
