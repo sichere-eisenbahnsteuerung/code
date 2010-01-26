@@ -234,7 +234,7 @@ void initAS()
 }
 
 /*
- * send_msg(byte msg[6], byte module_id)
+ * sendMsg(byte module_id, byte msg[6])
  * Schnittstelle mit Statusmeldungen fuer Module mit zugeordneter Modulnummer.
  * (Siehe dazu den Prototypen-Kommentar in der Header-Datei
  * AuditingSystemSendMsg.h)
@@ -263,7 +263,7 @@ void initAS()
  * 
  * Autor: Felix Blueml
  */
-void send_msg(byte msg[6], byte module_id)
+void sendMsg(byte module_id, byte msg[6])
 {
 	byte i;
 	// Enthaellt AS_fill_next_msg falschen Wert?

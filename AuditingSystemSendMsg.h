@@ -22,7 +22,7 @@
  *
  *        Diese Headerdatei ist fuer die Module Leitzentrale,
  *        Befehlsvalidierung und Ergebnisvalidierung vorgesehen. Sie
- *        enthaellt den Prototypen fuer die Schnittstelle send_msg.
+ *        enthaellt den Prototypen fuer die Schnittstelle sendMsg.
  *
  ****************************************************************************/
 
@@ -40,13 +40,23 @@
 /* Deklaration von globalen Funktionen **************************************/
 
 /*
- * send_msg(byte msg[6], byte module_id)
+ * sendMsg(byte module_id, byte msg[6])
  * Schnittstelle mit Statusmeldungen fuer Module mit zugeordneter Modulnummer.
  * Die Schnittstelle dient der Aufnahme aktueller Statusmeldungen der Module.
  * 
  * Rueckgabe: Keine
  */
-void send_msg(
+void sendMsg(
+	byte module_id /*
+	*
+	*  Description: Vergebene Nummer zu einem der folgenden Module:
+	*               0 = Leitzentrale
+	*               1 = Befehlsvalidierung
+	*               2 = Ergebnisvalidierung
+	*  Direction  : in
+	*  Values     : 0-2		(Modulnummer)
+	*/
+
 	byte msg[6], /*
 	*
 	*  Description: Statusmeldung eines Moduls.
@@ -57,16 +67,6 @@ void send_msg(
 	*               [3]: 0-255,
 	*               [4]: 0-255,
 	*               [5]: 0-255 (Statusmeldung eines Moduls)
-	*/  
-
-	byte module_id /*
-	*
-	*  Description: Vergebene Nummer zu einem der folgenden Module:
-	*               0 = Leitzentrale
-	*               1 = Befehlsvalidierung
-	*               2 = Ergebnisvalidierung
-	*  Direction  : in
-	*  Values     : 0-2		(Modulnummer)
 	*/  
 );
 
