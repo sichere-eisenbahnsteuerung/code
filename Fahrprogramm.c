@@ -23,10 +23,11 @@
 #include "Fahrprogramm.h"
 #include "Betriebsmittelverwaltung.h"
 
+
 /* Definition globaler Konstanten *******************************************/
-#define lok0 0x0	//Lokomotive 0 nur im Zugbetrieb
-#define lok1 0x1	//Lokomotive 1 im Zug- und Rangierbetrieb
-#define err 0xFF	//Error
+#define lok1 0x0	//Lokomotive 0 nur im Zugbetrieb
+#define lok2 0x1	//Lokomotive 1 im Zug- und Rangierbetrieb
+#define err  0xFF	//Error
 #define null '\0'	//Null
 
 //Fahrprogramm ArraySize
@@ -40,17 +41,94 @@
 /* Lokale Typen *************************************************************/
 typedef int Fahrprogramm[row][col]; 	//Definition Fahrprogrammarrays
 
+typedef enum {
+	gleisAbschnitt_1 = 0x1,
+	gleisAbschnitt_2,
+	gleisAbschnitt_3,
+	gleisAbschnitt_4,
+	gleisAbschnitt_5,
+	gleisAbschnitt_6,
+	gleisAbschnitt_7,
+	gleisAbschnitt_8,
+	gleisAbschnitt_9
+} Gleisabschnitt;
+
+typedef enum {
+	fahreLok1 = 0x0,
+	fahreLok2 = 0x1,
+	kuppelLok2 = 0x3,
+	abkuppelLok2 =0x5,
+	haltLok2_10 = 0x7,
+	haltLok2_20 = 0x17,
+	haltLok2_30 = 0x27
+} Fahrbefehl;
 /* Lokale Konstanten ********************************************************/
 
 /* Lokale Variablen *********************************************************/
-static Fahrprogramm Fahrprogramm_1 , Fahrprogramm_2; //Initialisiere Fahrprogramm(e)
+/*
+ * Initialisiere Fahrprogramm_1
+ * Fahrprogramm_1 enthält Fahrbefehle für die Lok#1 (nur Zugbetreieb)
+ */
+static Fahrprogramm fahrprogramm_1  = {
+	{fahreLok1,gleisAbschnitt_4},
+	{fahreLok1,gleisAbschnitt_5},
+	{fahreLok1,gleisAbschnitt_6},
+	{fahreLok1,gleisAbschnitt_1},
+	{fahreLok1,gleisAbschnitt_7}
+};
+/*
+ * Initialisiere Fahrprogramm_2
+ * Fahrprogramm_2 enthält Fahrbefehle für die Lok#2 (Zug- und Rangierbetreieb)
+ */
+static Fahrprogramm fahrprogramm_2  = {
+	{fahreLok2,gleisAbschnitt_1},
+	{fahreLok2,gleisAbschnitt_7},
+	{fahreLok2,gleisAbschnitt_4},
+	{fahreLok2,gleisAbschnitt_3},
+	{kuppelLok2,gleisAbschnitt_2},//Ankuppeln der 3 Wagons
+	{fahreLok2,gleisAbschnitt_1},
+	{fahreLok2,gleisAbschnitt_8},
+	{fahreLok2,gleisAbschnitt_9},//Abkupeln der Wagons
+	{fahreLok2,gleisAbschnitt_8},
+	{fahreLok2,gleisAbschnitt_1},
+	{fahreLok2,gleisAbschnitt_2},
+	{haltLok2_20,gleisAbschnitt_2},//Warte 20 Sekunden
+	{fahreLok2,gleisAbschnitt_1},
+	{fahreLok2,gleisAbschnitt_8},
+	{kuppelLok2,gleisAbschnitt_9},//Ankuppeln der drei Wagons
+	{fahreLok2,gleisAbschnitt_8},
+	{fahreLok2,gleisAbschnitt_1},
+	{fahreLok2,gleisAbschnitt_2},
+	{fahreLok2,gleisAbschnitt_3},
+	{abkuppelLok2,gleisAbschnitt_2},//Abkupeln der Wagons
+	{fahreLok2,gleisAbschnitt_3},
+	{fahreLok2,gleisAbschnitt_4},
+	{fahreLok2,gleisAbschnitt_5},
+	{fahreLok2,gleisAbschnitt_6},
+	{fahreLok2,gleisAbschnitt_1},
+	{fahreLok2,gleisAbschnitt_8},
+	{haltLok2_20,gleisAbschnitt_8}//Warte 20 Sekunden
+};
 
 /* Prototypen fuer lokale Funktionen ****************************************/
 
 /* Funktionsimplementierungen ***********************************************/
+/*
+ * void initFP() initialisiert die Fahraufgaben
+ * Diese Funktion muss einmal zu Beginn des gesamten Programmablaufs
+ * aufgerufen werden
+ */
+void initFP()
+{
 
+}
+//Ende initFP
 
-/**********************************************************************/
+void workFP()
+{
+
+}
+
 //Schnittstelle
 //Übergabe nächster Fahranweisung an Leitzentrale
 Fahranweisung get_command(byte lok)
@@ -60,33 +138,36 @@ Fahranweisung get_command(byte lok)
 	static unsigned int f2_Index = 0;
 	Fahranweisung Anweisung;
 
-	//Anweisung für Lok 0
-	if (lok == lok0) {
+	//Anweisung für Lok 1
+	if (lok == lok1) {
 
-		if (Fahrprogramm_1[f1_Index][1] == null) {
-			//Es gibt keinen Gleischabschnitt = null Array Ende
+		if (fahrprogramm_1[f1_Index][1] == null) {
+			//Es gibt keinen Gleischabschnitt = null, Array Ende
 			f1_Index = 0;
+
 		}
 
 		//Zuweisung
-		Anweisung.fahrbefehl = Fahrprogramm_1[f1_Index][0];
-		Anweisung.gleisabschnittNr = Fahrprogramm_1[f1_Index][1];
+		Anweisung.fahrbefehl = fahrprogramm_1[f1_Index][0];
+		Anweisung.gleisabschnittNr = fahrprogramm_1[f1_Index][1];
+		//Anweisung.gleisabschnittNr = fahrprogramm_1[f1_Index][1];
 
 		f1_Index ++;//Index inkrementieren
 		//Rückgabe aktuelle Anweisung = (Fahrbefehl_n,Gleisabschnit_n)
 		return Anweisung;
-	}
-	//Anweisung für Lok 1
-	else if (lok == lok1) {
 
-		if (Fahrprogramm_2[f2_Index][1] == null) {
-			//Es gibt keinen Gleischabschnitt = null Array Ende
+	}
+	//Anweisung für Lok 2
+	else if (lok == lok2) {
+
+		if (fahrprogramm_2[f2_Index][1] == null) {
+			//Es gibt keinen Gleischabschnitt = null, Array Ende
 			f2_Index = 0;
 		}
 
 		//Zuweisung
-		Anweisung.fahrbefehl = Fahrprogramm_2[f2_Index][0];
-		Anweisung.gleisabschnittNr = Fahrprogramm_2[f2_Index][1];
+		Anweisung.fahrbefehl = fahrprogramm_2[f2_Index][0];
+		Anweisung.gleisabschnittNr = fahrprogramm_2[f2_Index][1];
 
 		f2_Index ++;//Index inkrementieren
 		//Rückgabe aktuelle Anweisung = (Fahrbefehl_n,Gleisabschnit_n)
@@ -101,78 +182,3 @@ Fahranweisung get_command(byte lok)
 		return Anweisung;
 	}
 }//Ende get_Command
-
-
-void initFP_1()
-{
-	/*
-	 * Fahrprogramm_1_Anweisung_n, FP_1_AW_n =(Fahrbefehl,Gleisabschnitt)
-	 * Lok#1 == Lok0 immer im Zugbetrieb mit 3 Wagons
-	 */
-	static Fahranweisung FP_1_AW_1 = {0x0,0x4};
-	static Fahranweisung FP_1_AW_2 = {0x0,0x5};
-	static Fahranweisung FP_1_AW_3 = {0x0,0x6};
-	static Fahranweisung FP_1_AW_4 = {0x0,0x1};
-	static Fahranweisung FP_1_AW_5 = {0x0,0x7};
-
-}//Ende initFP_1
-
-
-void initFP_2()
-{
-	/*
-	 * Fahrprogramm_2, FP_2_AW_n=(Fahrbefehl,Gleisabschnitt)
-	 * Lok#2 == Lok1 kann Zugbetrieb und Rangierbetrieb mit max 3 Wagons
-	 * */
-	static Fahranweisung FP_2_AW_1 = {0x1,0x1};
-	static Fahranweisung FP_2_AW_2 = {0x1,0x7};
-	static Fahranweisung FP_2_AW_3 = {0x1,0x4};
-	static Fahranweisung FP_2_AW_4 = {0x1,0x3};
-	static Fahranweisung FP_2_AW_5 = {0x3,0x2};//Ankuppeln der 3 Wagons
-	static Fahranweisung FP_2_AW_6 = {0x1,0x1};
-	static Fahranweisung FP_2_AW_7 = {0x1,0x8};
-	static Fahranweisung FP_2_AW_8 = {0x5,0x9};//Abkupeln der Wagons
-	static Fahranweisung FP_2_AW_9 = {0x1,0x8};
-	static Fahranweisung FP_2_AW_10= {0x1,0x1};
-	static Fahranweisung FP_2_AW_11= {0x1,0x2};
-	static Fahranweisung FP_2_AW_12= {0x17,0x2};//Warte 20 Sekunden
-	static Fahranweisung FP_2_AW_13= {0x1,0x1};
-	static Fahranweisung FP_2_AW_14= {0x1,0x8};
-	static Fahranweisung FP_2_AW_15= {0x3,0x9};//Ankuppeln der drei Wagons
-	static Fahranweisung FP_2_AW_16= {0x1,0x8};
-	static Fahranweisung FP_2_AW_17= {0x1,0x1};
-	static Fahranweisung FP_2_AW_18= {0x1,0x2};
-	static Fahranweisung FP_2_AW_19= {0x5,0x3};//Abkupeln der Wagons
-	static Fahranweisung FP_2_AW_20= {0x1,0x3};
-	static Fahranweisung FP_2_AW_21= {0x1,0x4};
-	static Fahranweisung FP_2_AW_22= {0x1,0x7};
-	static Fahranweisung FP_2_AW_23= {0x1,0x1};
-	static Fahranweisung FP_2_AW_24= {0x1,0x8};
-	static Fahranweisung FP_2_AW_25= {0x17,0x8};//Warte 20 Sekunden
-}//Ende initFP_2
- 
-
-/*
- * void initFP() initialisiert die Fahraufgaben
- * Diese Funktion muss einmal zu Beginn des gesamten Programmablaufs
- * aufgerufen werden
- */
-void initFP()
-{
-	
-	/*
-	 * Initialisiere Fahrprogramm_1
-	 * Fahrprogramm_1 enthält Fahrbefehle für die Lok#1 (nur Zugbetreieb)
-	 */
-	void initFP_1();
-	/*
-	 * Initialisiere Fahrprogramm_2
-	 * Fahrprogramm_2 enthält Fahrbefehle für die Lok#2 (Zug- und Rangierbetreieb)
-	 */
-	void initFP_2();
-
-}
-//Ende initFP
-
-void workFP();
-

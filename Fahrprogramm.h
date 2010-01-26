@@ -21,11 +21,15 @@
  *
  ****************************************************************************/
 
-#include "Leitzentrale.h"
 #include "Betriebsmittelverwaltung.h"
 /* Globale Makrodefinitionen ************************************************/
 
 /* Globale Typdefinitionen **************************************************/
+typedef struct 
+{ 
+	byte fahrbefehl; 
+	byte gleisabschnittNr; 
+} Fahranweisung;
 
 /* Deklaration von globalen Konstanten **************************************/
 
