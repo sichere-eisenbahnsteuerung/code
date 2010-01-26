@@ -9,15 +9,17 @@
  *        Autor:        Philip Weber
  *
  *
- *        Modul:        Ergebnisvalidierung, <Version des Moduldesigns>
+ *        Modul:        Ergebnisvalidierung, 1.0
  *
  *        Beschreibung:
- *        ________________________________________________________________
- *        ________________________________________________________________
- *        ________________________________________________________________
- *        ________________________________________________________________
- *        ________________________________________________________________
- *        ________________________________________________________________
+ *		Das Modul Ergebnisvalidierung dient der berprfung der von 
+ *		der Anwendung erzeugten Streckenbefehle auf Korrektheit. 
+ *		Hierzu werden diese ber die SSC-Schnittstelle zwischen den 
+ *		Mikrocontrollern ausgetauscht und verglichen. Unterscheiden 
+ *		sich diese voneinander, wird ein Not-Aus-Signal erzeugt und 
+ *		eine Statusmeldung mit den abweichenden Werten an das 
+ *		Auditing-System zur Protokollierung gesendet.
+ *
  *
  ****************************************************************************/
 

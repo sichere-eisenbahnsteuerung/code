@@ -7,15 +7,17 @@
  *        Autor:        Philip Weber
  *
  *
- *        Modul:        Ergebnisvalidierung, <Version des Moduldesigns>
+ *        Modul:        Ergebnisvalidierung, 1.0
  *
  *        Beschreibung:
- *        ________________________________________________________________
- *        ________________________________________________________________
- *        ________________________________________________________________
- *        ________________________________________________________________
- *        ________________________________________________________________
- *        ________________________________________________________________
+ *		Das Modul Ergebnisvalidierung dient der berprfung der von 
+ *		der Anwendung erzeugten Streckenbefehle auf Korrektheit. 
+ *		Hierzu werden diese ber die SSC-Schnittstelle zwischen den 
+ *		Mikrocontrollern ausgetauscht und verglichen. Unterscheiden 
+ *		sich diese voneinander, wird ein Not-Aus-Signal erzeugt und 
+ *		eine Statusmeldung mit den abweichenden Werten an das 
+ *		Auditing-System zur Protokollierung gesendet.
+ *
  *
  ****************************************************************************/
 
@@ -30,8 +32,30 @@
 /* Definition globaler Variablen ********************************************/
 
 /* Lokale Makros ************************************************************/
+#ifndef MAXSCCCOUNTER 
+#define MAXSSCCOUNTER 3
+#endif
+#ifndef	MAXRS232COUNTER
+#define MAXRS232COUNTER 3
+#endif
+#ifndef	MAXSTRECKENBEFEHLEUNGLEICH
+#define MAXSTRECKENBEFEHLEUNGLEICH 3
+#endif
 
 /* Lokale Typen *************************************************************/
+typedef enum {
+	E_STRECKENBEFEHLEUNGLEICH = 1,
+	E_SSC_COUNTER = 2,
+	E_RS232_COUNTER = 3,
+	E_SSC_ERROR = 4,
+	E_RS232_ERROR = 5
+} Element;
+
+typedef enum {
+	A_INFO = 1,
+	A_WARNING = 2,
+	A_FEHLER = 3
+} Art;
 
 /* Lokale Konstanten ********************************************************/
 
@@ -58,8 +82,11 @@ static Streckenbefehl externerStreckenbefehl = {LEER, LEER, LEER, LEER};
 // Gibt an, ob ein neuer Streckenbefehl von der Befehlsvalidierung vorhanden ist
 static boolean isBVNew = FALSE;
 
-// Gibt an, ob ein neuer Sreckenbefehl vom SSC-Treiber vorhanden ist,
+// Gibt an, ob ein neuer Sreckenbefehl vom SSC-Treiber vorhanden ist
 static boolean isSSCNew = FALSE;
+
+// Nachricht, die an das Auditing System gesendet wird
+static byte EV_nachricht[6];
 
 /* Prototypen fuer lokale Funktionen ****************************************/
 static boolean isStreckenbefehlResetted(Streckenbefehl *track);
@@ -67,9 +94,10 @@ static boolean processExternalStreckenbefehl(void);
 static boolean streckenbefehleEqual(Streckenbefehl *track1, Streckenbefehl *track2);
 static void processInternalStreckenbefehl(void);
 static void resetStreckenbefehl(Streckenbefehl *track);
+static void sendNachricht(Element element, Art art, byte data1, byte data2, byte data3);
 
 void initEV(void);
-void workEV();
+void workEV(void);
 
 /* Funktionsimplementierungen ***********************************************/
 /*
@@ -90,6 +118,35 @@ void initEV(void)
 	externerStreckenbefehl.Weiche = LEER;
 	externerStreckenbefehl.Entkoppler = LEER;
 	externerStreckenbefehl.Fehler = 0;
+	EV_nachricht[0] = 0;
+	EV_nachricht[1] = 0;
+	EV_nachricht[2] = 0;
+	EV_nachricht[3] = 0;
+	EV_nachricht[4] = 0;
+	EV_nachricht[5] = 0;
+}
+
+/*
+* Name		: sendNachricht
+* Description	: Dient zum senden von Nachrichten an das Auditing System.
+* Parameter	: element	- Art des Typs, der den Fehler geworfen hat
+		  art		- Art der Nachricht (Info, Warnung, Fehler)
+		  data1		- z.B. Streckenbefehl.Lok, Zaehlerwert
+		  data2		- z.B. Streckenbefehl.Weiche, Streckenbefehl.Fehler
+		  data3		- z.B. Streckenbefehl.Entkoppler
+* Author	: Philip Weber
+*/
+static void sendNachricht(Element element, Art art, byte data1, byte data2, byte data3)
+{
+	EV_nachricht[0] = element;
+	EV_nachricht[1] = art;
+	EV_nachricht[2] = data1;
+	EV_nachricht[3] = data2;
+	EV_nachricht[4] = data3;
+	EV_nachricht[5] = 0;
+
+	// Nachricht an das Auditing System uebermitteln
+	sendMsg(MODUL_EV, EV_nachricht);
 }
 
 /*
@@ -167,8 +224,9 @@ static boolean streckenbefehleEqual(Streckenbefehl *track1, Streckenbefehl *trac
 	
 	// Sind die Streckenbefehle ungleich, wird ueberprueft, wie oft
 	// die Streckenbefehle bereits voneinander abwichen.
-	if(streckenbefehleUngleich < 3)
+	if(streckenbefehleUngleich < MAXSTRECKENBEFEHLEUNGLEICH)
 	{
+		sendNachricht(E_STRECKENBEFEHLEUNGLEICH, A_WARNING, streckenbefehleUngleich, 0, 0);
 		// Ist der Wert kleiner 3 der Zaehler inkrementiert ...
 		streckenbefehleUngleich++;
 		// und die Funktion mit dem Wert FALSE verlassen, um das
@@ -179,9 +237,7 @@ static boolean streckenbefehleEqual(Streckenbefehl *track1, Streckenbefehl *trac
 	// Sind die Streckenbefehle ungleich und hat der Zaehler einen Wert
 	// groesser gleich 3, wird ein Fehlercode an das Auditing System 
 	// uebermittelt, ...
-
-// TODO: Auditingfunktion
-	//send_msg(3,2);
+	sendNachricht(E_STRECKENBEFEHLEUNGLEICH, A_FEHLER, MAXSTRECKENBEFEHLEUNGLEICH + 1, 0, 0);
 	// ein Not-Aus eingeleitet ...
 	emergency_off();
 	// und die Funktion mit dem Wert FALSE verlassen, um das Modul
@@ -206,9 +262,7 @@ static boolean checkForCommunicationErrors(void)
 	{
 		// Falls nicht, wird der Fehlercode an das Auditing System
 		// uebermittelt, ...
-
-// TODO: Auditingfunktion
-//		send_msg(&EV_RS232_streckenbefehl.Fehler,2);
+		sendNachricht(E_RS232_ERROR, A_FEHLER, 0, EV_RS232_streckenbefehl.Fehler, 0);
 		// ein Not-Aus eingeleitet ...
 		emergency_off();
 		// und die Funktion mit dem Wert TRUE verlassen. 
@@ -222,9 +276,7 @@ static boolean checkForCommunicationErrors(void)
 	{
 		// Falls nicht, wird der Fehlercode an das Auditing System
 		// uebermittelt, ...
-
-// TODO: Auditingfunktion
-//		send_msg(SSC_EV_streckenbefehl.Fehler,2);
+		sendNachricht(E_SSC_ERROR, A_FEHLER, 0, SSC_EV_streckenbefehl.Fehler, 0);
 		// ein Not-Aus eingeleitet ...
 		emergency_off();
 		// und die Funktion mit dem Wert TRUE verlassen. 
@@ -252,8 +304,9 @@ static boolean checkForCommunicationErrors(void)
 		// Falls der Shared Memory zum RS232-Treiber nicht 
 		// zurueckgesetzt ist, wird ueberprueft, wie oft vergeblich
 		// versucht wurde in diesen zu schreiben.
-		} else if(counterRS232 < 3)
+		} else if(counterRS232 < MAXRS232COUNTER)
 		{
+			sendNachricht(E_RS232_COUNTER, A_WARNING, counterRS232, 0, 0);
 			// Falls die Versuche einen Wert kleiner 3 aufweisen,
 			// wird dieser inkrementiert.
 			counterRS232++;
@@ -265,9 +318,7 @@ static boolean checkForCommunicationErrors(void)
 		{
 			// wird ein Fehlercode an das Auditing System 
 			// uebermittelt, ...
-
-// TODO: Auditingfunktion
-//			send_msg(3,2);
+			sendNachricht(E_RS232_COUNTER, A_FEHLER, MAXRS232COUNTER + 1, 0, 0);
 			// ein Not-Aus eingeleitet ...
 			emergency_off();
 			// und die Funktion mit dem Wert TRUE verlassen. 
@@ -296,8 +347,9 @@ static boolean checkForCommunicationErrors(void)
 		// Falls der Shared Memory zum SSC-Treiber nicht 
 		// zurueckgesetzt ist, wird ueberprueft, wie oft vergeblich
 		// versucht wurde in diesen zu schreiben.
-		} else if(counterSSC < 3)
+		} else if(counterSSC < MAXSSCCOUNTER)
 		{
+			sendNachricht(E_SSC_COUNTER, A_WARNING, counterSSC, 0, 0);
 			// Falls die Versuche einen Wert kleiner 3 aufweisen,
 			// wird dieser inkrementiert.
 			counterSSC++;
@@ -309,9 +361,7 @@ static boolean checkForCommunicationErrors(void)
 		{
 			// wird ein Fehlercode an das Auditing System 
 			// uebermittelt, ...
-
-// TODO: Auditingfunktion
-//			send_msg(3,2);
+			sendNachricht(E_SSC_COUNTER, A_FEHLER, MAXSSCCOUNTER + 1, 0, 0);
 			// ein Not-Aus eingeleitet ...
 			emergency_off();
 			// und die Funktion mit dem Wert TRUE verlassen. 
@@ -358,6 +408,13 @@ static void processInternalStreckenbefehl(void)
 	// zurueckgesetzt ist.
 	if(isStreckenbefehlResetted(&EV_SSC_streckenbefehl))
 	{
+		sendNachricht(
+			E_EV_SSC, 
+			A_INFO, 
+			internerStreckenbefehl.Lok, 
+			internerStreckenbefehl.Weiche, 
+			internerStreckenbefehl.Entkoppler
+			);
 		// Falls ja kann der interne Streckenbefehl in diesen 
 		// geschrieben werden.
 		EV_SSC_streckenbefehl = internerStreckenbefehl;
@@ -365,6 +422,7 @@ static void processInternalStreckenbefehl(void)
 		counterSSC = 0;
 	} else 
 	{
+		sendNachricht(E_SSC_COUNTER, A_WARNING, counterSSC, 0, 0);
 		// Falls nicht, wird der Wert der Zaehlvariable erhoeht.
 		counterSSC++;
 	}
@@ -478,11 +536,19 @@ void workEV(void)
 	// zurueckgesetzt ist.
 	if(isStreckenbefehlResetted(&EV_RS232_streckenbefehl))
 	{
+		sendNachricht(
+			E_EV_RS232, 
+			A_INFO, 
+			internerStreckenbefehl.Lok, 
+			internerStreckenbefehl.Weiche, 
+			internerStreckenbefehl.Entkoppler
+			);
 		// Falls ja kann der interne Streckenbefehl in diesen 
 		// geschrieben werden.
 		EV_RS232_streckenbefehl = internerStreckenbefehl;
 	} else 
 	{
+		sendNachricht(E_RS232_COUNTER, A_WARNING, counterRS232, 0, 0);
 		// Falls nicht, wird der Wert der Zaehlvariable erhoeht ...
 		counterRS232++;
 		// und das Modul verlassen.
