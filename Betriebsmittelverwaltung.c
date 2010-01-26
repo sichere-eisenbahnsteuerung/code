@@ -33,18 +33,6 @@
 // #include "Fahrprogramm.h"
 
 /* Definition globaler Konstanten *******************************************/
-/*
-  Modul IDs für SW
-
-  Leitzentrale - 0
-  Befehlsvalidierung - 1
-  Ergebnisvalidierung - 2
-  S88-Treiber - 3
-  SSC-Treiber - 4
-  RS232-Treiber - 5
-  Auditing System - 6
-*/
-enum module_id { LZ, BV, EV, S88, SSC, RS232, AS};
 
 /* Definition globaler Variablen ********************************************/
 
@@ -62,9 +50,9 @@ Streckenbefehl EV_RS232_streckenbefehl = {LEER,LEER,LEER,0};
 byte AS_msg_counter = LEER;
 
 /**
-   Interrupt 1 f¸r SW
-   Interrupt 4 f¸r RS232
-   Interrupt 18 f¸r S88
+   Interrupt 1 für SW
+   Interrupt 4 für RS232
+   Interrupt 18 für S88
 **/
 
 /* Lokale Makros ************************************************************/
@@ -106,7 +94,7 @@ void main (void)
 	for(;;)	//Endlosschleife der aufrufe, s. "C-Programmierung"
 	{
 // 		workLZ();		//modulaufruf
-// 		hello();		//beim SW r¸ckmelden
+// 		hello();		//beim SW rückmelden
 // 		workRS232();
 // 		hello();
 // 		workS88();
