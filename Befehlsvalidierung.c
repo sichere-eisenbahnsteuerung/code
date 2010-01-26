@@ -34,7 +34,7 @@ byte BV_zugPosition[BV_ANZAHL_ZUEGE];
 
 /* Lokale Makros ************************************************************/
 #ifndef BV_MODULE_ID
-#define BV_MODULE_ID 1
+#define BV_MODULE_ID MODUL_BV
 #endif
 #ifndef BV_MAX_WAGGONS
 #define BV_MAX_WAGGONS 4
@@ -45,12 +45,39 @@ byte BV_zugPosition[BV_ANZAHL_ZUEGE];
 
 /* Lokale Typen *************************************************************/
 
-typedef enum {
-	Z_RETURN_FROM_WORK = 1
+typedef enum {	// Zustaende, die ans Auditing-System uebermittelt werden
+	Z_RETURN_FROM_WORK = 0,
+		// Lokale Funktionen, die Nachrichten ans AS schicken
+	Z_FKT_CHECK_SENSOR_DATEN = 1,
+	Z_FKT_SEND_SENSOR_DATEN = 2,
+	Z_FKT_CHECK_STRECKEN_BEFEHL = 3,
+	Z_FKT_SENSOR_NACHBARN = 4,
+	Z_FKT_CHECK_KRITISCHER_ZUSTAND = 5
 } Zustand;
 
-typedef enum {
-	F_KEIN_FEHLER = 0
+typedef enum {	// Fehler, die ans Auditing-System uebermittelt werden
+	F_KEIN_FEHLER = 0,
+		// Allgemeine Fehler
+	F_SENSORDATEN_FEHLERHAFT = 1,
+	F_KRITISCHER_ZUSTAND_ZU_OFT = 2,
+	F_STRECKENTOPOLOGIE_MANIPULIERT = 3,
+	F_UNBEKANNTER_INTERNER_ZUSTAND = 4,
+	
+		// Sensordaten-Fehler
+	F_SD_FEHLERBYTE_GESETZT = 8,
+	F_SD_KEIN_ZUG_NEBEN_SENSOR = 9,
+	F_SD_VON_LZ_NICHT_VERARBEITET = 10,
+	F_SD_KEINE_ABSCHNITTE_DRAN = 11,
+	
+		// Streckenbefehl-Fehler
+	F_SB_ENTKOPPLER_NR_FALSCH = 16,
+	F_SB_WEICHEN_NR_FALSCH = 17,
+	F_SB_ENTKOPPELN_BEI_VOLLGAS = 18,
+	F_SB_BELEGTE_WEICHE_STELLEN = 19,
+			// Lokbefehl-Fehler
+	F_SB_LB_MIT_VOLLGAS_AUF_BELEGTES_GLEIS = 20,
+	F_SB_LB_WEICHE_ZUM_ZIEL_BELEGT = 21,
+	F_SB_LB_WEICHE_ZUM_ZIEL_FALSCH = 22
 } Fehler;
 
 /* Lokale Konstanten ********************************************************/
@@ -152,7 +179,7 @@ static boolean sensorNachbarn(byte sensorNr, byte *nextAbs, byte *prevAbs,
 static boolean checkKritischerZustand(void);
 static boolean weicheRichtig(byte zugPos, byte richtung, byte ziel, byte weiche);
 static void zielGleisUndWeiche(byte zugPos, byte richtung, byte *ziel, byte *weiche);
-static void setNachricht(Zustand zustand, Fehler fehler);
+static void sendNachricht(Zustand zustand, Fehler fehler);
 
 /* Funktionsimplementierungen ***********************************************/
 
@@ -249,11 +276,10 @@ void workBV(void)
 		emergency_off();	// anderen Zustand darf es nicht geben.
 	}
 	
+	sendNachricht(Z_RETURN_FROM_WORK,F_KEIN_FEHLER);
+	
 	//TODO: evtl. noch den criticalStateCounter shiften und dazupacken?
 	helloModul(BV_MODULE_ID, BV_next_state); 
-	
-	setNachricht(Z_RETURN_FROM_WORK,F_KEIN_FEHLER);
-	send_msg(BV_nachricht, BV_MODULE_ID);
 }
 
 /* Im Moduldesign beschriebene lokale Funktionen .. */
@@ -849,7 +875,7 @@ static boolean checkKritischerZustand(void)
 		}
 	}
 		
-	return TRUE;
+	return kritisch;
 }
 
 static boolean weicheRichtig(byte zugPos, byte richtung, byte ziel, byte weiche)
@@ -916,7 +942,7 @@ static void zielGleisUndWeiche(byte zugPos, byte richtung, byte *ziel, byte *wei
 	}
 }
 
-static void setNachricht(Zustand zustand, Fehler fehler)
+static void sendNachricht(Zustand zustand, Fehler fehler)
 {
 	BV_nachricht[0] = zustand;
 	BV_nachricht[1] = fehler;
@@ -924,4 +950,6 @@ static void setNachricht(Zustand zustand, Fehler fehler)
 	BV_nachricht[3] = BV_criticalStateCounter;
 	BV_nachricht[4] = zugPosition[0];
 	BV_nachricht[5] = zugPosition[1];
+	
+	sendMsg(BV_MODULE_ID, BV_nachricht);
 }
