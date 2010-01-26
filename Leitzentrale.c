@@ -91,15 +91,20 @@ typedef enum {
 
 // Fehlercodes fuer die Meldung ans Auditingsystem
 typedef enum {
-	FEHLER_ZUSTAND, // Unmöglicher Zustand
-	FEHLER_FAHRBEFEHL // Nicht definierter Fahrbefehl
+	FEHLER_ZUSTAND, 	// Unmöglicher Zustand
+	FEHLER_FAHRBEFEHL, 	// Nicht definierter Fahrbefehl
+	ZIEL_ERREICHT, 		// Angestrebte Zielposition erreicht
+	NICHT_BEFAHRBAR, 	// Gleisabschnitt ist nicht befahrbar
+	KUPPELN_FEHLGESCHLAGEN, // Kupel ist fehlgeschlagen
+	ANKUPPEL_VERSUCH, 	// Ein Ankuppelversuch wird gestartet
+	ABKUPPEL_VERSUCH 	// Ein Abkuppelversuch wird gestartet
 } FehlerCode;
 
 /* Lokale Konstanten ********************************************************/
 
 // Modul-ID, die an den SW Watchdog und an das Auditingsystem ueberliefert
 // werden
-#define MODULE_ID 0 
+#define MODULE_ID MODUL_LZ
 
 // Die Sensor-Nummer des Kuppelsensors
 #define KUPPELSENSOR_NR 14
@@ -128,7 +133,7 @@ Fahranweisung fahranweisung[ANZAHL_LOKS];
 Zustand zustand[ANZAHL_LOKS];
 
 // Die (Pseudo-)Wartezeit, falls eine Lok eine bestimmte Zeit warten muss.
-int zeit = 0xFFFF;
+int zeit = 0;
 
 // Die gerade gewaehlte Kuppelaktion
 KuppelAktion kuppelAktion = KEINE_AKTION;
@@ -137,15 +142,11 @@ KuppelAktion kuppelAktion = KEINE_AKTION;
 CheckKuppelAktion checkKuppelAktion = NIE;
 
 // Speichert fuer jedes Gleis, ob es gesperrt ist.
-Lok gleisSperrung[9] = {
+Lok gleisSperrung[10] = {
 	KEINE_LOK,	KEINE_LOK, 	KEINE_LOK, 
 	KEINE_LOK,	KEINE_LOK, 	KEINE_LOK, 
-	KEINE_LOK,	LOK1,		LOK2
-};
-
-// Eine 6-Byte große Nachricht, die ans Auditingsystem geschickt werden kann.
-Nachricht nachricht = {
-	0, 0, 0, 0, 0, 0
+	KEINE_LOK,	LOK1,		LOK2,
+	KEINE_LOK
 };
 
 //Die aktuell ausgewaehlte Lok
@@ -244,9 +245,9 @@ static void setStreckenbefehl(Streckenbefehl streckenbefehl);
 
 /*
  * Generiert eine Nachricht für den angegebenen Fehlercode. Diese Nachricht
- * kann dann ans Auditingsystem gesendet werden.
+ * wird dann ans Auditingsystem gesendet werden.
  */
-static void setNachricht(FehlerCode fehlerCode);
+static void sendNachricht(FehlerCode fehlerCode);
 
 /*
  * Setzt den Zustand fuer die aktuelle Fahranweisung und setzt den passenden
@@ -280,17 +281,23 @@ static Sensordaten getSensordaten() {
 }
 
 static boolean checkZielpositionErreicht(byte zielNr) {
-	return (BV_zugPosition[lok] == zielNr) ? TRUE : FALSE;
+	if(BV_zugPosition[lok] == zielNr) {
+		return TRUE;
+	}
+	else {
+		sendNachricht(ZIEL_ERREICHT);
+		return FALSE;
+	}
 }
 
 static boolean checkZeit() {
-	zeit = zeit - ZEIT_DEKREMENT;
+	zeit -= ZEIT_DEKREMENT;
 	if(zeit > 0) {
 		return TRUE;
 	}
 	else {
 		// Zeit zurueck auf Maximalwert setzen.
-		zeit = 0xFFFF;
+		zeit = 0;
 		return FALSE;
 	}
 }
@@ -436,29 +443,77 @@ static void setStreckenbefehl(Streckenbefehl streckenbefehl) {
 	LZ_BV_streckenbefehl = streckenbefehl;
 }
 
-static void setNachricht(FehlerCode fehlerCode) {
+static void sendNachricht(FehlerCode fehlerCode) {
+	// Eine 6-Byte große Nachricht, die ans Auditingsystem geschickt werden kann.
+	Nachricht nachricht;
 	switch(fehlerCode) {
 	case FEHLER_ZUSTAND:
 		nachricht[0] = fehlerCode;
 		nachricht[1] = zustand[LOK1];
 		nachricht[2] = zustand[LOK2];
-		nachricht[3] = lok;
-		nachricht[4] = kuppelAktion;
-		nachricht[5] = BV_zugPosition[LOK1];
-		nachricht[6] = BV_zugPosition[LOK2];
+		nachricht[3] = BV_zugPosition[LOK1];
+		nachricht[4] = BV_zugPosition[LOK2];
+		nachricht[5] = lok;
+		nachricht[6] = kuppelAktion;
 		break;
 	case FEHLER_FAHRBEFEHL:
 		nachricht[0] = fehlerCode;
 		nachricht[1] = zustand[LOK1];
 		nachricht[2] = zustand[LOK2];
-		nachricht[3] = lok;
-		nachricht[4] = fahranweisung[lok].fahrbefehl;
-		nachricht[5] = BV_zugPosition[LOK1];
-		nachricht[6] = BV_zugPosition[LOK2];
+		nachricht[3] = BV_zugPosition[LOK1];
+		nachricht[4] = BV_zugPosition[LOK2];
+		nachricht[5] = lok;
+		nachricht[6] = fahranweisung[lok].fahrbefehl;
+		break;
+	case ZIEL_ERREICHT:
+		nachricht[0] = fehlerCode;
+		nachricht[1] = zustand[LOK1];
+		nachricht[2] = zustand[LOK2];
+		nachricht[3] = BV_zugPosition[LOK1];
+		nachricht[4] = BV_zugPosition[LOK2];
+		nachricht[5] = lok;
+		nachricht[6] = fahranweisung[lok].fahrbefehl;
+		break;
+	case NICHT_BEFAHRBAR:
+		nachricht[0] = fehlerCode;
+		nachricht[1] = zustand[LOK1];
+		nachricht[2] = zustand[LOK2];
+		nachricht[3] = BV_zugPosition[LOK1];
+		nachricht[4] = BV_zugPosition[LOK2];
+		nachricht[5] = lok;
+		nachricht[6] = fahranweisung[lok].gleisabschnittNr;
+		break;
+	case KUPPELN_FEHLGESCHLAGEN:
+		nachricht[0] = fehlerCode;
+		nachricht[1] = zustand[LOK1];
+		nachricht[2] = zustand[LOK2];
+		nachricht[3] = BV_zugPosition[LOK1];
+		nachricht[4] = BV_zugPosition[LOK2];
+		nachricht[5] = lok;
+		nachricht[6] = fahranweisung[lok].fahrbefehl;
+		break;
+	case ANKUPPEL_VERSUCH:
+		nachricht[0] = fehlerCode;
+		nachricht[1] = zustand[LOK1];
+		nachricht[2] = zustand[LOK2];
+		nachricht[3] = BV_zugPosition[LOK1];
+		nachricht[4] = BV_zugPosition[LOK2];
+		nachricht[5] = lok;
+		nachricht[6] = fahranweisung[lok].fahrbefehl;
+		break;
+	case ABKUPPEL_VERSUCH:
+		nachricht[0] = fehlerCode;
+		nachricht[1] = zustand[LOK1];
+		nachricht[2] = zustand[LOK2];
+		nachricht[3] = BV_zugPosition[LOK1];
+		nachricht[4] = BV_zugPosition[LOK2];
+		nachricht[5] = lok;
+		nachricht[6] = fahranweisung[lok].fahrbefehl;
 		break;
 	default:
 		break;
 	}
+	send_msg(MODULE_ID,nachricht);
 }
 
 static void setZustandFuerFahranweisung(byte gleisabschnittNr) {
@@ -502,7 +557,6 @@ static void setZustandFuerFahranweisung(byte gleisabschnittNr) {
 	default:
 		// Ungueltiger Zustand
 		setNachricht(FEHLER_ZUSTAND);
-		send_msg(nachricht,MODULE_ID);
 		break;
 	}
 }
@@ -535,13 +589,25 @@ void workLZ() {
 	// Aktuelle Sensordaten holen
 	sensordaten = getSensordaten();
 	// Status des Kuppelsensors speichern
-	kuppelSensor = (sensordaten.Byte0 >> 13) & 0x1;
+	kuppelSensor = (sensordaten.Byte1 >> 5) & 0x1;
 	
 	// Nacheinander jeweils das Fahrprogramm für Lok1 und Lok2 ausführen
-	for(lok=LOK1;lok<=LOK2;++lok) {
+	for(lok=LOK1;lok<ANZAHL_LOKS;++lok) {
+		// Status fuer den Watchdog speichern
+		// Hohes Byte enthaelt einen Zaehler, niederes Zustand
+		// und aktuelle Lok
+		wdStatus = (wdStatus & 0xF0) + 0x10;
+		wdStatus |= (lok << 3) + zustand[lok];
+		
 		switch(zustand[lok]) {
 			// Neue Fahranweisung wird geholt
 		case HOLT_FAHRANWEISUNG:
+			// Speichert den Status fuer den Watchdog
+			// Speichert Lok und Zustand, aber keinen
+			// Zaehler, da dieser Zustand nicht keinen
+			// Uebergang zu sich selbst machen darf.
+			wdStatus = (lok << 3) | zustand[lok];
+			
 			// Vor Holen des neuen Gleisabschnitts, verlassenen
 			// speichern
 			verlassenerGleisabschnitt[lok] = gleisabschnittNr[lok];
@@ -556,6 +622,8 @@ void workLZ() {
 				setZustandFuerFahranweisung(gleisabschnittNr[lok]);
 			}
 			else {
+				// Nachricht an das Auditingsystem
+				sendNachricht(NICHT_BEFAHRBAR);
 				// Zug anhalten
 				streckenbefehl.Entkoppler = LEER;
 				streckenbefehl.Fehler = LEER;
@@ -566,15 +634,14 @@ void workLZ() {
 			}
 			break;
 			// Der Zug ist im Fahrbetrieb unterwegs
-		case FAHREND:
+		case FAHREND:			
 			// Prueft, ob ein An- oder Abkuppeln evtl. wiederholt
 			// werden muss.
 			if(
-			
 			// Zielposition wurde erreicht, es laesst sich in
 			// diesem Gleisabschnitt bestimmen, ob das Kuppeln
 			// geklappt hat und die Anzahl der Wagons hinter
-			// oder vor dem Zug entspricht nicht der erwareteten
+			// oder vor dem Zug entspricht nicht der erwarteten
 			(checkZielpositionErreicht(gleisabschnittNr[lok]) == TRUE && 
 			 checkKuppelAktion == JETZT &&
 		         checkAnzahlWagons() == FALSE) || 
@@ -601,6 +668,9 @@ void workLZ() {
 						kuppelAktion = KEINE_AKTION;
 					}
 					
+					// Nachricht ans Auditingsystem
+					sendNachricht(KUPPELN_FEHLGESCHLAGEN);
+					
 					// Kuppelmanoever wiederholen und 
 					// Fahranweisung holen
 					wiederholen[lok] = TRUE;
@@ -625,6 +695,14 @@ void workLZ() {
 				// Muss in diesem Abschnitt fuer eine gewisse
 				// Zeit gewartet werden?
 				if(fahranweisung[lok].fahrbefehl & 0x0E == FB_HALTEN) {
+					// Holt sich die (Pseudo-)Zeit, die gewartet werden soll
+					zeit = (fahranweisung[lok].fahrbefehl & 0xF0);
+					// Zug anhalten
+					streckenbefehl.Entkoppler = LEER;
+					streckenbefehl.Fehler = LEER;
+					streckenbefehl.Weiche = LEER;
+					streckenbefehl.Lok = (BV_V_STAND << 2) || getRichtung(gleisabschnittNr[lok]) || lok;
+					setStreckenbefehl(streckenbefehl);
 					zustand[lok] = WARTEND;
 				}
 				else {
@@ -662,6 +740,7 @@ void workLZ() {
 				setGleisabschnittGesperrt(verlassenerGleisabschnitt[lok],FALSE);
 				checkKuppelAktion = BEIM_NAECHSTEN_MAL;
 				wiederholen[lok] = FALSE;
+				sendNachricht(ANKUPPEL_VERSUCH);
 			}
 			break;
 			// Die Lok kuppelt ab
@@ -677,18 +756,15 @@ void workLZ() {
 				setGleisabschnittGesperrt(verlassenerGleisabschnitt[lok],FALSE);
 				checkKuppelAktion = BEIM_NAECHSTEN_MAL;
 				wiederholen[lok] = FALSE;
+				sendNachricht(ABKUPPEL_VERSUCH;
 			}
 			break;
 			// Kein gueltiger Zustand, Fehler ans Auditing melden.
 		default:
-			// Watchdog-Status beibehalten, da kein Fortschritt
-			wdStatus--;
-			setNachricht(FEHLER_ZUSTAND);
-			send_msg(nachricht,MODULE_ID);
+			sendNachricht(FEHLER_ZUSTAND);
 			break;
 		}
 		// Meldung beim Software-Watchdog machen
-		wdStatus++;
 		helloModul(MODULE_ID,wdStatus);
 	}
 }
