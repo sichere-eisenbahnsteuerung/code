@@ -48,8 +48,18 @@ typedef struct
 } Sensordaten;
 
 /* Deklaration von globalen Konstanten **************************************/
+/*
+  Modul IDs für SW
 
-//extern enum module_id; 
+  Leitzentrale - 0
+  Befehlsvalidierung - 1
+  Ergebnisvalidierung - 2
+  S88-Treiber - 3
+  SSC-Treiber - 4
+  RS232-Treiber - 5
+  Auditing System - 6
+*/
+enum module_id { modul_LZ, modul_BV, modul_EV, modul_S88, modul_SSC, modul_RS232, modul_AS};
 
 /* Deklaration von globalen Variablen ***************************************/
 
@@ -60,8 +70,6 @@ extern Sensordaten S88_BV_sensordaten;
 extern Streckenbefehl BV_EV_streckenbefehl;
 extern Streckenbefehl SSC_EV_streckenbefehl;
 extern Streckenbefehl EV_SSC_streckenbefehl;
-//extern byte EV_SSC_failure; //Ueberfluessig, weil schon integriert im Streckenbefehl
-//extern byte SSC_EV_failure; //Ueberfluessig, weil schon integriert im Streckenbefehl
 extern byte SW_status_array[6];
 extern Streckenbefehl EV_RS232_streckenbefehl;
 extern byte AS_msg_counter;
@@ -71,8 +79,6 @@ extern byte AS_msg_counter;
    Interrupt 4 f¸r RS232
    Interrupt 18 f¸r S88
 **/
-
-//EAL = 1; //enable all interrupts
 
 //Pins
 //P4.1 bis P4.4 f¸r SSC reserviert
