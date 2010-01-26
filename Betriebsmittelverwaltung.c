@@ -7,12 +7,12 @@
  *        Autor:        Altan Gottwald, Vitali Voroth, Jan-Christopher Icken
  *
  *
- *        Modul:        Betriebsmittelverwaltung, ver 0.5
+ *        Modul:        Betriebsmittelverwaltung
  *
  *        Beschreibung:
  *        Init aller Module
  *        Aufruf aller Module
- *        _enum Konstanten für SW Modul IDs_______________________________________________________________
+ *        _______________________________________________________________
  *        ________________________________________________________________
  *        ________________________________________________________________
  *        ________________________________________________________________
@@ -94,7 +94,7 @@ void main (void)
 	for(;;)	//Endlosschleife der aufrufe, s. "C-Programmierung"
 	{
 // 		workLZ();		//modulaufruf
-// 		hello();		//beim SW rückmelden
+// 		hello();		//beim SW rueckmelden
 // 		workRS232();
 // 		hello();
 // 		workS88();

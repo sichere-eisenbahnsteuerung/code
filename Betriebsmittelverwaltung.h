@@ -9,7 +9,7 @@
  *        Autor:        Altan Gottwald, Vitali Voroth, Jan-Christopher Icken
  *
  *
- *        Modul:        Betriebsmittelverwaltung, ver 0.5
+ *        Modul:        Betriebsmittelverwaltung
  *
  *        Beschreibung:
  *        Belegung von Ressourcen
@@ -59,7 +59,7 @@ typedef struct
   RS232-Treiber - 5
   Auditing System - 6
 */
-enum module_id { modul_LZ, modul_BV, modul_EV, modul_S88, modul_SSC, modul_RS232, modul_AS};
+enum module_id { MODUL_LZ, MODUL_BV, MODUL_EV, MODUL_S88, MODUL_SSC, MODUL_RS232, MODUL_AS};
 
 /* Deklaration von globalen Variablen ***************************************/
 
@@ -75,19 +75,29 @@ extern Streckenbefehl EV_RS232_streckenbefehl;
 extern byte AS_msg_counter;
 
 /**
-   Interrupt 1 f¸r SW
-   Interrupt 4 f¸r RS232
-   Interrupt 18 f¸r S88
+   Interrupt 1 für SW
+   Interrupt 4 für RS232
+   Interrupt 18 für S88
 **/
 
 //Pins
-//P4.1 bis P4.4 f¸r SSC reserviert
-//P4.6 und P4.7 f¸r CAN reserviert
+//P4.1 bis P4.4 fuer SSC reserviert
+//P4.6 und P4.7 fuer CAN reserviert
 
 /**
 * sbit Zuweisung muss in einer Headerdatei erfolgen
 * siehe: http://www.keil.com/support/docs/1317.htm
 **/
+
+/*
+
+//alternative S88 Ports
+sbit S88_PS = P5^0; 
+sbit S88_RESET = P5^1;     
+sbit S88_CLK = P5^2;
+sbit S88_Data = P5^3;
+*/
+
 sbit S88_PS = P1^6; 
 sbit S88_RESET = P1^7;     
 sbit S88_CLK = P3^2;
