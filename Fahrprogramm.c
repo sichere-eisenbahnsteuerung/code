@@ -159,6 +159,7 @@ void initFP_2()
  */
 void initFP()
 {
+	
 	/*
 	 * Initialisiere Fahrprogramm_1
 	 * Fahrprogramm_1 enthält Fahrbefehle für die Lok#1 (nur Zugbetreieb)

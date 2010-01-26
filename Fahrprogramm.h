@@ -1,5 +1,5 @@
-#ifndef Fahraufgabe_H
-#define Fahraufgabe_H
+#ifndef Fahrprogramm_H
+#define Fahrprogramm_H
 /*****************************************************************************
  *
  *        Dateiname:    Fahrprogramm.h
@@ -26,31 +26,6 @@
 /* Globale Makrodefinitionen ************************************************/
 
 /* Globale Typdefinitionen **************************************************/
-
-/* Eine Fahranweisung besteht aus 2 Byte. Der Typ Gleisabschnitt wird in 
- * Befehlsvalidierung.h deklariert und ist ein Byte gro§.
- * Der Fahrbefehl enthaelt den eigentlichen Fahrbefehl und die Lok fuer die
- * er gilt.
- */
-typedef struct Fahranweisung_struct {
-	byte fahrbefehl; /*
-	 * Description      : Der Fahrbefehl, enthlt zustzlich als 
-	 *		      letztes Bit die Lok, fr die er gilt.
-	 *
-	 * Access Rights    : r (Leitzentrale) w (Fahrprogramm)
-	 *
-	 * Values           : Kodierung siehe Software-Design
-	 */  
-	byte gleisabschnittNr; /*
-	 * Description      : Die Nummer des Gleisabschnitts, fr den der 
-	 *		      Fahrbefehl gilt.
-	 *
-	 * Access Rights    : r (Leitzentrale) w (Fahrprogramm)
-	 *
-	 * Values           : (1 - 9)
-	 *                    Kodierung siehe Befehlsvalidierung-Moduldesign
-	 */  
-} Fahranweisung;
 
 /* Deklaration von globalen Konstanten **************************************/
 
