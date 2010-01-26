@@ -47,7 +47,7 @@
  * Rueckgabe: Keine
  */
 void sendMsg(
-	byte module_id /*
+	byte module_id, /*
 	*
 	*  Description: Vergebene Nummer zu einem der folgenden Module:
 	*               0 = Leitzentrale
@@ -57,7 +57,7 @@ void sendMsg(
 	*  Values     : 0-2		(Modulnummer)
 	*/
 
-	byte msg[6], /*
+	byte msg[6] /*
 	*
 	*  Description: Statusmeldung eines Moduls.
 	*  Direction  : in
