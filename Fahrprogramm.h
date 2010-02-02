@@ -36,7 +36,13 @@ typedef struct
 /* Deklaration von globalen Variablen ***************************************/
 
 /* Deklaration von globalen Funktionen **************************************/
+/*
+ * Schnittstelle get_command,
+ * Aufruf durch Leitzentralle.
+ * Übergabewert gültige Fahranweisung = (fahrbefehl,gleisabschnittNr)
+ */
 Fahranweisung get_command(byte Lok);
+
 void initFP();
 void workFP();
 
