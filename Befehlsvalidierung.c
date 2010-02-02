@@ -192,6 +192,7 @@ static boolean sensorNachbarn(byte sensorNr, byte *nextAbs, byte *prevAbs,
 					byte *nSwitch, byte *pSwitch);
 static boolean checkKritischerZustand(void);
 static boolean weicheRichtig(byte zugPos, byte richtung, byte ziel, byte weiche);
+static boolean zugFaehrtAufWeicheZu(byte weicheNr);
 static void zielGleisUndWeiche(byte zugPos, byte richtung, byte *ziel, byte *weiche);
 static void sendNachricht(Zustand zustand, Fehler fehler);
 
@@ -557,12 +558,13 @@ static boolean checkStreckenBefehl(void)
 	//TODO: Nur stellen, wenn kein Zug auf die Weiche zufaehrt. (siehe 6.3)
 	if (LZ_BV_streckenbefehl.Weiche != LEER)
 	{
-		if (weichenBelegung[weicheNr] != 0)
+		if ( (weichenBelegung[weicheNr] != 0)
+			|| zugFaehrtAufWeicheZu(weicheNr) )
 		{
 			sendNachricht(Z_FKT_CHECK_STRECKEN_BEFEHL,
 					F_SB_BELEGTE_WEICHE_STELLEN);
 			return FALSE;
-		}
+		}		
 	}
 	
 	// Pruefen ob der Lok-Befehl einen unsicheren Zustand hervorruft
@@ -958,6 +960,37 @@ static boolean weicheRichtig(byte zugPos, byte richtung, byte ziel, byte weiche)
 	}
 	
 	return TRUE;
+}
+
+static boolean zugFaehrtAufWeicheZu(byte weicheNr)
+{
+	byte z, zug;
+	for (zug = 0; z < BV_ANZAHL_ZUEGE; z++)
+	{
+		if (zugGeschwindigkeit[zug] == BV_V_STAND)
+		{
+			// Nur Zuege anschauen, die nicht stehen.
+			continue;
+		}
+		
+		for (z = 1; z < BV_ANZAHL_GLEISABSCHNITTE; z++)
+		{
+			if ( (streckentopologie[z].nextSwitch = weicheNr)
+				&& (zugPosition[zug] == z) 
+				&& (zugRichtung[zug] == 1) )
+			{
+				return TRUE;
+			}
+			
+			if ( (streckentopologie[z].prevSwitch = weicheNr)
+				&& (zugPosition[zug] == z) 
+				&& (zugRichtung[zug] == 0) )
+			{
+				return TRUE;
+			}
+
+		}
+	}
 }
 
 static void zielGleisUndWeiche(byte zugPos, byte richtung, byte *ziel, byte *weiche)
