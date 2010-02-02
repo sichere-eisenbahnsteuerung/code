@@ -40,6 +40,7 @@ byte BV_zugPosition[BV_ANZAHL_ZUEGE];
 #define BV_MAX_WAGGONS 4
 #endif
 #ifndef BV_MAX_KRITISCH
+	// Nicht hoeher als 30 !
 #define BV_MAX_KRITISCH 5
 #endif
 
@@ -209,6 +210,9 @@ void initBV(void)
 
 void workBV(void)
 {
+	// Verknuepft next_state und critical_state_counter
+	byte concatState = 0; 
+	
 	switch (BV_next_state)
 	{
 	case 0:
@@ -297,8 +301,9 @@ void workBV(void)
 	{
 		sendNachricht(Z_RETURN_FROM_WORK, F_KEIN_FEHLER);
 	}
-	//TODO: evtl. noch den criticalStateCounter shiften und dazupacken?
-	helloModul(BV_MODULE_ID, BV_next_state); 
+
+	concatState = (BV_next_state) & (BV_criticalStateCounter << 3);
+	helloModul(BV_MODULE_ID, concatState);
 }
 
 /* Im Moduldesign beschriebene lokale Funktionen .. */
@@ -311,7 +316,6 @@ static boolean checkStreckenTopologie(void)
 	Gleisabschnitt *my = streckentopologie;
 	Gleisabschnitt *his = BV_streckentopologie;
 	
-	// TODO: geht es die Struktur einfach mit == zu vergleichen?
 	for (z = 1; z < BV_ANZAHL_GLEISABSCHNITTE; z++)
 	{
 		ret &= (his[z].nr == my[z].nr);
