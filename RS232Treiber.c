@@ -25,9 +25,7 @@
 #include<Betriebsmittelverwaltung.h>
 
 /* Definition globaler Konstanten *******************************************/
-void konvertLok();
-void konvertWeiche();
-void konvertEntkoppler();
+
 
 /* Definition globaler Variablen ********************************************/
 
@@ -37,23 +35,28 @@ void konvertEntkoppler();
 
 /* Lokale Konstanten ********************************************************/
 
+
 /* Lokale Variablen *********************************************************/
-static byte sbuf_buffer;
-static byte receive_buffer[3];
-static byte called_without_sent_answer = 0x00;
-static byte bytes_to_receive = 0x00;
-static byte li101_header_received = 0x00;
-static byte ready_to_send = 0x01;
-static byte cts_pin_false = 0x00;
-static byte sende_counter = 0x00;
-static byte sende_buffer[6];
-static byte maxfailures = 0x05; // !!!!! Noch zu ergaezen im Moduldesign
-static byte rs232_enabled; // !!!!! Noch zu ergaenzen im Moduldesign
+static byte sbufBuffer;
+static byte receiveBuffer[3];
+static byte calledWithoutSentAnswer = 0x00;
+static byte bytesToReceive = 0x00;
+static byte li101HeaderReceived = 0x00;
+static byte readyToSend = 0x01;
+static byte ctsPinFalse = 0x00;
+static byte sendeCounter = 0x00;
+static byte sendeBuffer[6];
+static const byte maxFailures = 0x05; 
+static byte rs232Enabled;
 // 1 Entkupplungsdekoder ist aktiv
 // 0 Entkupplungsdekoder ist nicht aktiv 
-static byte entkupplerActive = 0x01;  // !!!!! Noch zu ergaenzen im Moduldesign
+static byte entkupplerActive = 0x01;
+static byte weicheActive = 0x01;    
 
 /* Prototypen fuer lokale Funktionen ****************************************/
+void konvertLok();
+void konvertWeiche();
+void konvertEntkoppler();
 
 /* Funktionsimplementierungen ***********************************************/
 
@@ -62,56 +65,56 @@ DataReceivedInterrupt () interrupt 4 //Interruptfunktion
 	if(RI == 1) 
 	{
 		//Es wurde zuvor ein Antwort-Header-Byte vom LI101F  empfangen
-		if(li101_header_received == 0x01) 
+		if(li101HeaderReceived == 0x01) 
 		{
-			receive_buffer[3 - bytes_to_receive] = SBUF;
-			bytes_to_receive--;
-			if(bytes_to_receive == 0x00) 
+			receiveBuffer[3 - bytesToReceive] = SBUF;
+			bytesToReceive--;
+			if(bytesToReceive == 0x00) 
 			{
 				//Sendebestaetigung
-				if(receive_buffer[1] == 0x04 && receive_buffer[2] == 0x05)
+				if(receiveBuffer[1] == 0x04 && receiveBuffer[2] == 0x05)
 				{
-					ready_to_send = 0x01;	
-					li101_header_received = 0x00;
+					readyToSend = 0x01;	
+					li101HeaderReceived = 0x00;
 				}
 				//Keine Sendebestaetigung
 				else 
 				{
-					EV_RS232_streckenbefehl.Fehler = receive_buffer[1];		
+					EV_RS232_streckenbefehl.Fehler = receiveBuffer[1];		
 				}
 			}
 		} 
 		//Es wurde zuvor KEIN Antwort-Header-Byte vom L101F empfangen
 		else 
 		{
-			sbuf_buffer = SBUF;
+			sbufBuffer = SBUF;
 			//Li101 Header identifiziert
-			if(sbuf_buffer == 0x01) 
+			if(sbufBuffer == 0x01) 
 			{
-				receive_buffer[0] = sbuf_buffer;
-				bytes_to_receive = 0x02;
-				li101_header_received = 0x01;
+				receiveBuffer[0] = sbufBuffer;
+				bytesToReceive = 0x02;
+				li101HeaderReceived = 0x01;
 			}
 			else
 			{
 				//Keine Datenbytes mehr auszulesen => Neuer Header
-				if(bytes_to_receive == 0x00) {
-					bytes_to_receive = (0x1F & sbuf_buffer) + 1;
+				if(bytesToReceive == 0x00) {
+					bytesToReceive = (0x1F & sbufBuffer) + 1;
 				}
 				//Es sind noch Datenbytes zu empfangen
 				else {
-					bytes_to_receive--;
+					bytesToReceive--;
 				}
 			}
 		}
 		RI = 0;
-	}
+	}  
 }
 
 void workRS232() 
 {
-	//CTS Pin = 0x00 = LI101F ist empfangsbereit
-	if(rs232_enabled == 0x00) 
+	
+	if(rs232Enabled == 0x00) 
 	{
 		EV_RS232_streckenbefehl.Lok = 0xFF;
 		EV_RS232_streckenbefehl.Weiche = 0xFF;
@@ -120,27 +123,27 @@ void workRS232()
 	}
 	
 	//Prueft wie oft das Modul aufgerufen worden ist, ohne dass eine Sende-Bestaetigung des LI101F empfangen worden ist.
-	if(ready_to_send == 0x00)
+	if(readyToSend == 0x00)
 	{
-		called_without_sent_answer++;
-		if( called_without_sent_answer == maxfailures)
+		calledWithoutSentAnswer++;
+		if( calledWithoutSentAnswer == maxFailures)
 		{
 			EV_RS232_streckenbefehl.Fehler = 0x04;
 		}
 		return;
 	}
 	
-	called_without_sent_answer = 0x00;
+	calledWithoutSentAnswer = 0x00;
 	
-	if(RS232TREIBER_CTSPIN == 0) 
+	if(RS232TREIBER_CTSPIN == CTS_readyToSend) 
 	{
-		cts_pin_false = 0x00;
+		ctsPinFalse = 0x00;
 		
 		//Keine Daten mehr zu versenden
-		if(sende_counter == 0x00) 
+		if(sendeCounter == 0x00) 
 		{
 			//Empfangsbestaetigung des letzten Befehls vom LI101F erhalten
-			if(ready_to_send == 0x01) 
+			if(readyToSend == 0x01) 
 			{
 				byte commandposition = 0xFF;
 				//Lok Befehl
@@ -184,15 +187,17 @@ void workRS232()
 			}
 		}
 		
-		while(sende_counter > 0x00)
+		while(sendeCounter > 0x00)
 		{
 			//CTS bereit
-			if(RS232TREIBER_CTSPIN == 0) 
+			if(RS232TREIBER_CTSPIN == CTS_readyToSend) 
 			{
-				SBUF = sende_buffer[sende_counter-1];
+				SBUF = sendeBuffer[sendeCounter-1];
+				
 				while(TI == 0) {
 				}
-				sende_counter--;
+				sendeCounter--;
+		
 				TI = 0;
 			}
 			//CTS nicht bereit
@@ -201,11 +206,11 @@ void workRS232()
 				int verzoegerung = 0;
 				while(verzoegerung  < 2000)
 				{
-					if(RS232TREIBER_CTSPIN == 1) 
+					if(RS232TREIBER_CTSPIN == CTS_stop_send) 
 					{
-						cts_pin_false++;
+						ctsPinFalse++;
 						//Maximaler Fehleranzahl erreicht?
-						if(cts_pin_false == maxfailures)
+						if(ctsPinFalse == maxFailures)
 						{
 							EV_RS232_streckenbefehl.Fehler = 0x04;	
 						}
@@ -246,10 +251,11 @@ void workRS232()
 		
 	}
 	//LI101F ist nicht empfangsbereit
-	else {
-		cts_pin_false++;
+	else 
+	{
+		ctsPinFalse++;
 		//Maximaler Fehleranzahl erreicht?
-		if(cts_pin_false == maxfailures)
+		if(ctsPinFalse == maxFailures)
 		{
 			EV_RS232_streckenbefehl.Fehler = 0x04;	
 		}
@@ -262,117 +268,116 @@ void konvertLok()
 {
 	byte v;
 
-	//Lok soll gestoppt werden 0000 00XX
-	if((EV_RS232_streckenbefehl.Lok >> 2) == 0x00)
-	{
-		sende_counter = 0x04;
-		sende_buffer[3] = 0x92; //Header
-		sende_buffer[2] = 0x00;//Daten 1
-		
-		if((0x01 & EV_RS232_streckenbefehl.Lok) == 0x01)
-		{
-			sende_buffer[1] = Lok1_address;//Daten 2
-		}
-		else
-		{
-			sende_buffer[1] = Lok2_address;//Daten 2
-		}
-		
-		sende_buffer[0] = (sende_buffer[3] ^ sende_buffer[2]) ^ sende_buffer[1];
-		return;
-	}
-
-	sende_counter = 0x06;
-	sende_buffer[5] = 0xE4;
-	sende_buffer[4] = 0x13;
-	sende_buffer[3] = 0x00;
+	sendeCounter = 0x06;
+	sendeBuffer[5] = 0xE4;
+	sendeBuffer[4] = 0x13;
+	sendeBuffer[3] = 0x00;
 
 	//Lok1 mit Adresse 0x00
 	if((0x01 & EV_RS232_streckenbefehl.Lok) == 0x00) 
 	{
-		sende_buffer[2] = Lok1_address;		  	
+		sendeBuffer[2] = Lok1_address;		  	
 		
 	}  //Lok2 mit Adresse 0x01
 	else if((0x01 & EV_RS232_streckenbefehl.Lok) == 0x01) 
 	{
-		sende_buffer[2] = Lok2_address;	
+		sendeBuffer[2] = Lok2_address;	
 	}
 	
 	//Geschwindigkeit ermitteln
 	v = 0x03 & (EV_RS232_streckenbefehl.Lok  >> 2);
 	
 	if(v == 0x01) {
-		sende_buffer[1] = ((0x02 & EV_RS232_streckenbefehl.Lok) << 6 ) | V_Abkuppeln;
+		sendeBuffer[1] = ((0x02 & EV_RS232_streckenbefehl.Lok) << 6 ) | V_Abkuppeln;
 	}
 	else {
 		if (v == 0x02) {
-			sende_buffer[1] = ((0x02 & EV_RS232_streckenbefehl.Lok) << 6 ) | V_Ankuppeln;
+			sendeBuffer[1] = ((0x02 & EV_RS232_streckenbefehl.Lok) << 6 ) | V_Ankuppeln;
 		}
 		else {
-			sende_buffer[1] = ((0x02 & EV_RS232_streckenbefehl.Lok) << 6 ) | V_Fahrt;
+			sendeBuffer[1] = ((0x02 & EV_RS232_streckenbefehl.Lok) << 6 ) | V_Fahrt;
 		}
 	}
 	
-	sende_buffer[0] = ((((sende_buffer[5] ^ sende_buffer[4]) ^ sende_buffer[3]) ^ sende_buffer[2]) ^ sende_buffer[1]);
+	sendeBuffer[0] = ((((sendeBuffer[5] ^ sendeBuffer[4]) ^ sendeBuffer[3]) ^ sendeBuffer[2]) ^ sendeBuffer[1]);
 }
 
 void konvertWeiche() //getestet
 {
 	byte BB;
 	
-	sende_counter = 0x04;
-	sende_buffer[3] = 0x52; //Header
+	sendeCounter = 0x04;
+	sendeBuffer[3] = 0x52; //Header
 		
-	//Weiche bestimmen
-	
+	//Weiche bestimmen	
 	if(EV_RS232_streckenbefehl.Weiche >> 1 == 0x01)
 	{
-		sende_buffer[2] = W1_address >> 2;	
+		sendeBuffer[2] = W1_address >> 2;	
 		BB = W1_address % 4;	
 	}
 	else if(EV_RS232_streckenbefehl.Weiche >> 1 == 0x02)
 	{
-		sende_buffer[2] = W2_address >> 2;
+		sendeBuffer[2] = W2_address >> 2;
 		BB = W2_address % 4;
 	}
 	else if(EV_RS232_streckenbefehl.Weiche >> 1 == 0x03)
 	{
-		sende_buffer[2] = W3_address >> 2;
+		sendeBuffer[2] = W3_address >> 2;
 		BB = W3_address % 4;
 	}			   
 	BB = BB << 1;
-
-	//Abbiegen
-	if((0x01 & EV_RS232_streckenbefehl.Weiche) == 0x01)
-	{
-		sende_buffer[1] = 0x80 + (0x09 | BB);//Daten 2
+	
+	//Check ob Weiche noch deaktiviert werden muss
+	if(weicheActive == 0x01)
+	{ 
+		//DEAKTIVIEREN DES ANDEREN AUSGANGS
+		//Abbiegen
+		if((0x01 & EV_RS232_streckenbefehl.Weiche) == 0x01)
+		{
+			sendeBuffer[1] = 0x80 + (0x01 | BB);//Daten 2
+		}
+		//Gerade aus
+		else
+		{
+			sendeBuffer[1] = 0x80 + (0x00 | BB);//Daten 2 ODER nur zur Übersicht implementiert
+		}
+		weicheActive = 0x00;
 	}
-	//Gerade aus
 	else
 	{
-		sende_buffer[1] = 0x80 + (0x08 | BB);//Daten 2
+		//AKTIVIEREN DES ENTSPRECHENDEN AUSGANGS
+		//Abbiegen
+		if((0x01 & EV_RS232_streckenbefehl.Weiche) == 0x01)
+		{
+			sendeBuffer[1] = 0x80 + (0x08 | BB);//Daten 2
+		}
+		//Gerade aus
+		else
+		{
+			sendeBuffer[1] = 0x80 + (0x09 | BB);//Daten 2
+		}
+		weicheActive = 0x01;
 	}
 	
-	sende_buffer[0] = (sende_buffer[3] ^ sende_buffer[2]) ^ sende_buffer[1];	  
+	sendeBuffer[0] = (sendeBuffer[3] ^ sendeBuffer[2]) ^ sendeBuffer[1];	  
 }
 
 void konvertEntkoppler()
 {	 
 	byte BB;
 	
-	sende_counter = 0x04;
-	sende_buffer[3] = 0x52; //Header
+	sendeCounter = 0x04;
+	sendeBuffer[3] = 0x52; //Header
 
-	//Entkuppler bestimmen
-	
+	//Entkuppler bestimmen		  	
 	if(EV_RS232_streckenbefehl.Weiche >> 1 == 0x01)
 	{
-		sende_buffer[2] = EK1_address >> 2;	
+		sendeBuffer[2] = EK1_address >> 2;	
 		BB = EK1_address % 4;	
 	}
 	else if(EV_RS232_streckenbefehl.Weiche >> 1 == 0x02)
 	{
-		sende_buffer[2] = EK2_address >> 2;
+		sendeBuffer[2] = EK2_address >> 2;
 		BB = EK2_address % 4;
 	}			   
 	BB = BB << 1;
@@ -380,62 +385,52 @@ void konvertEntkoppler()
 	//entkupplerActive = 0x01 -> Erst deaktivieren
 	if(entkupplerActive == 0x01)
 	{
-		sende_buffer[1] = 0x80 + BB;//Daten 2
+		sendeBuffer[1] = 0x80 + BB;//Daten 2
 	}
 	//entkupplerActive = 0x00 -> "Heben" Befehl erzeugen
 	else
 	{
-		sende_buffer[1] = 0x80 + (0x08 | BB);//Daten 2
+		sendeBuffer[1] = 0x80 + (0x08 | BB);//Daten 2
 	}
 	
-	sende_buffer[0] = (sende_buffer[3] ^ sende_buffer[2]) ^ sende_buffer[1];	  
+	sendeBuffer[0] = (sendeBuffer[3] ^ sendeBuffer[2]) ^ sendeBuffer[1];	  
 }
 
 
 void initRS232() 
 {
-	if(RS232TREIBER_CTSPIN == 0)
-	{
-		rs232_enabled = 0x01;
-	}
-	else
-	{
-		rs232_enabled = 0x00;
-	}
+	RS232TREIBER_CTSPIN = 1;	
+
+	rs232Enabled = 0x01;
+
+//	SCON = SCON | 0x80;
 	
 	EV_RS232_streckenbefehl.Fehler = 0x00;
-	SM0 = 0; 
-	SM1 = 1;	
-	RI = 0;
-	TI = 0;	
-	SM2 = 1;
-	SRELH = 0x03;
-	SRELH = 0xDF;
-	ES = 1;
-	REN = 1;
-	BD = 1;
+//	SM0 = 0; 
+//	SM1 = 1;	
+	//RI = 1;
+	//TI = 1;	
+	//SM2 = 0;
+//	SRELH = 0x03;
+//	SRELH = 0xDF;
+	//ES = 1;
+//	REN = 1;
+//	BD = 1;
+	TI = 0;
 }
-/*
+
 void main(void)
 {
-   int i = 50000;
 
+   
    initRS232();
 
-   EV_RS232_streckenbefehl.Lok = 0x02; 
-	
-   workRS232();
-   
-   while(i > 0)
-   	i--;
-   i = 50000;
+ 
 
-   workRS232();
-   workRS232();
-   workRS232();
+   while(1);	  
 
-   while(1);
-}	*/
+
+}	
 
 
 

@@ -29,16 +29,19 @@
 /* Globale Typdefinitionen **************************************************/
 
 /* Deklaration von globalen Konstanten **************************************/
+#define V_STOPP 0x00
 #define V_Abkuppeln 0x08
 #define V_Ankuppeln 0x1F
 #define V_Fahrt 0xDD
-#define Lok1_address 0x00
-#define Lok2_address 0x01
+#define Lok1_address 0x01
+#define Lok2_address 0x02
 #define W1_address 0x03
 #define W2_address 0x04
 #define W3_address 0x02
 #define EK1_address 0x06
 #define EK2_address 0x05
+#define CTS_ready_to_send 1
+#define CTS_stop_send 0
 
 /* Deklaration von globalen Variablen ***************************************/
 
