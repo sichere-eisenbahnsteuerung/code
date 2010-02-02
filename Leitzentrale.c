@@ -7,10 +7,10 @@
  *        Autor:        Jan Kremer
  *
  *
- *        Modul:        Leitzentrale, Version 1.1
+ *        Modul:        Leitzentrale, Version 1.2
  *
  *        Beschreibung:
- *        Die Leitzentrale ist fuer die Steueurung der beiden Loks zu-
+ *        Die Leitzentrale ist fuer die Steuerung der beiden Loks zu-
  *        staendig. Sie holt sich Fahranweisungen von den Fahrprogrammen und
  *        setzt diese in Streckenbefehle um, die zur Ueberpruefung an die
  *        Befehlsverwaltung in der Sicherheitsschicht weitergegeben werden.
@@ -37,6 +37,7 @@
 
 /* Lokale Typen *************************************************************/
 
+// Eine Nachricht besteht aus 6 frei belegbaren Bytes
 typedef byte Nachricht[6];
 
 typedef enum {
@@ -57,6 +58,7 @@ typedef enum {
 	VORWAERTS = 0x02
 } Richtung;
 
+// Die verschiedenen Zustaende, in denen sich die Leitzentrale befinden kann
 typedef enum {
 	FAHREND,
 	WARTEND,
@@ -66,12 +68,13 @@ typedef enum {
 	HOLT_FAHRANWEISUNG
 } Zustand;
 
+// Eine Variable vom Typ CheckKuppelAktion legt fest, wann geprueft werden
+// soll, ob die Kuppel-Aktion erfolgreich war
 typedef enum {
 	JETZT,
 	BEIM_NAECHSTEN_MAL,
 	NIE
 } CheckKuppelAktion;
-
 
 typedef enum { 
 	ANKUPPELN, 
@@ -91,11 +94,12 @@ typedef enum {
 
 // Fehlercodes fuer die Meldung ans Auditingsystem
 typedef enum {
-	FEHLER_ZUSTAND, 	// Unmöglicher Zustand
+	FEHLER_ZUSTAND, 	// Unmoeglicher Zustand
 	FEHLER_FAHRBEFEHL, 	// Nicht definierter Fahrbefehl
+	FEHLER_WEICHENSTELLUNG,	// Weichenstellung laesst sich nicht bestimmen
 	ZIEL_ERREICHT, 		// Angestrebte Zielposition erreicht
 	NICHT_BEFAHRBAR, 	// Gleisabschnitt ist nicht befahrbar
-	KUPPELN_FEHLGESCHLAGEN, // Kupel ist fehlgeschlagen
+	KUPPELN_FEHLGESCHLAGEN, // Kuppeln ist fehlgeschlagen
 	ANKUPPEL_VERSUCH, 	// Ein Ankuppelversuch wird gestartet
 	ABKUPPEL_VERSUCH 	// Ein Abkuppelversuch wird gestartet
 } FehlerCode;
@@ -111,6 +115,10 @@ typedef enum {
 
 // Die Anzahl der Loks auf der Strecke.
 #define ANZAHL_LOKS 2
+
+// Die Anzahl der Gleisabschnitte + 1, 
+// da die Zaehlung bei 1 beginnt, Weichen ausgenommen
+#define ANZAHL_GLEISE 11
 
 // Gibt an, um wieviel die Pseudo-Wartezeit pro Durchlauf verringert werden
 // soll.
@@ -142,11 +150,17 @@ KuppelAktion kuppelAktion = KEINE_AKTION;
 CheckKuppelAktion checkKuppelAktion = NIE;
 
 // Speichert fuer jedes Gleis, ob es gesperrt ist.
-Lok gleisSperrung[10] = {
-	KEINE_LOK,	KEINE_LOK, 	KEINE_LOK, 
-	KEINE_LOK,	KEINE_LOK, 	KEINE_LOK, 
-	KEINE_LOK,	LOK1,		LOK2,
-	KEINE_LOK
+Lok gleisSperrung[ANZAHL_GLEISE] = {
+	0,
+	KEINE_LOK, 	// Gleisabschnitt 1
+ 	KEINE_LOK, 	// Gleisabschnitt 2
+	KEINE_LOK, 	// Gleisabschnitt 3
+	KEINE_LOK, 	// Gleisabschnitt 4
+ 	KEINE_LOK, 	// Gleisabschnitt 5
+	KEINE_LOK,	// Gleisabschnitt 6
+	LOK1,		// Gleisabschnitt 7
+	LOK2,		// Gleisabschnitt 8
+	KEINE_LOK	// Gleisabschnitt 9
 };
 
 //Die aktuell ausgewaehlte Lok
@@ -163,7 +177,7 @@ byte wdStatus = 0;
 /* Prototypen fuer lokale Funktionen ****************************************/
 
 /* 
- * Gibt für ein Zielgleis, die passende Weichenstellung aus, in die die
+ * Gibt fuer ein Zielgleis, die passende Weichenstellung aus, in die die
  * Weiche gebracht werden muss, um das Gleis zu erreichen.
  */
 static Weichenstellung getWeichenStellung(byte zielNr);
@@ -226,7 +240,7 @@ static boolean checkZielpositionErreicht(byte zielNr);
 static boolean checkZeit();
 
 /*
- * Prüft, ob die Anzahl der Wagons auf dem Gleis, auf dem sich die aktuelle 
+ * Prueft, ob die Anzahl der Wagons auf dem Gleis, auf dem sich die aktuelle 
  * Lok gerade befindet, der erwarteten Anzahl entspricht. Diese Hilfsfunktion
  * wird fuer den Abkuppelvorgang benoetigt. Gibt TRUE zurueck, wenn die
  * Anzahl der Erwartung entspricht, sonst FALSE.
@@ -244,7 +258,7 @@ static void setGleisabschnittGesperrt(byte gleisabschnittNr, boolean gesperrt);
 static void setStreckenbefehl(Streckenbefehl streckenbefehl);
 
 /*
- * Generiert eine Nachricht für den angegebenen Fehlercode. Diese Nachricht
+ * Generiert eine Nachricht fuer den angegebenen Fehlercode. Diese Nachricht
  * wird dann ans Auditingsystem gesendet werden.
  */
 static void sendNachricht(FehlerCode fehlerCode);
@@ -259,7 +273,7 @@ static void setZustandFuerFahranweisung(byte gleisabschnittNr);
 /* Funktionsimplementierungen ***********************************************/
 
 static boolean checkAnzahlWagons() {
-	// Befinden sich außer der Lok noch Wagons
+	// Befinden sich ausser der Lok noch Wagons
 	// auf dem Gleis, so hat das Abkuppeln nicht geklappt
 	if(BV_gleisBelegung[BV_zugPosition[lok]] > 1) {
 		return FALSE;
@@ -306,6 +320,9 @@ static Fahranweisung getFahranweisung() {
 	// Verwaltet zwei Indizes, der Index zum Lesen
 	// wird verwendet, wenn eine alte Fahranweisung
 	// aus dem Ringpuffer geholt werden soll.
+	// Der Index zum Schreiben gibt die Position an, an der
+	// eine neue Fahranweisung in den Ringpuffer geschrieben
+	// werden soll.
 	static byte lesen[2] = { 0, 0 };
 	static byte schreiben[2] = { 0, 0 };
 	Fahranweisung fa;
@@ -329,14 +346,34 @@ static Fahranweisung getFahranweisung() {
 
 static Weichenstellung getWeichenStellung(byte zielNr) {
 	/*
-	 * TODO (a better version)
-	 * dirty hack, funktioniert mit aktueller topologie
-	 * lösung unabhängig von der topologie nicht möglich
-	 * mit aktueller streckentopologie-definition (?),
-	 * xpressnet lässt nur geradeaus und abbiegen zu,
-	 * nicht aber links und rechts als weichenstellung
+	 * Diese Loesung funktioniert nur mit der von uns
+	 * gewaehlten Gleistopologie, da XpressNet bei
+	 * der Weichenstellung logisch nicht zwischen links
+	 * und rechts, sondern zwischen geradeaus und abbiegen
+	 * unterscheidet.
 	 */
-	return zielNr + BV_zugPosition[lok] < 8 ? GERADEAUS : ABBIEGEN;
+	if( 	(zielNr == 1 && BV_zugPosition[lok] == 8) ||
+		(zielNr == 8 && BV_zugPosition[lok] == 1) ||
+		(zielNr == 1 && BV_zugPosition[lok] == 7) ||
+		(zielNr == 7 && BV_zugPosition[lok] == 1) ||
+		(zielNr == 4 && BV_zugPosition[lok] == 7) ||
+		(zielNr == 7 && BV_zugPosition[lok] == 4)) {
+		
+		return ABBIEGEN;
+	}
+	else if((zielNr == 1 && BV_zugPosition[lok] == 6) ||
+		(zielNr == 6 && BV_zugPosition[lok] == 1) ||
+		(zielNr == 1 && BV_zugPosition[lok] == 2) ||
+		(zielNr == 2 && BV_zugPosition[lok] == 1) ||
+		(zielNr == 3 && BV_zugPosition[lok] == 4) ||
+		(zielNr == 4 && BV_zugPosition[lok] == 3)) {
+		
+		return GERADEAUS;
+	}
+	else {
+		sendNachricht(FEHLER_WEICHENSTELLUNG);
+		return -1;
+	}
 }
 
 static boolean checkGesperrt(byte gleisabschnittNr) {
@@ -357,8 +394,8 @@ static byte getNextWeiche(byte zielNr) {
 
 static boolean checkBelegt(byte gleisabschnittNr) {
 	byte switchNr;
-	// Ein Gleisabschnitt ist belegt, wenn der Gleisasbschnitt
-	// selbst nicht frei ist und eine evtl. zwischen aktuellem
+	// Ein Gleisabschnitt ist belegt, wenn der Gleisabschnitt
+	// selbst nicht frei ist und evtl. zwischen aktuellem
 	// Gleis und dem Gleisabschnitt eine belegte Weiche liegt.
 	if(BV_gleisBelegung[gleisabschnittNr] == 0) {
 		switchNr = getNextWeiche(gleisabschnittNr);
@@ -381,7 +418,8 @@ static boolean checkBefahrbarkeit(byte gleisabschnittNr) {
 	// Wenn der zu befahrende Gleisabschnitt nicht belegt ist
 	// und nicht gesperrt ist, dann sperre ihn fuer die andere
 	// Lok
-	if(checkBelegt(gleisabschnittNr) == FALSE && checkGesperrt(gleisabschnittNr) == FALSE) {
+	if(checkBelegt(gleisabschnittNr) == FALSE && 
+	   checkGesperrt(gleisabschnittNr) == FALSE) {
 		setGleisabschnittGesperrt(gleisabschnittNr, TRUE);
 	}
 	else {
@@ -395,8 +433,9 @@ static boolean checkBefahrbarkeit(byte gleisabschnittNr) {
 		else {
 			/*
 			 * Es wird davon ausgegangen, dass Lok1 nicht
-			 * rangiert und deswegen die Lok ist, die ein Einfahren
-			 * in den Gleisabschnitt verhindern könnte.
+			 * rangiert und deswegen die Lok ist, die ein 
+			 * Einfahren in den Gleisabschnitt verhindern 
+			 * koennte.
 			 */
 				
 			// Wenn der Gleisabschnitt nicht frei ist, 
@@ -444,76 +483,38 @@ static void setStreckenbefehl(Streckenbefehl streckenbefehl) {
 }
 
 static void sendNachricht(FehlerCode fehlerCode) {
-	// Eine 6-Byte große Nachricht, die ans Auditingsystem geschickt werden kann.
+	// Eine 6-Byte grosse Nachricht, die ans 
+	// Auditingsystem geschickt werden kann.
 	Nachricht nachricht;
+	
+	nachricht[0] = fehlerCode | (lok << 4);
+	nachricht[1] = zustand[LOK1];
+	nachricht[2] = zustand[LOK2];
+	nachricht[3] = BV_zugPosition[LOK1];
+	nachricht[4] = BV_zugPosition[LOK2];
+	
 	switch(fehlerCode) {
+	/*
+	 * Hier entgegen der Coding-Richtlinien kein break,
+	 * da das 6. Byte fuer diese Fehlercodes gleich
+	 * kodiert werden soll.
+	 */
 	case FEHLER_ZUSTAND:
-		nachricht[0] = fehlerCode;
-		nachricht[1] = zustand[LOK1];
-		nachricht[2] = zustand[LOK2];
-		nachricht[3] = BV_zugPosition[LOK1];
-		nachricht[4] = BV_zugPosition[LOK2];
-		nachricht[5] = lok;
-		nachricht[6] = kuppelAktion;
-		break;
 	case FEHLER_FAHRBEFEHL:
-		nachricht[0] = fehlerCode;
-		nachricht[1] = zustand[LOK1];
-		nachricht[2] = zustand[LOK2];
-		nachricht[3] = BV_zugPosition[LOK1];
-		nachricht[4] = BV_zugPosition[LOK2];
-		nachricht[5] = lok;
-		nachricht[6] = fahranweisung[lok].fahrbefehl;
-		break;
+	case FEHLER_WEICHENSTELLUNG:
 	case ZIEL_ERREICHT:
-		nachricht[0] = fehlerCode;
-		nachricht[1] = zustand[LOK1];
-		nachricht[2] = zustand[LOK2];
-		nachricht[3] = BV_zugPosition[LOK1];
-		nachricht[4] = BV_zugPosition[LOK2];
-		nachricht[5] = lok;
-		nachricht[6] = fahranweisung[lok].fahrbefehl;
+	case KUPPELN_FEHLGESCHLAGEN:
+	case ANKUPPEL_VERSUCH:
+	case ABKUPPEL_VERSUCH:
+		nachricht[5] = fahranweisung[lok].fahrbefehl;
 		break;
 	case NICHT_BEFAHRBAR:
-		nachricht[0] = fehlerCode;
-		nachricht[1] = zustand[LOK1];
-		nachricht[2] = zustand[LOK2];
-		nachricht[3] = BV_zugPosition[LOK1];
-		nachricht[4] = BV_zugPosition[LOK2];
-		nachricht[5] = lok;
-		nachricht[6] = fahranweisung[lok].gleisabschnittNr;
-		break;
-	case KUPPELN_FEHLGESCHLAGEN:
-		nachricht[0] = fehlerCode;
-		nachricht[1] = zustand[LOK1];
-		nachricht[2] = zustand[LOK2];
-		nachricht[3] = BV_zugPosition[LOK1];
-		nachricht[4] = BV_zugPosition[LOK2];
-		nachricht[5] = lok;
-		nachricht[6] = fahranweisung[lok].fahrbefehl;
-		break;
-	case ANKUPPEL_VERSUCH:
-		nachricht[0] = fehlerCode;
-		nachricht[1] = zustand[LOK1];
-		nachricht[2] = zustand[LOK2];
-		nachricht[3] = BV_zugPosition[LOK1];
-		nachricht[4] = BV_zugPosition[LOK2];
-		nachricht[5] = lok;
-		nachricht[6] = fahranweisung[lok].fahrbefehl;
-		break;
-	case ABKUPPEL_VERSUCH:
-		nachricht[0] = fehlerCode;
-		nachricht[1] = zustand[LOK1];
-		nachricht[2] = zustand[LOK2];
-		nachricht[3] = BV_zugPosition[LOK1];
-		nachricht[4] = BV_zugPosition[LOK2];
-		nachricht[5] = lok;
-		nachricht[6] = fahranweisung[lok].fahrbefehl;
+		nachricht[5] = fahranweisung[lok].gleisabschnittNr;
 		break;
 	default:
 		break;
 	}
-	send_msg(MODULE_ID,nachricht);
+	sendMsg(MODULE_ID,nachricht);
 }
 
 static void setZustandFuerFahranweisung(byte gleisabschnittNr) {
@@ -521,17 +522,17 @@ static void setZustandFuerFahranweisung(byte gleisabschnittNr) {
 	// Niedrigstes Bit ignorieren, welches nur die Lok
 	// enthaelt, fuer die dieser Fahrbefehl gilt
 	switch(fahranweisung[lok].fahrbefehl & 0x0E) {
-	/* Ausnahmsweise kein break, da auch
-	 * beim Anhalten für eine beliebige
-	 * Zeit zunächst in den betreffenden
-	 * Gleisabschnitt eingefahren werden 
-	 * muss*/
+	/* Entgegen der Coding-Richtlinien kein 
+	 * break, da auch beim Anhalten fuer eine 
+	 * beliebige Zeit zunaechst in den betreffenden
+	 * Gleisabschnitt eingefahren werden muss
+	 */
 	case FB_FAHREN:
 		// Fahrgeschwindigkeit einlegen
 		streckenbefehl.Fehler = LEER;
 		streckenbefehl.Entkoppler = LEER;
 		streckenbefehl.Weiche = LEER;
-		streckenbefehl.Lok = (BV_V_VOLLGAS << 2) || getRichtung(gleisabschnittNr) || lok;
+		streckenbefehl.Lok = (BV_V_VOLLGAS << 2) | getRichtung(gleisabschnittNr) | lok;
 		setStreckenbefehl(streckenbefehl);
 	case FB_HALTEN:
 		zustand[lok] = FAHREND;
@@ -541,7 +542,7 @@ static void setZustandFuerFahranweisung(byte gleisabschnittNr) {
 		streckenbefehl.Entkoppler = LEER;
 		streckenbefehl.Fehler = LEER;
 		streckenbefehl.Weiche = LEER;
-		streckenbefehl.Lok = (BV_V_ANKUPPELN << 2) || getRichtung(gleisabschnittNr) || lok;
+		streckenbefehl.Lok = (BV_V_ANKUPPELN << 2) | getRichtung(gleisabschnittNr) | lok;
 		setStreckenbefehl(streckenbefehl);
 		zustand[lok] = ANKUPPELND;
 		break;
@@ -550,13 +551,13 @@ static void setZustandFuerFahranweisung(byte gleisabschnittNr) {
 		streckenbefehl.Entkoppler = LEER;
 		streckenbefehl.Fehler = LEER;
 		streckenbefehl.Weiche = LEER;
-		streckenbefehl.Lok = (BV_V_ABKUPPELN << 2) || getRichtung(gleisabschnittNr) || lok;
+		streckenbefehl.Lok = (BV_V_ABKUPPELN << 2) | getRichtung(gleisabschnittNr) | lok;
 		setStreckenbefehl(streckenbefehl);
 		zustand[lok] = ABKUPPELND;
 		break;
 	default:
 		// Ungueltiger Zustand
-		setNachricht(FEHLER_ZUSTAND);
+		sendNachricht(FEHLER_ZUSTAND);
 		break;
 	}
 }
@@ -564,7 +565,7 @@ static void setZustandFuerFahranweisung(byte gleisabschnittNr) {
 /* Globale Init-Funktion */
 void initLZ() {
 	int i=0;
-	// Initialisieren der Werte, deren Größe von der Anzahl
+	// Initialisieren der Werte, deren Groesse von der Anzahl
 	// der Loks abhaengt.
 	for(i=0;i<ANZAHL_LOKS;++i) {
 		wiederholen[i] = FALSE;
@@ -577,12 +578,12 @@ void initLZ() {
 	}
 }
 
-/* Globale Worker-Funktion */
+/* Globale Work-Funktion */
 void workLZ() {
-	// Die GleisabschnittsNr, des gerade vom Zug 
+	// Die GleisabschnittNr, des gerade vom Zug 
 	// verlassenen Gleisabschnitts
 	byte verlassenerGleisabschnitt[ANZAHL_LOKS] = { 0, 0 };
-	// Aktuelle GleisabschnittsNr
+	// Aktuelle GleisabschnittNr
 	byte gleisabschnittNr[ANZAHL_LOKS] = { 0, 0 };
 	Streckenbefehl streckenbefehl;
 	Sensordaten sensordaten = { LEER,LEER,LEER };
@@ -591,7 +592,7 @@ void workLZ() {
 	// Status des Kuppelsensors speichern
 	kuppelSensor = (sensordaten.Byte1 >> 5) & 0x1;
 	
-	// Nacheinander jeweils das Fahrprogramm für Lok1 und Lok2 ausführen
+	// Nacheinander jeweils das Fahrprogramm fuer Lok1 und Lok2 ausfuehren
 	for(lok=LOK1;lok<ANZAHL_LOKS;++lok) {
 		// Status fuer den Watchdog speichern
 		// Hohes Byte enthaelt einen Zaehler, niederes Zustand
@@ -602,7 +603,7 @@ void workLZ() {
 		switch(zustand[lok]) {
 			// Neue Fahranweisung wird geholt
 		case HOLT_FAHRANWEISUNG:
-			// Speichert den Status fuer den Watchdog
+			// Status fuer den Watchdog
 			// Speichert Lok und Zustand, aber keinen
 			// Zaehler, da dieser Zustand nicht keinen
 			// Uebergang zu sich selbst machen darf.
@@ -628,7 +629,7 @@ void workLZ() {
 				streckenbefehl.Entkoppler = LEER;
 				streckenbefehl.Fehler = LEER;
 				streckenbefehl.Weiche = LEER;
-				streckenbefehl.Lok = (BV_V_STAND << 2) || getRichtung(gleisabschnittNr[lok]) || lok;
+				streckenbefehl.Lok = (BV_V_STAND << 2) | getRichtung(gleisabschnittNr[lok]) | lok;
 				setStreckenbefehl(streckenbefehl);
 				zustand[lok] = ANGEHALTEN;
 			}
@@ -638,7 +639,7 @@ void workLZ() {
 			// Prueft, ob ein An- oder Abkuppeln evtl. wiederholt
 			// werden muss.
 			if(
-			// Zielposition wurde erreicht, es laesst sich in
+			// Zielposition wurde erreicht; es laesst sich in
 			// diesem Gleisabschnitt bestimmen, ob das Kuppeln
 			// geklappt hat und die Anzahl der Wagons hinter
 			// oder vor dem Zug entspricht nicht der erwarteten
@@ -663,7 +664,7 @@ void workLZ() {
 					// Abschnitt geprueft werden. 
 					
 					// Wenn das Ankuppeln fehlschlug,
-					// die kuppelAktion zurücksetzen
+					// die kuppelAktion zuruecksetzen
 					if(kuppelAktion == ANKUPPELN) {
 						kuppelAktion = KEINE_AKTION;
 					}
@@ -701,7 +702,7 @@ void workLZ() {
 					streckenbefehl.Entkoppler = LEER;
 					streckenbefehl.Fehler = LEER;
 					streckenbefehl.Weiche = LEER;
-					streckenbefehl.Lok = (BV_V_STAND << 2) || getRichtung(gleisabschnittNr[lok]) || lok;
+					streckenbefehl.Lok = (BV_V_STAND << 2) | getRichtung(gleisabschnittNr[lok]) | lok;
 					setStreckenbefehl(streckenbefehl);
 					zustand[lok] = WARTEND;
 				}
@@ -748,7 +749,7 @@ void workLZ() {
 			// Wenn die Zielposition erreicht ist, abkuppeln.
 			if(checkZielpositionErreicht(gleisabschnittNr[lok]) == TRUE) {
 				// Abkuppeln
-				streckenbefehl.Entkoppler = gleisabschnittNr[lok] << 1 + 1;
+				streckenbefehl.Entkoppler = (gleisabschnittNr[lok] << 1) + 1;
 				streckenbefehl.Fehler = LEER;
 				streckenbefehl.Weiche = LEER;
 				streckenbefehl.Lok = LEER;
@@ -756,7 +757,7 @@ void workLZ() {
 				setGleisabschnittGesperrt(verlassenerGleisabschnitt[lok],FALSE);
 				checkKuppelAktion = BEIM_NAECHSTEN_MAL;
 				wiederholen[lok] = FALSE;
-				sendNachricht(ABKUPPEL_VERSUCH;
+				sendNachricht(ABKUPPEL_VERSUCH);
 			}
 			break;
 			// Kein gueltiger Zustand, Fehler ans Auditing melden.

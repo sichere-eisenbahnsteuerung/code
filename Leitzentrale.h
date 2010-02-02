@@ -12,7 +12,7 @@
  *        Modul:        Leitzentrale, Version 1.1
  *
  *        Beschreibung:
- *        Die Leitzentrale ist fuer die Steueurung der beiden Loks zu-
+ *        Die Leitzentrale ist fuer die Steuerung der beiden Loks zu-
  *        staendig. Sie holt sich Fahranweisungen von den Fahrprogrammen und
  *        setzt diese in Streckenbefehle um, die zur Ueberpruefung an die
  *        Befehlsverwaltung in der Sicherheitsschicht weitergegeben werden.
