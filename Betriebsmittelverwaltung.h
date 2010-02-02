@@ -88,24 +88,14 @@ extern byte AS_msg_counter;
 * sbit Zuweisung muss in einer Headerdatei erfolgen
 * siehe: http://www.keil.com/support/docs/1317.htm
 **/
-
-/*
-
-//alternative S88 Ports
+sbit NOTAUS_PIN	= P3^4;
+sbit RS232TREIBER_CTSPIN = P3^5;
 sbit S88_PS = P5^0; 
 sbit S88_RESET = P5^1;     
 sbit S88_CLK = P5^2;
 sbit S88_Data = P5^3;
-*/
-
-sbit S88_PS = P1^6; 
-sbit S88_RESET = P1^7;     
-sbit S88_CLK = P3^2;
-sbit S88_Data = P3^3;
-sbit NOTAUS_PIN	= P3^4;
-sbit RS232TREIBER_CTSPIN = P3^5;
-sbit AS_PORT_I2C_SDA = P3^6;
-sbit AS_PORT_I2C_SCL = P3^7;
+sbit AS_PORT_I2C_SDA = P5^4;
+sbit AS_PORT_I2C_SCL = P5^5;
 
 /* Deklaration von globalen Funktionen **************************************/
 
