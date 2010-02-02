@@ -9,7 +9,7 @@
  *        Autor:        Jan Kremer
  *
  *
- *        Modul:        Leitzentrale, Version 1.1
+ *        Modul:        Leitzentrale, Version 1.2
  *
  *        Beschreibung:
  *        Die Leitzentrale ist fuer die Steuerung der beiden Loks zu-
