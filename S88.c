@@ -36,6 +36,8 @@
 /* Lokale Konstanten ********************************************************/
 
 /* Lokale Variablen *********************************************************/
+int sensor_data_old[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+int sensor_data_new[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 int i;
 int sensor_count;
 byte temp_sensor_data;
@@ -43,8 +45,8 @@ byte error;
 /* Prototypen fuer lokale Funktionen ****************************************/
 
 void get_sensor_data(void);
-void write_sensor_data(void);
-byte validate_sensor_data(void);  
+void write_sensor_data(int sensor_number);
+void validate_sensor_data(void);  
 void send_error(byte error);
 void wait(byte times);
 
@@ -70,8 +72,8 @@ if(S88_BV_sensordaten.Byte0 == LEER && S88_BV_sensordaten.Byte1 == LEER)
 	}
 	else
 	{
-		S88_BV_sensordaten.Byte0 = 0x00;
-		S88_BV_sensordaten.Byte1 = 0x00;
+		//S88_BV_sensordaten.Byte0 = 0x00;
+		//S88_BV_sensordaten.Byte1 = 0x00;
 		get_sensor_data(); //Sensordaten abfragen
 	}
 }
@@ -87,61 +89,61 @@ void get_sensor_data() {
 	wait(7);
 	S88_RESET = LOW;
 	wait(7);
-	write_sensor_data();
+	write_sensor_data(0); //1. Sensor auslesen und in Array schreiben
+	//write_sensor_data();
 	S88_PS = LOW;
 	wait(9);
-	for(i = 0;i< 15;i++) 
+	for(i = 1;i< 16;i++) 
 	{
 		S88_CLK = HIGH;
-		write_sensor_data();
+		write_sensor_data(i);  //Sensor i auslesen und in Array schreiben
 		wait(9);
 		S88_CLK = LOW;
 		wait(9);
-	} 
+	}
+	validate_sensor_data(); 
 }
 
-void write_sensor_data() 
+void write_sensor_data(int sensor_number)
 {
-	temp_sensor_data = S88_Data; //Daten vom Dateneingang in temp Variable schreiben
-	temp_sensor_data = temp_sensor_data << 7;
-	if(sensor_count	< 0x08)
-	{
-		//In Byte0 vom struct Sensordaten schreiben
-		S88_BV_sensordaten.Byte0+= temp_sensor_data;
-		if(sensor_count < 0x07)
-		{
-			S88_BV_sensordaten.Byte0 = S88_BV_sensordaten.Byte0 >> 1;
-		}		
-		sensor_count++;
-
-	}
-	else if(sensor_count <= 0x0F)
-	{
-		//In Byte1 vom struct Sensordaten schreiben
-		S88_BV_sensordaten.Byte1 += temp_sensor_data;
-		
-		if(sensor_count == 0x0F)
-		{
-			sensor_count = 0;	//Sensordaten von vorne beginnen einzulesen	
-		}
-		else
-		{
-			S88_BV_sensordaten.Byte1 = S88_BV_sensordaten.Byte1 >> 1;
-			sensor_count++;
-		}
-		
-	}
-	else
-	{
-		error = 0xFF;
-		send_error(error);//Fehler werfen
-	}
-
+	sensor_data_new[sensor_number] = S88_Data;	
 }
 
-byte validate_sensor_data()
+void validate_sensor_data()
 {
-	return 1;
+	//Alte Sensordaten mit neuen Sensordaten vergleichen
+	//und in Shared Memory schreiben
+	for(i = 0;i< 16;i++) 
+	{
+		//Ueberpruefung ob sich Sensordaten seit dem letzten Auslesen geaendert haben
+		if(sensor_data_old[i] == sensor_data_new[i])
+		{
+			sensor_data_new[i] = 0;	//Sensordaten "loeschen" falls Flanke bereits gemeldet					
+		}
+		//Daten in Shared Memory schreiben
+		if( i < 0x08)
+		{
+			//In Byte0 vom struct Sensordaten schreiben
+			S88_BV_sensordaten.Byte0+= sensor_data_new[i];
+			//Bitshift fuer 1. Sensor = LSB und 8. Sensor = MSB
+			if(sensor_count < 0x07)
+			{
+				S88_BV_sensordaten.Byte0 = S88_BV_sensordaten.Byte0 >> 1;
+			}		
+		}
+		else if(i < 0x10)
+		{
+			//In Byte1 vom struct Sensordaten schreiben
+			S88_BV_sensordaten.Byte1 += sensor_data_new[i];
+		
+			if(sensor_count < 0x0F)
+			{
+				//Bitshift fuer 9. Sensor = LSB und 16. Sensor = MSB
+				S88_BV_sensordaten.Byte1 = S88_BV_sensordaten.Byte1 >> 1;	
+			}
+		}
+		sensor_data_old[i] = sensor_data_new[i];
+	}	
 }
 
 void send_error(byte error)
