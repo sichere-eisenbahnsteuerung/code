@@ -228,7 +228,7 @@ void workRS232()
 		else
 		{
 			//Weichen-Befehl
-			if(EV_RS232_streckenbefehl.Weiche != 0xFF) 
+			if(EV_RS232_streckenbefehl.Weiche != 0xFF && weicheActive == 0x01) 
 			{
 				EV_RS232_streckenbefehl.Weiche = 0xFF;
 			}
