@@ -74,11 +74,23 @@ typedef enum {	// Fehler, die ans Auditing-System uebermittelt werden
 	F_SB_WEICHEN_NR_FALSCH = 17,
 	F_SB_ENTKOPPELN_BEI_VOLLGAS = 18,
 	F_SB_BELEGTE_WEICHE_STELLEN = 19,
-			// Lokbefehl-Fehler
+		// Lokbefehl-Fehler
 	F_SB_LB_MIT_VOLLGAS_AUF_BELEGTES_GLEIS = 20,
 	F_SB_LB_WEICHE_ZUM_ZIEL_BELEGT = 21,
-	F_SB_LB_WEICHE_ZUM_ZIEL_FALSCH = 22
+	F_SB_LB_WEICHE_ZUM_ZIEL_FALSCH = 22,
+	
+		// Kritischer-Zustand-Fehler
+	F_KZ_VOLLGAS_RICHTUNG_BELEGTEN_ABSCHNITT = 32,
+	F_KZ_ZUG_RICHTUNG_BENACHBARTEN_ZUG = 33,
+	F_KZ_ZUG_RICHTUNG_FALSCH_GESTELLTER_WEICHE = 34,
+	F_KZ_ZU_VIELE_WAGGONS_LOKS_AUF_ABSCHNITT = 35
 } Fehler;
+
+typedef enum {	// Detailliertheit der Debug-Ausgaben
+	V_ERRORS = 1,
+	V_NORMAL = 2,
+	V_ALL = 3
+} Verbosity;
 
 /* Lokale Konstanten ********************************************************/
 
@@ -87,6 +99,7 @@ typedef enum {	// Fehler, die ans Auditing-System uebermittelt werden
 static byte BV_next_state = 0;
 static byte BV_criticalStateCounter = 0;
 static byte BV_nachricht[6] = {0, 0, 0, 0, 0, 0};
+static byte BV_verbosity = V_ERRORS;
 
 	/* Gleis-Topologie und -Zaehler */
 static Gleisabschnitt streckentopologie[BV_ANZAHL_GLEISABSCHNITTE + 1];
@@ -211,7 +224,8 @@ void workBV(void)
 		if (	(checkSensorDaten() == FALSE) || 
 			(sendSensorDaten() == FALSE) )
 		{
-			//TODO: Auditing-System Bescheid geben!
+			sendNachricht(Z_RETURN_FROM_WORK, 
+					F_SENSORDATEN_FEHLERHAFT);
 			emergency_off();
 			break;
 		}
@@ -229,7 +243,8 @@ void workBV(void)
 		{
 			if (++BV_criticalStateCounter > BV_MAX_KRITISCH)
 			{
-				//TODO: Auditing-System Bescheid geben!
+				sendNachricht(Z_RETURN_FROM_WORK, 
+						F_KRITISCHER_ZUSTAND_ZU_OFT);
 				emergency_off();
 			}
 			break;
@@ -262,7 +277,8 @@ void workBV(void)
 		// Wenn Kopien der Streckentopologie manipuliert wurden
 		if (checkStreckenTopologie() == FALSE)
 		{
-			//TODO: Auditing-System Bescheid geben!
+			sendNachricht(Z_RETURN_FROM_WORK,
+					F_STRECKENTOPOLOGIE_MANIPULIERT);
 			emergency_off();
 			break;
 		}
@@ -272,12 +288,15 @@ void workBV(void)
 			break;
 		}
 	default: 
-		//TODO: Auditing-System Bescheid geben!
+		sendNachricht(Z_RETURN_FROM_WORK,
+				F_UNBEKANNTER_INTERNER_ZUSTAND);
 		emergency_off();	// anderen Zustand darf es nicht geben.
 	}
 	
-	sendNachricht(Z_RETURN_FROM_WORK,F_KEIN_FEHLER);
-	
+	if (BV_verbosity >= V_NORMAL)
+	{
+		sendNachricht(Z_RETURN_FROM_WORK, F_KEIN_FEHLER);
+	}
 	//TODO: evtl. noch den criticalStateCounter shiften und dazupacken?
 	helloModul(BV_MODULE_ID, BV_next_state); 
 }
@@ -334,7 +353,8 @@ static boolean checkSensorDaten(void)
 	// wenn Fehler-Byte gesetzt ist, FALSE zurueckgeben
 	if (S88_BV_sensordaten.Fehler != 0)
 	{
-		//TODO: Auditing-System Bescheid geben!
+		sendNachricht(Z_FKT_CHECK_SENSOR_DATEN,
+				F_SD_FEHLERBYTE_GESETZT);
 		return FALSE;
 	}
 	
@@ -368,7 +388,8 @@ static boolean checkSensorDaten(void)
 		// Ist eigentlich ein Zug bei diesem Sensor? Welcher? Richtung?
 		if (zugNebenSensor(z, &zugNr, &richtung) == FALSE)
 		{
-			//TODO: Auditing-System Bescheid geben!
+			sendNachricht(Z_FKT_CHECK_SENSOR_DATEN,
+					F_SD_KEIN_ZUG_NEBEN_SENSOR);
 			return FALSE;
 		}
 		
@@ -434,7 +455,8 @@ static boolean sendSensorDaten(void)
 	// wenn die LZ die alten Sensordaten noch nicht verarbeitet hat, Fehler
 	if (BV_LZ_sensordaten.Byte0 != LEER || BV_LZ_sensordaten.Byte1 != LEER)
 	{
-		//TODO: Auditing-System Bescheid geben!
+		sendNachricht(Z_FKT_SEND_SENSOR_DATEN,
+				F_SD_VON_LZ_NICHT_VERARBEITET);
 		return FALSE;
 	}
 	
@@ -461,10 +483,11 @@ static boolean checkStreckenBefehl(void)
 	// beim Entkoppler-Befehl pruefen, ob die Entkoppler-Nr gueltig ist.
 	if (LZ_BV_streckenbefehl.Entkoppler != LEER)
 	{
-		entkopplerNr = (LZ_BV_streckenbefehl.Entkoppler  & 254) >> 1;
+		entkopplerNr = (LZ_BV_streckenbefehl.Entkoppler & 254) >> 1;
 		if (entkopplerNr > BV_ANZAHL_ENTKOPPLER)
 		{
-			//TODO: Auditing System bescheid geben
+			sendNachricht(Z_FKT_CHECK_STRECKEN_BEFEHL,
+					F_SB_ENTKOPPLER_NR_FALSCH);
 			return FALSE;
 		}
 	}
@@ -475,7 +498,8 @@ static boolean checkStreckenBefehl(void)
 		weicheNr = (LZ_BV_streckenbefehl.Weiche & 254) >> 1;
 		if (weicheNr > BV_ANZAHL_WEICHEN)
 		{
-			//TODO: Auditing System bescheid geben
+			sendNachricht(Z_FKT_CHECK_STRECKEN_BEFEHL,
+					F_SB_WEICHEN_NR_FALSCH);
 			return FALSE;
 		}
 	}
@@ -485,6 +509,7 @@ static boolean checkStreckenBefehl(void)
 	// Entkoppeln nur bei entsprechender Geschwindigkeit erlaubt
 	if (LZ_BV_streckenbefehl.Entkoppler != LEER)
 	{
+		boolean fehler = FALSE;
 		byte v1 = zugGeschwindigkeit[0];
 		byte v2 = zugGeschwindigkeit[1];
 		byte zug1 = zugPosition[0];
@@ -495,28 +520,33 @@ static boolean checkStreckenBefehl(void)
 		case 1:
 			if ( (zug1 == 2 || zug1 == 3) && (v1 != BV_V_ABKUPPELN) )
 			{
-				//TODO: Auditing-System Bescheid geben!
-				return FALSE;
+				fehler = TRUE;
 			}
 			if ( (zug2 == 2 || zug2 == 3) && (v2 != BV_V_ABKUPPELN) )
 			{
-				//TODO: Auditing-System Bescheid geben!
-				return FALSE;
+				fehler = TRUE;
 			}
 			break;
 		case 2:
 			if ( (zug1 == 8 || zug1 == 9) && (v1 != BV_V_ABKUPPELN) )
 			{
-				//TODO: Auditing-System Bescheid geben!
-				return FALSE;
+				fehler = TRUE;
 			}
 			if ( (zug2 == 8 || zug2 == 9) && (v2 != BV_V_ABKUPPELN) )
 			{
-				//TODO: Auditing-System Bescheid geben!
-				return FALSE;
+				fehler = TRUE;
 			}
 			break;
 		}
+		
+		if (fehler == TRUE)
+		{
+			sendNachricht(Z_FKT_CHECK_STRECKEN_BEFEHL,
+					F_SB_ENTKOPPELN_BEI_VOLLGAS);
+			return FALSE;
+		}
+		
+		return TRUE;
 	}
 	
 	// Weiche darf nur gestellt werden, wenn sie nicht belegt ist
@@ -525,7 +555,8 @@ static boolean checkStreckenBefehl(void)
 	{
 		if (weichenBelegung[weicheNr] != 0)
 		{
-			//TODO: Auditing-System Bescheid geben!
+			sendNachricht(Z_FKT_CHECK_STRECKEN_BEFEHL,
+					F_SB_BELEGTE_WEICHE_STELLEN);
 			return FALSE;
 		}
 	}
@@ -549,21 +580,24 @@ static boolean checkStreckenBefehl(void)
 		// Wenn Zielgleis belegt, darf man nur lansgsam reinfahren
 		if ( (gleisBelegung[ziel] != 0) && (geschw != BV_V_ANKUPPELN) )
 		{
-			//TODO: Auditing-System Bescheid geben!
+			sendNachricht(Z_FKT_CHECK_STRECKEN_BEFEHL,
+					F_SB_LB_MIT_VOLLGAS_AUF_BELEGTES_GLEIS);
 			return FALSE;
 		}
 		
 		// Egal ob Zielgleis belegt: die Weiche dahin muss frei sein!
 		if ( (weiche != 0) && (weichenBelegung[weiche] != 0) )
 		{
-			//TODO: Auditing-System Bescheid geben!
+			sendNachricht(Z_FKT_CHECK_STRECKEN_BEFEHL,
+					F_SB_LB_WEICHE_ZUM_ZIEL_BELEGT);
 			return FALSE;
 		}
 		
 		// Weichenstellung pruefen, wenn man von hinten kommt.
 		if (weicheRichtig(zugPos, richtung, ziel, weiche))
 		{
-			//TODO: Auditing-System Bescheid geben!
+			sendNachricht(Z_FKT_CHECK_STRECKEN_BEFEHL,
+					F_SB_LB_WEICHE_ZUM_ZIEL_FALSCH);
 			return FALSE;
 		}
 	}
@@ -807,7 +841,8 @@ static boolean sensorNachbarn(byte sensorNr, byte *nextAbs, byte *prevAbs,
 	// das sollte eigentlich nicht passieren
 	if (*nextAbs == 0 && *prevAbs == 0)
 	{
-		//TODO: Auditing-System Bescheid geben!
+		sendNachricht(Z_FKT_SENSOR_NACHBARN,
+				F_SD_KEINE_ABSCHNITTE_DRAN);
 		return FALSE;
 	}
 	
@@ -843,7 +878,8 @@ static boolean checkKritischerZustand(void)
 		// Ein Zug faehrt mit Vollgas richtung eines belegten Abschnitts
 		if ( (geschw > BV_V_ANKUPPELN) && (gleisBelegung[ziel] != 0) )
 		{
-			//TODO: Auditing-System Bescheid geben!
+			sendNachricht(Z_FKT_CHECK_KRITISCHER_ZUSTAND,
+				F_KZ_VOLLGAS_RICHTUNG_BELEGTEN_ABSCHNITT);
 			kritisch = TRUE;
 			break;
 		}
@@ -852,7 +888,8 @@ static boolean checkKritischerZustand(void)
 		if (ziel == zugPosition[ 1 - zugPos ])
 		{
 			// Ziel gleich der Position des anderen Zuges!
-			//TODO: Auditing-System Bescheid geben!
+			sendNachricht(Z_FKT_CHECK_KRITISCHER_ZUSTAND,
+				F_KZ_ZUG_RICHTUNG_BENACHBARTEN_ZUG);
 			kritisch = TRUE;
 			break;
 		}
@@ -860,7 +897,8 @@ static boolean checkKritischerZustand(void)
 		// Ein Zug faehrt auf eine falsch gestellte Weiche zu
 		if (weicheRichtig(zugPos, richtung, ziel, weiche))
 		{
-			//TODO: Auditing-System Bescheid geben!
+			sendNachricht(Z_FKT_CHECK_KRITISCHER_ZUSTAND,
+				F_KZ_ZUG_RICHTUNG_FALSCH_GESTELLTER_WEICHE);
 			kritisch = TRUE;
 		}
 	}
@@ -869,7 +907,8 @@ static boolean checkKritischerZustand(void)
 	for (z = 1; z < BV_ANZAHL_GLEISABSCHNITTE; z++) {
 		if (gleisBelegung[z] > BV_MAX_WAGGONS)
 		{
-			//TODO: Auditing-System Bescheid geben!
+			sendNachricht(Z_FKT_CHECK_KRITISCHER_ZUSTAND,
+				F_KZ_ZU_VIELE_WAGGONS_LOKS_AUF_ABSCHNITT);
 			kritisch = TRUE;
 			break;
 		}
