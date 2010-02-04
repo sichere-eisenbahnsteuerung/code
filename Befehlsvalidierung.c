@@ -75,10 +75,11 @@ typedef enum {	// Fehler, die ans Auditing-System uebermittelt werden
 	F_SB_WEICHEN_NR_FALSCH = 17,
 	F_SB_ENTKOPPELN_BEI_VOLLGAS = 18,
 	F_SB_BELEGTE_WEICHE_STELLEN = 19,
+	F_SB_ANGEFAHRENE_WEICHE_STELLEN = 20,
 		// Lokbefehl-Fehler
-	F_SB_LB_MIT_VOLLGAS_AUF_BELEGTES_GLEIS = 20,
-	F_SB_LB_WEICHE_ZUM_ZIEL_BELEGT = 21,
-	F_SB_LB_WEICHE_ZUM_ZIEL_FALSCH = 22,
+	F_SB_LB_MIT_VOLLGAS_AUF_BELEGTES_GLEIS = 21,
+	F_SB_LB_WEICHE_ZUM_ZIEL_BELEGT = 22,
+	F_SB_LB_WEICHE_ZUM_ZIEL_FALSCH = 23,
 	
 		// Kritischer-Zustand-Fehler
 	F_KZ_VOLLGAS_RICHTUNG_BELEGTEN_ABSCHNITT = 32,
@@ -554,17 +555,26 @@ static boolean checkStreckenBefehl(void)
 		return TRUE;
 	}
 	
-	// Weiche darf nur gestellt werden, wenn sie nicht belegt ist
-	//TODO: Nur stellen, wenn kein Zug auf die Weiche zufaehrt. (siehe 6.3)
 	if (LZ_BV_streckenbefehl.Weiche != LEER)
 	{
-		if ( (weichenBelegung[weicheNr] != 0)
-			|| zugFaehrtAufWeicheZu(weicheNr) )
+		byte wStell = (LZ_BV_streckenbefehl.Weiche & 1);
+		
+		// Weiche darf nur gestellt werden, wenn sie nicht belegt ist
+		if ( weichenBelegung[weicheNr] != 0 )
 		{
 			sendNachricht(Z_FKT_CHECK_STRECKEN_BEFEHL,
 					F_SB_BELEGTE_WEICHE_STELLEN);
 			return FALSE;
-		}		
+		}
+		
+		// Nur stellen, wenn kein anderer Zug auf diese Weiche zufaehrt
+		if (zugFaehrtAufWeicheZu(weicheNr) 
+			&& weichenBelegung[weicheNr] != wStell)
+		{
+			sendNachricht(Z_FKT_CHECK_STRECKEN_BEFEHL,
+					F_SB_ANGEFAHRENE_WEICHE_STELLEN);
+			return FALSE;
+		}
 	}
 	
 	// Pruefen ob der Lok-Befehl einen unsicheren Zustand hervorruft
@@ -574,14 +584,10 @@ static boolean checkStreckenBefehl(void)
 		byte richtung = (LZ_BV_streckenbefehl.Lok & 2) >> 1;
 		byte geschw = (LZ_BV_streckenbefehl.Lok & 252) >> 2;
 		byte zugPos = zugPosition[zugNr];
-		Gleisabschnitt gleis, zielGleis;
-		byte ziel, weiche, wStell;
+		byte ziel, weiche;
 		
 		// Zielgleis und etwaige Weiche auf dem Weg dahin bestimmen
 		zielGleisUndWeiche(zugPos, richtung, &ziel, &weiche);
-		zielGleis = streckentopologie[ziel];
-		gleis = streckentopologie[zugPos];
-		wStell = weichenStellung[weiche];
 		
 		// Wenn Zielgleis belegt, darf man nur lansgsam reinfahren
 		if ( (gleisBelegung[ziel] != 0) && (geschw != BV_V_ANKUPPELN) )
@@ -967,30 +973,24 @@ static boolean zugFaehrtAufWeicheZu(byte weicheNr)
 	byte z, zug;
 	for (zug = 0; z < BV_ANZAHL_ZUEGE; z++)
 	{
+		byte ziel, weiche;
+		byte zugPos = zugPosition[zug];
+		byte richtung = zugRichtung[zug];
+		
 		if (zugGeschwindigkeit[zug] == BV_V_STAND)
 		{
 			// Nur Zuege anschauen, die nicht stehen.
 			continue;
 		}
-		
-		for (z = 1; z < BV_ANZAHL_GLEISABSCHNITTE; z++)
-		{
-			if ( (streckentopologie[z].nextSwitch = weicheNr)
-				&& (zugPosition[zug] == z) 
-				&& (zugRichtung[zug] == 1) )
-			{
-				return TRUE;
-			}
-			
-			if ( (streckentopologie[z].prevSwitch = weicheNr)
-				&& (zugPosition[zug] == z) 
-				&& (zugRichtung[zug] == 0) )
-			{
-				return TRUE;
-			}
 
+		zielGleisUndWeiche(zugPos, richtung, &ziel, &weiche);
+		if ( weicheRichtig(zugPos, richtung, ziel, weiche)
+			&& (weiche == weicheNr) )
+		{
+			return TRUE;
 		}
 	}
+	return FALSE;
 }
 
 static void zielGleisUndWeiche(byte zugPos, byte richtung, byte *ziel, byte *weiche)
