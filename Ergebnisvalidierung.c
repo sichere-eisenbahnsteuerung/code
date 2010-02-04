@@ -89,6 +89,7 @@ static boolean isSSCNew = FALSE;
 static byte EV_nachricht[6];
 
 /* Prototypen fuer lokale Funktionen ****************************************/
+static boolean compareTracks(Streckenbefehl *track1, Streckenbefehl *track2);
 static boolean isStreckenbefehlResetted(Streckenbefehl *track);
 static boolean processExternalStreckenbefehl(void);
 static boolean streckenbefehleEqual(Streckenbefehl *track1, Streckenbefehl *track2);
@@ -204,13 +205,38 @@ static void resetStreckenbefehl(Streckenbefehl *track)
 static boolean streckenbefehleEqual(Streckenbefehl *track1, Streckenbefehl *track2)
 {
 	// Ueberpruefung, ob jeweils ein neuer Streckenbefehl von der
-	// Befehlsvalidierung und dem SSC-Treiber
+	// Befehlsvalidierung und dem SSC-Treiber vorhanden sind
 	if(isBVNew && isSSCNew)
 	{
 		// Zuruecksetzen des Zaehlers, 
 		streckenbefehleUngleich = 0;
+		// Streckenbefehle vergleichen
+		return compareTracks(&track1, &track2);
 	}
 
+	// Ueberpruefung, ob die uebergebenen Streckenbefehle leer sind,
+	// falls mindestens einer nicht neu ist
+	if(!isStreckenbefehlResetted(&track1) && !isStreckenbefehlResetted(&track2))
+	{
+		// Streckenbefehle vergleichen
+		return compareTracks(&track1, &track2);
+	}
+	
+	return FALSE;
+}
+
+/*
+ * Name		: compareTracks
+ * Description	: Ueberprueft, ob die uebergebenen Streckenbefehle
+ gleich sind.
+ * Parameter	: track1 - 1. Streckenbefehl
+ track2 - 2. Streckenbefehl
+ * Return value	: TRUE wenn die Streckenbefehle identisch sind,
+ FALSE falls nicht.
+ * Author	: Philip Weber
+ */
+static boolean compareTracks(Streckenbefehl *track1, Streckenbefehl *track2)
+{
 	// Vergleichen der beiden Streckenbefehle
 	if(track1->Lok == track2->Lok &&
 	   track1->Weiche == track2->Weiche &&
@@ -219,7 +245,7 @@ static boolean streckenbefehleEqual(Streckenbefehl *track1, Streckenbefehl *trac
 		// Sind diese gleich, wird der Zaehler zurueckgesetzt ...
 		streckenbefehleUngleich = 0;
 		// und die Funktion mit dem Wert TRUE verlassen.
-	   	return TRUE;
+		return TRUE;
 	}
 	
 	// Sind die Streckenbefehle ungleich, wird ueberprueft, wie oft
@@ -238,9 +264,9 @@ static boolean streckenbefehleEqual(Streckenbefehl *track1, Streckenbefehl *trac
 	// groesser gleich 3, wird ein Fehlercode an das Auditing System 
 	// uebermittelt, ...
 	sendNachricht(E_STRECKENBEFEHLEUNGLEICH, A_FEHLER, MAXSTRECKENBEFEHLEUNGLEICH + 1, 0, 0);
-	// ein Not-Aus eingeleitet ...
+	// ein Not-Aus eingeleitet und ...
 	emergency_off();
-	// und die Funktion mit dem Wert FALSE verlassen, um das Modul
+	// die Funktion mit dem Wert FALSE verlassen, um das Modul
 	// fruehzeitig zu beenden. 
 	return FALSE;
 }
