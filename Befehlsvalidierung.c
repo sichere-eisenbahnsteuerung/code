@@ -95,7 +95,7 @@ typedef enum {	// Detailliertheit der Debug-Ausgaben
 
 /* Lokale Variablen *********************************************************/
 
-static byte next_state = 0;
+static byte nextState = 0;
 static byte criticalStateCounter = 0;
 static byte nachricht[6] = {0, 0, 0, 0, 0, 0};
 static byte verbosity = V_ERRORS;
@@ -209,17 +209,17 @@ void initBV(void)
 
 void workBV(void)
 {
-	// Verknuepft next_state und critical_state_counter
+	// Verknuepft nextState und critical_state_counter
 	byte concatState = 0; 
 	
-	switch (next_state)
+	switch (nextState)
 	{
 	case 0:
 		// Wenn keine neuen Sensordaten eingetroffen, gibt's nix zu tun
 		if (	(S88_BV_sensordaten.Byte0) == LEER && 
 			(S88_BV_sensordaten.Byte1) == LEER)
 		{
-			next_state = 2;	// Streckenbefehl holen
+			nextState = 2;	// Streckenbefehl holen
 			break;
 		}
 		
@@ -236,7 +236,7 @@ void workBV(void)
 		// Wenn neue Sensordaten in Ordndung
 		else 
 		{
-			next_state = 1;	// Gleisbild pruefen
+			nextState = 1;	// Gleisbild pruefen
 			break;
 		}
 		
@@ -256,7 +256,7 @@ void workBV(void)
 		{
 			// keine kritischen Zustaende erkannt
 			criticalStateCounter = 0;
-			next_state = 2;	// Streckenbefehl holen
+			nextState = 2;	// Streckenbefehl holen
 			break;
 		}
 				
@@ -273,7 +273,7 @@ void workBV(void)
 			sendStreckenBefehl();
 		}
 		
-		next_state = 0;		// Sensordaten holen
+		nextState = 0;		// Sensordaten holen
 		break;
 		
 	case 3:
@@ -287,7 +287,7 @@ void workBV(void)
 		}
 		else
 		{
-			next_state = 2;	// Streckenbefehl holen
+			nextState = 2;	// Streckenbefehl holen
 			break;
 		}
 	default: 
@@ -301,7 +301,7 @@ void workBV(void)
 		sendNachricht(Z_RETURN_FROM_WORK, F_KEIN_FEHLER);
 	}
 
-	concatState = (next_state) & (criticalStateCounter << 3);
+	concatState = (nextState) & (criticalStateCounter << 3);
 	helloModul(MODUL_BV, concatState);
 }
 
@@ -1019,7 +1019,7 @@ static void sendNachricht(Zustand zustand, Fehler fehler)
 {
 	nachricht[0] = zustand;
 	nachricht[1] = fehler;
-	nachricht[2] = next_state;
+	nachricht[2] = nextState;
 	nachricht[3] = criticalStateCounter;
 	nachricht[4] = zugPosition[0];
 	nachricht[5] = zugPosition[1];
