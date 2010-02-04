@@ -33,15 +33,12 @@ byte BV_weichenBelegung[BV_ANZAHL_WEICHEN + 1];
 byte BV_zugPosition[BV_ANZAHL_ZUEGE];
 
 /* Lokale Makros ************************************************************/
-#ifndef BV_MODULE_ID
-#define BV_MODULE_ID MODUL_BV
+#ifndef MAX_WAGGONS
+#define MAX_WAGGONS 4
 #endif
-#ifndef BV_MAX_WAGGONS
-#define BV_MAX_WAGGONS 4
-#endif
-#ifndef BV_MAX_KRITISCH
+#ifndef MAX_KRITISCH
 	// Nicht hoeher als 30 !
-#define BV_MAX_KRITISCH 5
+#define MAX_KRITISCH 5
 #endif
 
 /* Lokale Typen *************************************************************/
@@ -98,10 +95,10 @@ typedef enum {	// Detailliertheit der Debug-Ausgaben
 
 /* Lokale Variablen *********************************************************/
 
-static byte BV_next_state = 0;
-static byte BV_criticalStateCounter = 0;
-static byte BV_nachricht[6] = {0, 0, 0, 0, 0, 0};
-static byte BV_verbosity = V_ERRORS;
+static byte next_state = 0;
+static byte criticalStateCounter = 0;
+static byte nachricht[6] = {0, 0, 0, 0, 0, 0};
+static byte verbosity = V_ERRORS;
 
 	/* Gleis-Topologie und -Zaehler */
 static Gleisabschnitt streckentopologie[BV_ANZAHL_GLEISABSCHNITTE + 1];
@@ -215,14 +212,14 @@ void workBV(void)
 	// Verknuepft next_state und critical_state_counter
 	byte concatState = 0; 
 	
-	switch (BV_next_state)
+	switch (next_state)
 	{
 	case 0:
 		// Wenn keine neuen Sensordaten eingetroffen, gibt's nix zu tun
 		if (	(S88_BV_sensordaten.Byte0) == LEER && 
 			(S88_BV_sensordaten.Byte1) == LEER)
 		{
-			BV_next_state = 2;	// Streckenbefehl holen
+			next_state = 2;	// Streckenbefehl holen
 			break;
 		}
 		
@@ -239,7 +236,7 @@ void workBV(void)
 		// Wenn neue Sensordaten in Ordndung
 		else 
 		{
-			BV_next_state = 1;	// Gleisbild pruefen
+			next_state = 1;	// Gleisbild pruefen
 			break;
 		}
 		
@@ -247,7 +244,7 @@ void workBV(void)
 		// Gleisbild auf kritische Zustaende pruefen
 		if (checkKritischerZustand() == FALSE)
 		{
-			if (++BV_criticalStateCounter > BV_MAX_KRITISCH)
+			if (++criticalStateCounter > MAX_KRITISCH)
 			{
 				sendNachricht(Z_RETURN_FROM_WORK, 
 						F_KRITISCHER_ZUSTAND_ZU_OFT);
@@ -258,8 +255,8 @@ void workBV(void)
 		else
 		{
 			// keine kritischen Zustaende erkannt
-			BV_criticalStateCounter = 0;
-			BV_next_state = 2;	// Streckenbefehl holen
+			criticalStateCounter = 0;
+			next_state = 2;	// Streckenbefehl holen
 			break;
 		}
 				
@@ -276,7 +273,7 @@ void workBV(void)
 			sendStreckenBefehl();
 		}
 		
-		BV_next_state = 0;		// Sensordaten holen
+		next_state = 0;		// Sensordaten holen
 		break;
 		
 	case 3:
@@ -290,7 +287,7 @@ void workBV(void)
 		}
 		else
 		{
-			BV_next_state = 2;	// Streckenbefehl holen
+			next_state = 2;	// Streckenbefehl holen
 			break;
 		}
 	default: 
@@ -299,13 +296,13 @@ void workBV(void)
 		emergency_off();	// anderen Zustand darf es nicht geben.
 	}
 	
-	if (BV_verbosity >= V_NORMAL)
+	if (verbosity >= V_NORMAL)
 	{
 		sendNachricht(Z_RETURN_FROM_WORK, F_KEIN_FEHLER);
 	}
 
-	concatState = (BV_next_state) & (BV_criticalStateCounter << 3);
-	helloModul(BV_MODULE_ID, concatState);
+	concatState = (next_state) & (criticalStateCounter << 3);
+	helloModul(MODUL_BV, concatState);
 }
 
 /* Im Moduldesign beschriebene lokale Funktionen .. */
@@ -917,7 +914,7 @@ static boolean checkKritischerZustand(void)
 	
 	// Zu viele Waggons und Loks auf einem Abschnitt
 	for (z = 1; z < BV_ANZAHL_GLEISABSCHNITTE; z++) {
-		if (gleisBelegung[z] > BV_MAX_WAGGONS)
+		if (gleisBelegung[z] > MAX_WAGGONS)
 		{
 			sendNachricht(Z_FKT_CHECK_KRITISCHER_ZUSTAND,
 				F_KZ_ZU_VIELE_WAGGONS_LOKS_AUF_ABSCHNITT);
@@ -1020,12 +1017,12 @@ static void zielGleisUndWeiche(byte zugPos, byte richtung, byte *ziel, byte *wei
 
 static void sendNachricht(Zustand zustand, Fehler fehler)
 {
-	BV_nachricht[0] = zustand;
-	BV_nachricht[1] = fehler;
-	BV_nachricht[2] = BV_next_state;
-	BV_nachricht[3] = BV_criticalStateCounter;
-	BV_nachricht[4] = zugPosition[0];
-	BV_nachricht[5] = zugPosition[1];
+	nachricht[0] = zustand;
+	nachricht[1] = fehler;
+	nachricht[2] = next_state;
+	nachricht[3] = criticalStateCounter;
+	nachricht[4] = zugPosition[0];
+	nachricht[5] = zugPosition[1];
 	
-	sendMsg(BV_MODULE_ID, BV_nachricht);
+	sendMsg(MODUL_BV, nachricht);
 }
