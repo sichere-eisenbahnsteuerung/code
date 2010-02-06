@@ -7,15 +7,14 @@
  *        Autor:        Oliver Gatti
  *
  *
- *        Modul:        <RS232-Treiber>, <Version des Moduldesigns>
+ *        Modul:        RS232-Treiber, 1.2
  *
  *        Beschreibung:
- *        ________________________________________________________________
- *        ________________________________________________________________
- *        ________________________________________________________________
- *        ________________________________________________________________
- *        ________________________________________________________________
- *        ________________________________________________________________
+ *        Dieses Modul implementiert die Kommunikation zwischen dem Micro-
+ *        controller und dem LI101f Interface. Die Kommunikation findet 
+ *        über die RS232 Schnittstelle statt. Die Ergebnisvalidierung legt 
+ *        die Streckenbefehle im Shared-Memory ab und der RS232-Treiber liest
+ *        diese aus und verarbeitet sie weiter.
  *
  ****************************************************************************/
 
@@ -48,8 +47,6 @@ static byte sendeCounter = 0x00;
 static byte sendeBuffer[6];
 static const byte maxFailures = 0x05; 
 static byte rs232Enabled;
-// 1 Entkupplungsdekoder ist aktiv
-// 0 Entkupplungsdekoder ist nicht aktiv 
 static byte entkupplerActive = 0x01;
 static byte weicheActive = 0x01;    
 
@@ -59,7 +56,9 @@ void konvertWeiche();
 void konvertEntkoppler();
 
 /* Funktionsimplementierungen ***********************************************/
-
+/*
+ *	Verarbeitet ankommende Daten per Interrupt-Service-Routine.
+ */
 DataReceivedInterrupt () interrupt 4 //Interruptfunktion
 {
 	if(RI == 1) 
@@ -263,7 +262,10 @@ void workRS232()
 	}
 }
 
-//Konvertiert Streckenbefehl aus dem Shared-Memory ins XpressNet-Format
+/*
+ * Diese Funktion konvertiert einen Lok-Fahr-Befehl in das XpressNet-Format
+ * und schreibt diesen in den Ausgangsbuffer "sendeBuffer".
+ */
 void konvertLok()
 {
 	byte v;
@@ -302,7 +304,12 @@ void konvertLok()
 	sendeBuffer[0] = ((((sendeBuffer[5] ^ sendeBuffer[4]) ^ sendeBuffer[3]) ^ sendeBuffer[2]) ^ sendeBuffer[1]);
 }
 
-void konvertWeiche() //getestet
+
+/*
+ * Diese Funktion konvertiert einen Weichen-Stell-Befehl in das XpressNet-Format
+ * und schreibt diesen in den Ausgangsbuffer "sendeBuffer".
+ */
+void konvertWeiche() 
 {
 	byte BB;
 	
@@ -362,6 +369,10 @@ void konvertWeiche() //getestet
 	sendeBuffer[0] = (sendeBuffer[3] ^ sendeBuffer[2]) ^ sendeBuffer[1];	  
 }
 
+/*
+ * Diese Funktion konvertiert einen Entkupplungsbefehl in das XpressNet-Format
+ * und schreibt diesen in den Ausgangsbuffer "sendeBuffer".
+ */
 void konvertEntkoppler()
 {	 
 	byte BB;
@@ -396,16 +407,16 @@ void konvertEntkoppler()
 	sendeBuffer[0] = (sendeBuffer[3] ^ sendeBuffer[2]) ^ sendeBuffer[1];	  
 }
 
-
+// Derzeit sind alle Zuweisungen, die die Initialisierung der Serielle Schnittstelle durchführen auskommentiert.
+// Die Initialisierung wird per Keil uVision durchgeführt.
 void initRS232() 
 {
 	RS232TREIBER_CTSPIN = 1;	
-
+	EV_RS232_streckenbefehl.Fehler = 0x00;
 	rs232Enabled = 0x01;
 
 //	SCON = SCON | 0x80;
 	
-	EV_RS232_streckenbefehl.Fehler = 0x00;
 //	SM0 = 0; 
 //	SM1 = 1;	
 	//RI = 1;
@@ -413,24 +424,21 @@ void initRS232()
 	//SM2 = 0;
 //	SRELH = 0x03;
 //	SRELH = 0xDF;
-	//ES = 1;
 //	REN = 1;
 //	BD = 1;
+	ES = 1;
 	TI = 0;
+	RI = 0;
 }
 
+/*
 void main(void)
 {
 
-   
    initRS232();
-
- 
-
    while(1);	  
-
-
 }	
+*/
 
 
 
