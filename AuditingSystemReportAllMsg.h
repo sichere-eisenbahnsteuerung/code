@@ -1,8 +1,8 @@
-#ifndef AUDITINGSYSTEM_H
-#define AUDITINGSYSTEM_H
+#ifndef AUDITINGSYSTEMREPORTALLMSG_H
+#define AUDITINGSYSTEMREPORTALLMSG_H
 /*****************************************************************************
  *
- *        Dateiname:    AuditingSystem.h
+ *        Dateiname:    AuditingSystemReportAllMsg.h
  *
  *        Projekt:      Sichere Eisenbahnsteuerung
  *
@@ -20,9 +20,8 @@
  *        Betriebsmittelverwaltung werden alle gesammelten Meldungen
  *        verschickt.
  *
- *        Diese Headerdatei ist fuer das Modul Betriebsmittelverwaltung
- *        vorgesehen. Sie enthaellt die Prototypen fuer die
- *        Schnittstellen initAS und workAS.
+ *        Diese Headerdatei ist fuer das Modul Not-Aus-Treiber vorgesehen. Sie
+ *        enthaellt den Prototypen fuer die Schnittstelle sendAll.
  *
  ****************************************************************************/
 
@@ -40,27 +39,15 @@
 /* Deklaration von globalen Funktionen **************************************/
 
 /*
- * initAS()
- * Schnittstelle nur fuer das Modul Betriebsmittelverwaltung. Die 
- * Schnittstelle dient der Initialisierung der Steuerungsvariablen fuer den 
- * Ringpuffer.
+ * reportAllMsg()
+ * Schnittstelle nur fuer das Modul Not-Aus-Treiber. Die Schnittstelle dient
+ * dem Auslesen aller Meldungen der Module aus dem Ringpuffer und deren
+ * Versendung ueber den I2C-Bus.
+ * Diese Schnittstelle darf nur bei deaktiviertem Watchdog aufgerufen werden.
  * 
  * Rueckgabe: Keine
  */
-void initAS(void);
-
-/*
- * workAS()
- * Schnittstelle nur fuer das Modul Betriebsmittelverwaltung. Die
- * Schnittstelle dient dem Auslesen von maximal vier Meldungen der Module aus
- * dem Ringpuffer und deren Versendung ueber den I2C-Bus.
- * Fuer diese Uebertragung werden 28 Bytes versendet.
- * Vor jedem erneuten Aufruf dieser Schnittstelle muessen mindestens 1,102 ms
- * verstrichen sein.
- * 
- * Rueckgabe: Keine
- */
-void workAS(void);
+void reportAllMsg(void);
 
 
-#endif /* AUDITINGSYSTEM_H */
+#endif /* AUDITINGSYSTEMREPORTALLMSG_H */

@@ -9,7 +9,7 @@
  *        Autor:        Felix Theodor Blueml
  *
  *
- *        Modul:        Software Watchdog, Version 1.2
+ *        Modul:        Software Watchdog, Version 1.5
  *
  *        Beschreibung:
  *        Der Software-Watchdog erkennt Deadlocks im Programmablauf. Bei

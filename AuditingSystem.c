@@ -7,7 +7,7 @@
  *        Autor:        Felix Theodor Blueml
  *
  *
- *        Modul:        Auditing-System, Version 0.3
+ *        Modul:        Auditing-System, Version 0.4
  *
  *        Beschreibung:
  *        Das Auditing-System uebermittelt alle gelieferten
@@ -22,11 +22,20 @@
 
 /* Includes *****************************************************************/
 
+#include <intrins.h>	// _nop_();
 #include "AuditingSystem.h"
 #include "Betriebsmittelverwaltung.h"
 
 
 /* Definition globaler Konstanten *******************************************/
+
+#ifndef MAX_MELDUNGEN
+	#define MAX_MELDUNGEN	30
+#endif
+/*
+ * Kapazitat des Ringpuffers. Maximale Anzahl der zu puffernden Meldungen.
+ */
+
 
 #ifndef WRITE
 	#define WRITE	0
@@ -59,49 +68,42 @@
 
 /* Definition globaler Variablen ********************************************/
 
-static byte AS_msg_array[15][7];
+static byte AS_msg_array[MAX_MELDUNGEN][7];
 /*
  *  Description: Ringpuffer zum speichern der Statusmeldungen der Module.
- *  Values     : [0-14][0]:    0 = Leitzentrale
- *                             1 = Befehlsvalidierung
- *                             2 = Ergebnisvalidierung
- *                            16 = Leitzentrale, Pufferueberlauf
- *                            17 = Befehlsvalidierung, Pufferueberlauf
- *                            18 = Ergebnisvalidierung, Pufferueberlauf
+ *  Values     : [0-(MAX_MELDUNGEN-1)][0]:
+ *                0 = Leitzentrale
+ *                1 = Befehlsvalidierung
+ *                2 = Ergebnisvalidierung
+ *               16 = Leitzentrale, Pufferueberlauf
+ *               17 = Befehlsvalidierung, Pufferueberlauf
+ *               18 = Ergebnisvalidierung, Pufferueberlauf
  *               (Modulnummer und ggf. Flag fuer Pufferueberlauf)
  *               
- *               [0-14][1-6]: 0-255	(Statusmeldung)
+ *               [0-(MAX_MELDUNGEN-1)][1-6]: 0-255	(Statusmeldung)
  *               (Siehe die Beschreibung des jeweiligen Moduls)
  */
 
 static byte AS_read_next_msg;
 /*
  *  Description: Lesezeiger ("OUT-Index") fer den Ringpuffer.
- *  Values     : 0-14	(Lesezeiger)
+ *  Values     : 0-(MAX_MELDUNGEN-1)	(Lesezeiger)
  */
 
 static byte AS_fill_next_msg;
 /*
  *  Description: Schreibezeiger ("IN-Index") fuer den Ringpuffer.
- *  Values     : 0-14	(Schreibezeiger)
+ *  Values     : 0-(MAX_MELDUNGEN-1)	(Schreibezeiger)
  */
 
 static byte AS_msg_counter;
 /*
  *  Description: Fuellstandzaehler fuer den Ringpuffer.
- *  Values     : 0-15	(Anzahl der Elemente im Ringpuffer)
+ *  Values     : 0-MAX_MELDUNGEN	(Anzahl der Elemente im Ringpuffer)
  */
 
 
 /* Lokale Makros ************************************************************/
-
-#ifndef _nop_
-	#define _nop_	;
-#endif
-/*
- * Leeranweisung zum Zeitvertreib.
- */
-
 
 /* Lokale Typen *************************************************************/
 
@@ -120,6 +122,14 @@ byte _i2c_error;
 
 
 /* Prototypen fuer lokale Funktionen ****************************************/
+
+/*
+ * warten()
+ * 1,568 ms verstreichen lassen.
+ * 
+ * Rueckgabe: Keine
+ */
+void warten(void);
 
 // Uebernommene Funktionen aus der Datei I2C_SW.C //
 
@@ -248,10 +258,11 @@ void initAS()
  * ausserhalb des gueltigen Bereichs befindet. Wenn dem so ist, so wird die
  * Modul-ID module_id um 16 erhoeht, sodass sie die Form 1Xh erhaelt. Der
  * Lesezeiger AS_read_next_msg wird korrigiert, in dem er auf die zweit
- * aelteste Meldung gesetzt wird. Der Fuellstandzaehler wird auf 14 gesetzt um
- * einerseits ggf. wieder in den Gueltigkeitsbereich zu gelangen. Andererseits
- * geschieht dies, da er im Folgenden wieder erhoeht wird und somit
- * nach-wie-vor den Befuellungsstand voll beibehaelt.
+ * aelteste Meldung gesetzt wird. Der Fuellstandzaehler wird auf
+ * (MAX_MELDUNGEN-1) gesetzt um einerseits ggf. wieder in den
+ * Gueltigkeitsbereich zu gelangen. Andererseits geschieht dies, da er im
+ * Folgenden wieder erhoeht wird und somit nach-wie-vor den Befuellungsstand
+ * voll beibehaelt.
  * Im Anschluss werden die per Parameter uebergebenen Informationen in den
  * Ringpuffer AS_msg_array an die Stelle des Schreibezeigers in der folgenden
  * Reihenfolge geschrieben:
@@ -267,7 +278,7 @@ void sendMsg(byte module_id, byte msg[6])
 {
 	byte i;
 	// Enthaellt AS_fill_next_msg falschen Wert?
-	if(AS_fill_next_msg >= 15)
+	if(AS_fill_next_msg >= MAX_MELDUNGEN)
 	{
 		// Sicherstellen, dass nicht wahllos in den Speicher
 		// geschrieben wird
@@ -275,16 +286,16 @@ void sendMsg(byte module_id, byte msg[6])
 	}
 	
 	// Pufferueberlauf oder enthaellt AS_msg_counter falschen Wert?
-	if(AS_msg_counter >= 15)
+	if(AS_msg_counter >= MAX_MELDUNGEN)
 	{
 		// Pufferueberlauf signalisieren
 		module_id = module_id + 0x10;
 		
 		// Lesezeiger auf die aelteste Meldung setzen
-		AS_read_next_msg = (AS_read_next_msg+1) % 15;
+		AS_read_next_msg = (AS_read_next_msg+1) % MAX_MELDUNGEN;
 		
 		// Fuellstand um 1 verringern
-		AS_msg_counter = 14;
+		AS_msg_counter = MAX_MELDUNGEN-1;
 	}
 	
 	// Modulnummer und Statusmeldung zusammen im Ringpuffer speichern
@@ -302,16 +313,17 @@ void sendMsg(byte module_id, byte msg[6])
 	
 	// Schreibezeiger auf die naechste zu ueberschreibende
 	// Meldung setzen
-	AS_fill_next_msg = (AS_fill_next_msg+1) % 15;
+	AS_fill_next_msg = (AS_fill_next_msg+1) % MAX_MELDUNGEN;
 }
 
 /*
  * workAS()
  * Schnittstelle nur fuer das Modul Betriebsmittelverwaltung. Die
- * Schnittstelle dient dem Auslesen der Meldungen der Module aus dem
+ * Schnittstelle dient dem Auslesen maximal vier Meldungen der Module aus dem
  * Ringpuffer und deren Versendung ueber den I2C-Bus.
- * Die Uebertragung eines komplett befuellten Puffers bedeutet, dass 105 Bytes
- * (15 Meldungen) versendet werden sollen.
+ * Fuer diese Uebertragung werden 28 Bytes versendet.
+ * Vor jedem erneuten Aufruf dieser Schnittstelle muessen mindestens 1,102 ms
+ * verstrichen sein.
  * 
  * Nach Aufruf dieser Schnittstelle wird ueberprueft, ob der Ringpuffer leer
  * ist. Wenn dem so ist, muessen keine Daten untersucht werden und der Vorgang
@@ -320,22 +332,18 @@ void sendMsg(byte module_id, byte msg[6])
  * gueltigen Index zeigt. Ggf. wird dieser durch Nullsetzen korrigiert.
  * Dadurch soll sichergestellt werden, dass im Folgenden nicht wahllose Werte
  * aus dem Speicher gelesen werden.
- * Der Zeitmesser timer wird mit 0 initialisiert und im Folgenden bei jeder
- * I2C-Uebertragung auf den Wert 216 ueberprueft. Wird dieser ueberstiegen,
- * wird der Vorgang beendet.
- * Es wird wiederholt versucht die I2C-Bus-Verbindung zum Mikrocontroller
- * "Arduino Duemilanove" herzustellen. Dazu wird die Funktion
- * I2CSendAddr(addr, rd) mit den Parametern (2, WRITE) benutzt. Bei jedem
- * Versuch wird der Zeitmesser um 5 erhoeht. 
- * Danach wird versucht, solange der Ringpuffer nicht leer ist, die naechsten
- * 7 Daten aus dem Ringpuffer an der Stelle des Lesezeigers AS_read_next_msg
- * mit Hilfe der Funktion I2CSendByte(bt) zu versenden. Bei jedem
- * Sendeversuch wird der Zeitmesser jeweils um 2 erhoeht.
- * Nachdem jeweils die 7 Daten versendet wurden, wird der Lesezeiger auf die
- * naechste Meldung gesetzt und der Fuellstandszaehler um 1 dekrementiert.
- * Ist der Vorgang des Daten aus dem Ringpuffers versenden abgeschlossen,
- * wird die Verbindung getrennt. Dazu wird die Funktion I2CSendStop() benutzt
- * Bei jedem Versuch wird der Zeitmesser um 1 erhoeht.
+ * Es wird versucht die I2C-Bus-Verbindung zum AD herzustellen. Dazu wird die
+ * Funktion I2CSendAddr(addr, rd) mit den Parametern (8, WRITE) benutzt.
+ * Schlaegt die Verbindung fehl, wird der Vorgang beendet.
+ * Danach wird versucht maximal vier Meldungen zu versenden. Dazu werden
+ * jeweils die naechsten 7 Daten aus dem Ringpuffer an der Stelle des
+ * Lesezeigers AS_read_next_msg gelesen und mit Hilfe der Funktion
+ * I2CSendByte(bt) wird sucht, sie zu versenden. Schlaegt die Verbindung fehl,
+ * wird erst versucht die Verbindung zu beenden und danach wird der Vorgang
+ * beendet.
+ * Ist der Vorgang des Daten aus dem Ringpuffers versenden abgeschlossen, wird
+ * versucht die Verbindung zu beenden. Dazu wird die Funktion I2CSendStop()
+ * benutzt.
  * 
  * Rueckgabe: Keine
  * 
@@ -343,9 +351,10 @@ void sendMsg(byte module_id, byte msg[6])
  */
 void workAS()
 {
-	// Zeitmesser; dient der Verhinderung des Ueberschreitens des
-	// vorgegebenen Zeitfensters von 20 ms
-	byte timer = 0;
+	byte max;	// Maximale Anzahl Mitteilungen, die versendet werden
+
+	byte i, j;	// Zaehler fuer die beiden for-Schleifen, fuer die
+			// Versendung von Mitteilungen
 
 	// Keine Elemente im Puffer zum versenden?
 	if(!AS_msg_counter)
@@ -355,90 +364,126 @@ void workAS()
 	}
 	
 	// Enthaellt AS_read_next_msg falschen Wert?
-	if(AS_read_next_msg >= 15)
+	if(AS_read_next_msg >= MAX_MELDUNGEN)
 	{
 		// Sicherstellen, dass nicht wahllos irgendwelche Werte aus
 		// dem Speicher gelesen werden
 		AS_read_next_msg = 0;
 	}
 	
-	
-	// Versuche eine schreibende Verbindung zum Arduino mit der Adresse 4
-	// herzustellen
+
+	// Versuche eine schreibende Verbindung zum Arduino mit der
+	// Adresse 4 herzustellen
+
 	_i2c_error = 255; // Status: Kein Fehler
-	do
+
+	I2CSendAddr(8, WRITE);
+
+	if(_i2c_error != 255) // Fehler erkannt?
 	{
-		I2CSendAddr(2, WRITE);
-		timer += 5; // Relative Zeitmessung
-		
-		// Gesamtzeit ueberschritten?
-		if(timer > 216)
-		{
-			// Abbruch!
-			return;
-		}
+		// Abbruch!
+		return;
 	}
-	while(_i2c_error != 255);	// Wiederhole, solange Fehler
-					// aufgetreten
-	
-	// Leere den Ringpuffer und versende die Daten
-	for(AS_msg_counter; AS_msg_counter>0; AS_msg_counter--)
+
+
+	// Lese maximal 4 Mitteilungen aus dem Ringpuffer und versende sie
+	if(AS_msg_counter<4)
 	{
-		byte i;
-		for(i=0; i<7; i++)
+		max = AS_msg_counter;
+	}
+	else
+	{
+		max = 4;
+	}
+
+	for(i=0; i<max; i++)
+	{
+		for(j=0; j<7; j++)
 		{
 			// Versuche ein Byte aus dem Ringpuffer an den Arduino
 			// zu versenden
+
 			_i2c_error = 255; // Status: Kein Fehler
-			do
+
+			I2CSendByte(AS_msg_array[AS_read_next_msg][j]);
+			
+			if(_i2c_error != 255) // Fehler erkannt?
 			{
-				I2CSendByte(
-					AS_msg_array[AS_read_next_msg][i]
-				);
-				timer += 2; // Relative Zeitmessung
-				
-				// Gesamtzeit ueberschritten?
-				if(timer > 216)
-				{
-					// Abbruch!
-					return;
-				}
+				// Versuche die Verbindung zu beenden
+				I2CSendStop();
+
+				// Abbruch!
+				return;
 			}
-			while(_i2c_error != 255);	// Wiederhole, solange
-							// Fehler aufgetreten
 		}
 		
+
 		// Eine komplette Statusmeldung wurde versendet,
 		// Lesezeiger auf die naechste zu sendende Meldung setzen
-		AS_read_next_msg = (AS_read_next_msg+1) % 15;
+		AS_read_next_msg = (AS_read_next_msg+1) % MAX_MELDUNGEN;
+
+		// Fuellstand um 1 verringern
+		AS_msg_counter--;
 	}
-	
-	
+
 	// Versuche die Verbindung zu beenden
-	_i2c_error = 255; // Status: Kein Fehler
-	do
-	{
-		I2CSendStop();
-		timer += 1; // Relative Zeitmessung
-		
-		// Gesamtzeit ueberschritten?
-		if(timer > 216)
-		{
-			// Abbruch!
-			return;
-		}
-	}
-	while(_i2c_error != 255);	// Wiederhole, solange Fehler
-					// aufgetreten
+	I2CSendStop();
 }
 
+/*
+ * reportAllMsg()
+ * Schnittstelle nur fuer das Modul Not-Aus-Treiber. Die Schnittstelle dient
+ * dem Auslesen aller Meldungen der Module aus dem Ringpuffer und deren
+ * Versendung ueber den I2C-Bus.
+ * Diese Schnittstelle darf nur bei deaktiviertem Watchdog aufgerufen werden.
+ * 
+ * Nach Aufruf dieser Schnittstelle wird zehn mal abwechselnd 1,568 ms
+ * gewartet und die Schnittstelle workAS() aufgerufen.
+ * 
+ * Rueckgabe: Keine
+ * 
+ * Autor: Felix Blueml
+ */
+void reportAllMsg()
+{
+	byte i;
+  	for(i=0; i<10; i++)
+	{
+		warten();
+		workAS();
+	}
+
+}
+
+/*
+ * warten()
+ * 1,568 ms verstreichen lassen.
+ * 
+ * Rueckgabe: Keine
+ * 
+ * Autor: Felix Blueml
+ */
+void warten()
+{
+	byte i;
+  	for(i=0; i<200; i++)
+	{
+		_nop_();
+		_nop_();
+		_nop_();
+		_nop_();
+		_nop_();
+		_nop_();
+	}
+
+}
 
 // Uebernommene Funktionen aus der Datei I2C_SW.C //
 
 /*
  * _I2CBitDly()
  * wait 4.7uS, or thereabouts
- * tune to xtal. This works at 11.0592MHz
+ * tune to xtal. This works at 10MHz
  * 
  * Rueckgabe: Keine
  * 
@@ -446,7 +491,15 @@ void workAS()
  */
 void _I2CBitDly()
 {
-	_nop_;		// delay is 5.4uS, only 4.3uS without
+	// 8 mal einen NOP (Leerbefehl) ausfuehren um 4,8 us zu warten
+	_nop_(); // je 600 ns warten
+	_nop_();
+	_nop_();
+	_nop_();
+	_nop_();
+	_nop_();
+	_nop_();
+	_nop_();
 	return;
 }
 

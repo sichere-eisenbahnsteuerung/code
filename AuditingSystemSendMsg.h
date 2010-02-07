@@ -9,7 +9,7 @@
  *        Autor:        Felix Theodor Blueml
  *
  *
- *        Modul:        Auditing-System, Version 0.3
+ *        Modul:        Auditing-System, Version 0.4
  *
  *        Beschreibung:
  *        Das Auditing-System uebermittelt alle gelieferten

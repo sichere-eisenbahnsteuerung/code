@@ -9,7 +9,7 @@
  *        Autor:        Felix Theodor Blueml
  *
  *
- *        Modul:        Software Watchdog, Version 1.2
+ *        Modul:        Software Watchdog, Version 1.5
  *
  *        Beschreibung:
  *        Der Software-Watchdog erkennt Deadlocks im Programmablauf. Bei
@@ -41,7 +41,7 @@
  */  
 
 #ifndef SW_TAKTRATE_C515C
-	#define SW_TAKTRATE_C515C	12000000
+	#define SW_TAKTRATE_C515C	10000000
 #endif
 /*
  * Taktrate des Mikrocontrollers C515C in Hz.
