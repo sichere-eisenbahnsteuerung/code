@@ -14,6 +14,7 @@
  *        Software Watchdog in der Version 1.6.
  *        Testname: Modul-Rueckmeldung, negativ
  *        Szenario: Abschalten des SW und Modul-Rueckmeldung beim SW.
+ *        Testspezifikationsversion: 0.1
  *
  ****************************************************************************/
 

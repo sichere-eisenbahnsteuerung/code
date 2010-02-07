@@ -16,6 +16,7 @@
  *        Software Watchdog in der Version 1.6.
  *        Testname: Zeitfenster
  *        Szenario: Pruefen der Groesse des SW-Zeitfensters.
+ *        Testspezifikationsversion: 0.1
  *
  ****************************************************************************/
 

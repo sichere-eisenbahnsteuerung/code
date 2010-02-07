@@ -16,6 +16,7 @@
  *        Software Watchdog in der Version 1.6.
  *        Testname: Rueckmeldung, abschalten
  *        Szenario: Rueckmeldung beim SW und hinterher Abschalten des SW.
+ *        Testspezifikationsversion: 0.1
  *
  ****************************************************************************/
 
