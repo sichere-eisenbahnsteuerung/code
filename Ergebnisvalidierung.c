@@ -211,15 +211,15 @@ static boolean streckenbefehleEqual(Streckenbefehl *track1, Streckenbefehl *trac
 		// Zuruecksetzen des Zaehlers, 
 		streckenbefehleUngleich = 0;
 		// Streckenbefehle vergleichen
-		return compareTracks(&track1, &track2);
+		return compareTracks(track1, track2);
 	}
 
 	// Ueberpruefung, ob die uebergebenen Streckenbefehle leer sind,
 	// falls mindestens einer nicht neu ist
-	if(!isStreckenbefehlResetted(&track1) && !isStreckenbefehlResetted(&track2))
+	if(!isStreckenbefehlResetted(track1) && !isStreckenbefehlResetted(track2))
 	{
 		// Streckenbefehle vergleichen
-		if(compareTracks(&track1, &track2))
+		if(compareTracks(track1, track2))
 		{
 			// Zuruecksetzen des Zaehlers
 			streckenbefehleUngleich = 0;
@@ -441,7 +441,7 @@ static void processInternalStreckenbefehl(void)
 		if(isStreckenbefehlResetted(&EV_SSC_streckenbefehl))
 		{
 			sendNachricht(
-				E_EV_SSC, 
+				E_SSC_COUNTER, 
 				A_INFO, 
 				internerStreckenbefehl.Lok, 
 				internerStreckenbefehl.Weiche, 
@@ -460,12 +460,12 @@ static void processInternalStreckenbefehl(void)
 	{
 		// Fehler da ein alter Streckenbefehl nicht gesendet wurde
 		sendNachricht(
-					  E_EV_SSC, 
-					  A_Fehler, 
-					  internerStreckenbefehl.Lok, 
-					  internerStreckenbefehl.Weiche, 
-					  internerStreckenbefehl.Entkoppler
-					  );
+			E_SSC_COUNTER, 
+			A_FEHLER, 
+			internerStreckenbefehl.Lok, 
+			internerStreckenbefehl.Weiche, 
+			internerStreckenbefehl.Entkoppler
+			);
 		
 		// Not-Aus einleiten
 		emergency_off();
@@ -585,7 +585,7 @@ void workEV(void)
 		if(isStreckenbefehlResetted(&EV_RS232_streckenbefehl))
 		{
 			sendNachricht(
-				E_EV_RS232, 
+				E_RS232_COUNTER, 
 				A_INFO, 
 				internerStreckenbefehl.Lok, 
 				internerStreckenbefehl.Weiche, 
@@ -606,8 +606,8 @@ void workEV(void)
 	{
 		// Fehler senden, da ein alter Streckenbefehl nicht gesendet werden konnte
 		sendNachricht(
-			E_EV_RS232, 
-			A_Fehler, 
+			E_RS232_COUNTER, 
+			A_FEHLER, 
 			internerStreckenbefehl.Lok, 
 			internerStreckenbefehl.Weiche, 
 			internerStreckenbefehl.Entkoppler
