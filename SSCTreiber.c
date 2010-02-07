@@ -5,7 +5,7 @@
  *        Projekt:      Sichere Eisenbahnsteuerung
  *
  *        Autor:        Matthias Buss	
- *        Datum:        13.01.2010
+ *        Datum:        07.02.2010
  *
  *        Modul:        SSC, 0.8
  *
@@ -360,12 +360,12 @@ void initSSC()
 	TEN  = 1		Transmitter enabled
 	MSTR = 1		Master Mode
 	CPOL = 0		SCLK low
-	CPHA = 1		shift, ...
+	CPHA = 1		shift, sample
 	BRS2 = 0
-	BRS1 = 0
-	BRS2 = 1		2.5 Mbaud
+	BRS1 = 1
+	BRS2 = 0		1.25 Mbaud
 	*/			
-	SSCCON = 0xE9;
+	SSCCON = 0xEA;
 	
 	//interrupts aktivieren
 	SCIEN = 0x03;
