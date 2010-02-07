@@ -219,7 +219,12 @@ static boolean streckenbefehleEqual(Streckenbefehl *track1, Streckenbefehl *trac
 	if(!isStreckenbefehlResetted(&track1) && !isStreckenbefehlResetted(&track2))
 	{
 		// Streckenbefehle vergleichen
-		return compareTracks(&track1, &track2);
+		if(compareTracks(&track1, &track2))
+		{
+			// Zuruecksetzen des Zaehlers
+			streckenbefehleUngleich = 0;
+			return TRUE;
+		}
 	}
 	
 	return FALSE;
@@ -242,8 +247,6 @@ static boolean compareTracks(Streckenbefehl *track1, Streckenbefehl *track2)
 	   track1->Weiche == track2->Weiche &&
 	   track1->Entkoppler == track2->Entkoppler)
 	{
-		// Sind diese gleich, wird der Zaehler zurueckgesetzt ...
-		streckenbefehleUngleich = 0;
 		// und die Funktion mit dem Wert TRUE verlassen.
 		return TRUE;
 	}
@@ -415,7 +418,7 @@ static void processInternalStreckenbefehl(void)
 	// Neuer Streckenbefehl im Shared Memory von der Befehlsvalidierung?
 	if(isStreckenbefehlResetted(&BV_EV_streckenbefehl))
 	{
-		// Falls kein neuner Streckenbefehl vorhanden ist,
+		// Falls kein neuer Streckenbefehl vorhanden ist,
 		// wird die Funktion verlassen
 		return;
 	}
@@ -430,28 +433,44 @@ static void processInternalStreckenbefehl(void)
 	// Signalisieren, dass ein neuer Streckenbefehl vorhanden ist
 	isBVNew = TRUE;
 
-	// Ueberpruefung, ob der Shared Memory zum SSC-Treiber 
-	// zurueckgesetzt ist.
-	if(isStreckenbefehlResetted(&EV_SSC_streckenbefehl))
+	// Ueberpruefung ob ein alter Streckenbefehl nicht gesendet werden konnte
+	if(counterSSC == 0)
 	{
-		sendNachricht(
-			E_EV_SSC, 
-			A_INFO, 
-			internerStreckenbefehl.Lok, 
-			internerStreckenbefehl.Weiche, 
-			internerStreckenbefehl.Entkoppler
-			);
-		// Falls ja kann der interne Streckenbefehl in diesen 
-		// geschrieben werden.
-		EV_SSC_streckenbefehl = internerStreckenbefehl;
-		// Zaehlvariable zuruecksetzen
-		counterSSC = 0;
+		// Ueberpruefung, ob der Shared Memory zum SSC-Treiber 
+		// zurueckgesetzt ist.
+		if(isStreckenbefehlResetted(&EV_SSC_streckenbefehl))
+		{
+			sendNachricht(
+				E_EV_SSC, 
+				A_INFO, 
+				internerStreckenbefehl.Lok, 
+				internerStreckenbefehl.Weiche, 
+				internerStreckenbefehl.Entkoppler
+				);
+			// Falls ja kann der interne Streckenbefehl in diesen 
+			// geschrieben werden.
+			EV_SSC_streckenbefehl = internerStreckenbefehl;
+		} else 
+		{
+			sendNachricht(E_SSC_COUNTER, A_WARNING, counterSSC, 0, 0);
+			// Falls nicht, wird der Wert der Zaehlvariable erhoeht.
+			counterSSC = 1;
+		}
 	} else 
 	{
-		sendNachricht(E_SSC_COUNTER, A_WARNING, counterSSC, 0, 0);
-		// Falls nicht, wird der Wert der Zaehlvariable erhoeht.
-		counterSSC++;
+		// Fehler da ein alter Streckenbefehl nicht gesendet wurde
+		sendNachricht(
+					  E_EV_SSC, 
+					  A_Fehler, 
+					  internerStreckenbefehl.Lok, 
+					  internerStreckenbefehl.Weiche, 
+					  internerStreckenbefehl.Entkoppler
+					  );
+		
+		// Not-Aus einleiten
+		emergency_off();
 	}
+
 }
 
 /*
@@ -558,28 +577,46 @@ void workEV(void)
 * Senden des internen Streckenbefehls an den RS232-Treiber 
 */
 
-	// Ueberpruefung, ob der Shared Memory zum RS232-Treiber 
-	// zurueckgesetzt ist.
-	if(isStreckenbefehlResetted(&EV_RS232_streckenbefehl))
+	// Ueberpruefung ob ein alter Streckenbefehl nicht gesendet werden konnte
+	if(counterRS232 == 0)
 	{
+		// Ueberpruefung, ob der Shared Memory zum RS232-Treiber 
+		// zurueckgesetzt ist.
+		if(isStreckenbefehlResetted(&EV_RS232_streckenbefehl))
+		{
+			sendNachricht(
+				E_EV_RS232, 
+				A_INFO, 
+				internerStreckenbefehl.Lok, 
+				internerStreckenbefehl.Weiche, 
+				internerStreckenbefehl.Entkoppler
+				);
+			// Falls ja kann der interne Streckenbefehl in diesen 
+			// geschrieben werden.
+			EV_RS232_streckenbefehl = internerStreckenbefehl;
+		} else 
+		{
+			sendNachricht(E_RS232_COUNTER, A_WARNING, counterRS232, 0, 0);
+			// Falls nicht, wird der Wert der Zaehlvariable erhoeht ...
+			counterRS232 = 1;
+			// und das Modul verlassen.
+			return;
+		}
+	} else 
+	{
+		// Fehler senden, da ein alter Streckenbefehl nicht gesendet werden konnte
 		sendNachricht(
 			E_EV_RS232, 
-			A_INFO, 
+			A_Fehler, 
 			internerStreckenbefehl.Lok, 
 			internerStreckenbefehl.Weiche, 
 			internerStreckenbefehl.Entkoppler
 			);
-		// Falls ja kann der interne Streckenbefehl in diesen 
-		// geschrieben werden.
-		EV_RS232_streckenbefehl = internerStreckenbefehl;
-	} else 
-	{
-		sendNachricht(E_RS232_COUNTER, A_WARNING, counterRS232, 0, 0);
-		// Falls nicht, wird der Wert der Zaehlvariable erhoeht ...
-		counterRS232++;
-		// und das Modul verlassen.
-		return;
+		
+		// Not-Aus einleiten
+		emergency_off();
 	}
+
 
 /*
 * Verarbeitungsschritt 6:
