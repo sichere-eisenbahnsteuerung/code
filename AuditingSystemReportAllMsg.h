@@ -17,11 +17,13 @@
  *        I2C-Buss an den Mikrocontroller "Arduino Duemilanove".
  *        Statusmeldungen werden vor ihrer Versendung in einem Ringpuffer
  *        zwischengespeichert. Bei zugeteilter Zeitscheibe durch die
- *        Betriebsmittelverwaltung werden alle gesammelten Meldungen
- *        verschickt.
+ *        Betriebsmittelverwaltung werden max. vier gesammelte Meldungen
+ *        verschickt. Bei erkanntem Versagen des Systems, gibt das Modul
+ *        Not-Aus-Treiber das Kommando alle gesammelten Meldungen zu
+ *        verschicken.
  *
  *        Diese Headerdatei ist fuer das Modul Not-Aus-Treiber vorgesehen. Sie
- *        enthaellt den Prototypen fuer die Schnittstelle sendAll.
+ *        enthaellt den Prototypen fuer die Schnittstelle reportAllMsg.
  *
  ****************************************************************************/
 
