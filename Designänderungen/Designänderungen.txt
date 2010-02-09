@@ -1,1 +1,4 @@
 Änderungen an den Design-Dokumenten:
+
+Betriebsmittelverwaltung:
+Der Streckenbefehl "RS232_EV_streckenebefehl" wurde hinzugefügt.

@@ -47,6 +47,7 @@ byte EV_SSC_failure = LEER;
 byte SSC_EV_failure = LEER; 
 byte SW_status_array[6] = {LEER,LEER,LEER,LEER,LEER,LEER}; 
 Streckenbefehl EV_RS232_streckenbefehl = {LEER,LEER,LEER,0};
+Streckenbefehl RS232_EV_streckenbefehl = {LEER,LEER,LEER,0};
 byte AS_msg_counter = LEER;
 
 /**
