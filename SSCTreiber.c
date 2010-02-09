@@ -367,8 +367,22 @@ void initSSC()
 	*/			
 	SSCCON = 0xEA;
 	
+	//interrupt Konfiguration
+	EAL = 1;
+	//ESSC deaktivieren, damit SCIEN beschrieben werden darf
+	IEN2 &= ~(1<<2);
 	//interrupts aktivieren
 	SCIEN = 0x03;
+	//ESSC setzen (drittes Bit im IEN2 Register)
+	IEN2 |= (1<<2);
+
+	//Priorität festlegen, Level 2
+	//setze IP0.2 auf 0
+	IP0 &= (1<<2);
+
+	//setze IP1.2 auf 1
+	IP1 |= (1<<2);
+
 }
 
 
