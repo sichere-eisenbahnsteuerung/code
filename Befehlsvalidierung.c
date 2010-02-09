@@ -40,6 +40,9 @@ byte BV_zugPosition[BV_ANZAHL_ZUEGE];
 	// Nicht hoeher als 30 !
 #define MAX_KRITISCH 5
 #endif
+#ifndef UNGUELTIG
+#define UNGUELTIG 99
+#endif
 
 /* Lokale Typen *************************************************************/
 
@@ -106,7 +109,7 @@ static Gleisabschnitt streckentopologie[BV_ANZAHL_GLEISABSCHNITTE + 1];
 static byte gleisBelegung[BV_ANZAHL_GLEISABSCHNITTE + 1] =
 	{	0,0,
 		3,	// Abschn. 2: Drei Gueterwaggons
-		0,0,0,	
+		0,0,0,0,
 		3,	// Abschn. 7: Lok1 inkl. zwei Passagierwaggons
 		1,	// Abschn. 8: Rangierlokomotive
 		0
@@ -185,13 +188,16 @@ static void sendStreckenBefehl(void);
 // Hilfsfunktionen
 static void copyStreckenBelegung(void);
 static void defineStreckenTopologie(void);
-static boolean zugNebenSensor(byte sensorNr, byte *zugNr, byte *richtung);
-static boolean sensorNachbarn(byte sensorNr, byte *nextAbs, byte *prevAbs,
-					byte *nSwitch, byte *pSwitch);
+static boolean zugNebenSensor(byte sensorNr,
+		/*@out@*/ byte *zugNr, /*@out@*/ byte *richtung);
+static boolean sensorNachbarn(byte sensorNr,
+		/*@out@*/ byte *nextAbs, /*@out@*/ byte *prevAbs,
+		/*@out@*/ byte *nSwitch, /*@out@*/ byte *pSwitch);
 static boolean checkKritischerZustand(void);
 static boolean weicheRichtig(byte zugPos, byte richtung, byte ziel, byte weiche);
 static boolean zugFaehrtAufWeicheZu(byte weicheNr);
-static void zielGleisUndWeiche(byte zugPos, byte richtung, byte *ziel, byte *weiche);
+static void zielGleisUndWeiche(byte zugPos, byte richtung,
+		/*@out@*/ byte *ziel, /*@out@*/ byte *weiche);
 static void sendNachricht(Zustand zustand, Fehler fehler);
 
 /* Funktionsimplementierungen ***********************************************/
@@ -397,7 +403,11 @@ static boolean checkSensorDaten(void)
 		}
 		
 		// Suche die Nachbar-Abschnitte und -Weichen des Sensors
-		sensorNachbarn(z, &nextAbs, &prevAbs, &nSwitch, &pSwitch);
+		if (sensorNachbarn(z, &nextAbs, &prevAbs, &nSwitch, &pSwitch) == FALSE)
+		{
+			return FALSE;
+		}
+		
 		
 		// Fahrtrichtung des Zuges? 0 = rueckwaerts, 1 = vorwaerts
 		inkr = (richtung == 1) ? 1 : -1;
@@ -470,7 +480,8 @@ static boolean sendSensorDaten(void)
 
 static boolean checkStreckenBefehl(void)
 {
-	byte weicheNr, entkopplerNr;
+	byte weicheNr = 0;
+	byte entkopplerNr = 0;
 	// Wenn Befehl leer ist, nichts weiter pruefen
 	if (	(LZ_BV_streckenbefehl.Entkoppler == LEER) &&
 		(LZ_BV_streckenbefehl.Weiche == LEER) &&
@@ -765,7 +776,8 @@ static void defineStreckenTopologie(void)
 	}
 }
 
-static boolean zugNebenSensor(byte sensorNr, byte *zugNr, byte *richtung)
+static boolean zugNebenSensor(byte sensorNr,
+	/*@out@*/ byte *zugNr, /*@out@*/ byte *richtung)
 {
 	byte zug1 = zugPosition[0];
 	byte zug2 = zugPosition[1];
@@ -824,12 +836,14 @@ static boolean zugNebenSensor(byte sensorNr, byte *zugNr, byte *richtung)
 	}
 	else
 	{
+		*zugNr = UNGUELTIG;
+		*richtung = UNGUELTIG;
 		return FALSE;
 	};
 }
 
-static boolean sensorNachbarn(byte sensorNr, byte *nextAbs, byte *prevAbs,
-				byte *nSwitch, byte *pSwitch)
+static boolean sensorNachbarn(byte sensorNr, /*@out@*/ byte *nextAbs, /*@out@*/ byte *prevAbs,
+				/*@out@*/ byte *nSwitch, /*@out@*/ byte *pSwitch)
 {
 	byte z;
 	*nextAbs = 0; *prevAbs = 0; *nSwitch = 0; *pSwitch = 0;
@@ -967,8 +981,8 @@ static boolean weicheRichtig(byte zugPos, byte richtung, byte ziel, byte weiche)
 
 static boolean zugFaehrtAufWeicheZu(byte weicheNr)
 {
-	byte z, zug;
-	for (zug = 0; z < BV_ANZAHL_ZUEGE; z++)
+	byte zug;
+	for (zug = 0; zug < BV_ANZAHL_ZUEGE; zug++)
 	{
 		byte ziel, weiche;
 		byte zugPos = zugPosition[zug];
@@ -990,7 +1004,8 @@ static boolean zugFaehrtAufWeicheZu(byte weicheNr)
 	return FALSE;
 }
 
-static void zielGleisUndWeiche(byte zugPos, byte richtung, byte *ziel, byte *weiche)
+static void zielGleisUndWeiche(byte zugPos, byte richtung,
+	/*@out@*/ byte *ziel, /*@out@*/ byte *weiche)
 {
 	Gleisabschnitt gleis;
 	gleis = streckentopologie[zugPos];
@@ -1004,7 +1019,7 @@ static void zielGleisUndWeiche(byte zugPos, byte richtung, byte *ziel, byte *wei
 		}
 	}
 
-	if (richtung == 0)
+	else if (richtung == 0)
 	{
 		*ziel = gleis.prev1;
 		*weiche = gleis.prevSwitch;
@@ -1012,6 +1027,10 @@ static void zielGleisUndWeiche(byte zugPos, byte richtung, byte *ziel, byte *wei
 		{
 			*ziel = gleis.prev2;
 		}
+	}
+	else {
+		*ziel = UNGUELTIG;
+		*weiche = UNGUELTIG;
 	}
 }
 
