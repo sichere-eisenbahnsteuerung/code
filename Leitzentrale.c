@@ -514,7 +514,7 @@ static void sendNachricht(FehlerCode fehlerCode) {
 	default:
 		break;
 	}
-	/* TEST sendMsg(MODULE_ID,nachricht); */
+	sendMsg(MODULE_ID,nachricht);
 }
 
 static void setZustandFuerFahranweisung(byte gleisabschnittNr) {
@@ -774,6 +774,6 @@ void workLZ() {
 			break;
 		}
 		// Meldung beim Software-Watchdog machen
-		/* TEST helloModul(MODULE_ID,wdStatus); */
+		helloModul(MODULE_ID,wdStatus);
 	}
 }
