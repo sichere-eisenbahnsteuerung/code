@@ -330,7 +330,7 @@ static Fahranweisung getFahranweisung() {
 	// Wenn eine Fahranweisungsequenz wiederholt werden soll,
 	// dann lese solange aus dem Ringpuffer, bis die letzte
 	// Schreibposition wieder erreicht wurde.
-	if(wiederholen == TRUE || lesen[lok] != schreiben[lok]) {
+	if(wiederholen[lok] == TRUE || lesen[lok] != schreiben[lok]) {
 		fa = fahranweisungRingpuffer[lok][lesen[lok]];
 		lesen[lok] = (lesen[lok] + 1) % 3;
 	}
@@ -514,7 +514,7 @@ static void sendNachricht(FehlerCode fehlerCode) {
 	default:
 		break;
 	}
-	sendMsg(MODULE_ID,nachricht);
+	/* TEST sendMsg(MODULE_ID,nachricht); */
 }
 
 static void setZustandFuerFahranweisung(byte gleisabschnittNr) {
@@ -590,7 +590,15 @@ void workLZ() {
 	// Aktuelle Sensordaten holen
 	sensordaten = getSensordaten();
 	// Status des Kuppelsensors speichern
-	kuppelSensor = (sensordaten.Byte1 >> 5) & 0x1;
+	// Sensorbelegung ist als als 16-Bit Liste in zwei Bytes gespeichert
+	// Je nachdem, ob die Sensor-Nr größer oder kleiner 8 ist, muss
+	// das erste oder das zweite Byte angesprochen werden.
+	if(KUPPELSENSOR_NR > 8) {
+		kuppelSensor = (sensordaten.Byte1 >> ((KUPPELSENSOR_NR - 1) % 8)) & 0x1;
+	}
+	else {
+		kuppelSensor = (sensordaten.Byte0 >> (KUPPELSENSOR_NR - 1)) & 0x1;
+	}
 	
 	// Nacheinander jeweils das Fahrprogramm fuer Lok1 und Lok2 ausfuehren
 	for(lok=LOK1;lok<ANZAHL_LOKS;++lok) {
@@ -766,6 +774,6 @@ void workLZ() {
 			break;
 		}
 		// Meldung beim Software-Watchdog machen
-		helloModul(MODULE_ID,wdStatus);
+		/* TEST helloModul(MODULE_ID,wdStatus); */
 	}
 }
