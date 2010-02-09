@@ -26,7 +26,7 @@
 // #include "AuditingSystem.h"
 // #include "RS232.h"
 // #include "S88.h"
-// #include "SSC.h"
+// #include "SSCTreiber.h"
 // #include "Ergebnisvalidierung.h"
 // #include "Befehlsvalidierung.h"
 // #include "Leitzentrale.h"
@@ -81,7 +81,7 @@ void main (void)
 // 	hello();
 // 	initS88();
 // 	hello(); 
-// 	initSSC();
+ 	initSSC();
 // 	hello();
 // 	initEV();
 // 	hello();
@@ -100,7 +100,7 @@ void main (void)
 // 		hello();
 // 		workS88();
 // 		hello();
-// 		workSSC();
+ 		workSSC();
 // 		hello();
 // 		workBV();
 // 		hello();

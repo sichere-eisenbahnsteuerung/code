@@ -5,7 +5,7 @@
  *        Projekt:      Sichere Eisenbahnsteuerung
  *
  *        Autor:        Matthias Buss	
- *        Datum:        07.02.2010
+ *        Datum:        09.02.2010
  *
  *        Modul:        SSC, 0.8
  *
@@ -382,7 +382,6 @@ void initSSC()
 
 	//setze IP1.2 auf 1
 	IP1 |= (1<<2);
-
 }
 
 
