@@ -118,7 +118,7 @@ typedef enum {
 
 // Die Anzahl der Gleisabschnitte + 1, 
 // da die Zaehlung bei 1 beginnt, Weichen ausgenommen
-#define ANZAHL_GLEISE 11
+#define ANZAHL_GLEISE 10
 
 // Gibt an, um wieviel die Pseudo-Wartezeit pro Durchlauf verringert werden
 // soll.
