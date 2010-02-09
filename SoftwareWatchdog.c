@@ -30,6 +30,19 @@
 
 /* Definition globaler Variablen ********************************************/
 
+byte SW_status_array[7];
+/*
+ *  Description: Ringpuffer zum speichern der Statusmeldungen der Module.
+ *  Values     : [0]: Statusmeldung Leitzentrale
+ *               [1]: Statusmeldung Befehlsvalidierung
+ *               [2]: Statusmeldung Ergebnisvalidierung
+ *               [3]: Statusmeldung S88-Treiber
+ *               [4]: Statusmeldung SSC-Treiber
+ *               [5]: Statusmeldung RS232-Treiber
+ *               [6]: Statusmeldung Auditing System
+ *               (Letzter status des jeweiligen Moduls)
+ */
+
 /* Lokale Makros ************************************************************/
 
 /* Lokale Typen *************************************************************/

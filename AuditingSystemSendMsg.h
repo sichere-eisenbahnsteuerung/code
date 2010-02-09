@@ -9,7 +9,7 @@
  *        Autor:        Felix Theodor Blueml
  *
  *
- *        Modul:        Auditing-System, Version 0.4
+ *        Modul:        Auditing-System, Version 0.5
  *
  *        Beschreibung:
  *        Das Auditing-System uebermittelt alle gelieferten
@@ -42,7 +42,7 @@
 /* Deklaration von globalen Funktionen **************************************/
 
 /*
- * sendMsg(byte module_id, byte msg[6])
+ * sendMsg(byte module_id, const byte* msg)
  * Schnittstelle mit Statusmeldungen fuer Module mit zugeordneter Modulnummer.
  * Die Schnittstelle dient der Aufnahme aktueller Statusmeldungen der Module.
  * 
@@ -59,7 +59,7 @@ void sendMsg(
 	*  Values     : 0-2		(Modulnummer)
 	*/
 
-	byte msg[6] /*
+	const byte* msg /*
 	*
 	*  Description: Statusmeldung eines Moduls.
 	*  Direction  : in

@@ -9,7 +9,7 @@
  *        Autor:        Felix Theodor Blueml
  *
  *
- *        Modul:        Auditing-System, Version 0.4
+ *        Modul:        Auditing-System, Version 0.5
  *
  *        Beschreibung:
  *        Das Auditing-System uebermittelt alle gelieferten
@@ -57,8 +57,6 @@ void initAS(void);
  * Schnittstelle dient dem Auslesen von maximal vier Meldungen der Module aus
  * dem Ringpuffer und deren Versendung ueber den I2C-Bus.
  * Fuer diese Uebertragung werden 28 Bytes versendet.
- * Vor jedem erneuten Aufruf dieser Schnittstelle muessen mindestens 1,102 ms
- * verstrichen sein.
  * 
  * Rueckgabe: Keine
  */

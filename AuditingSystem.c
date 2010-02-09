@@ -7,7 +7,7 @@
  *        Autor:        Felix Theodor Blueml
  *
  *
- *        Modul:        Auditing-System, Version 0.4
+ *        Modul:        Auditing-System, Version 0.5
  *
  *        Beschreibung:
  *        Das Auditing-System uebermittelt alle gelieferten
@@ -70,7 +70,7 @@
 
 /* Definition globaler Variablen ********************************************/
 
-static byte AS_msg_array[MAX_MELDUNGEN][7];
+byte AS_msg_array[MAX_MELDUNGEN][7];
 /*
  *  Description: Ringpuffer zum speichern der Statusmeldungen der Module.
  *  Values     : [0-(MAX_MELDUNGEN-1)][0]:
@@ -86,24 +86,23 @@ static byte AS_msg_array[MAX_MELDUNGEN][7];
  *               (Siehe die Beschreibung des jeweiligen Moduls)
  */
 
-static byte AS_read_next_msg;
+byte AS_read_next_msg;
 /*
- *  Description: Lesezeiger ("OUT-Index") fer den Ringpuffer.
+ *  Description: Lesezeiger ("OUT-Index") fuer den Ringpuffer.
  *  Values     : 0-(MAX_MELDUNGEN-1)	(Lesezeiger)
  */
 
-static byte AS_fill_next_msg;
+byte AS_fill_next_msg;
 /*
  *  Description: Schreibezeiger ("IN-Index") fuer den Ringpuffer.
  *  Values     : 0-(MAX_MELDUNGEN-1)	(Schreibezeiger)
  */
 
-static byte AS_msg_counter;
+byte AS_msg_counter;
 /*
  *  Description: Fuellstandzaehler fuer den Ringpuffer.
  *  Values     : 0-MAX_MELDUNGEN	(Anzahl der Elemente im Ringpuffer)
  */
-
 
 /* Lokale Makros ************************************************************/
 
@@ -123,6 +122,29 @@ byte _i2c_error;
  */
 
 
+// Die folgenden Variablen werden nur global eingesetzt, um //
+// bestimmte Funktionen auch vom Interrupt "timer0overflow" //
+// des Moduls Software-Watchdog aufrufen zu koennen:        //
+
+// Variablen der Funktion workAS
+byte maxSendMsg_workAS;
+/*
+ *  Description: Maximale Anzahl Mitteilungen, die versendet werden.
+ */
+
+byte i_workAS, j_workAS;
+/*
+ *  Description: Zaehler fuer die beiden for-Schleifen, fuer die
+ *               Versendung von Mitteilungen.
+ */
+
+// Variable der Funktion I2CSendByte
+byte i_I2CSendByte;
+
+// Variable der Funktion _I2CSCLHigh
+int err__I2CSCLHigh;
+
+
 /* Prototypen fuer lokale Funktionen ****************************************/
 
 /*
@@ -132,6 +154,7 @@ byte _i2c_error;
  * Rueckgabe: Keine
  */
 void warten(void);
+
 
 // Uebernommene Funktionen aus der Datei I2C_SW.C //
 
@@ -164,7 +187,7 @@ void I2CSendAddr(
 	*  Description: Adresse des Geraetes, mit dem ueber I2C kommuniziert
 	*               werden soll.
 	*               addr * 2 entspricht der Adresse des gewuenschten
-	*		Geraets.
+	*               Geraets.
 	*  Direction  : in
 	*  Values     : 0-255 (?)	(Adresse*2)
 	*/  
@@ -246,7 +269,7 @@ void initAS()
 }
 
 /*
- * sendMsg(byte module_id, byte msg[6])
+ * sendMsg(byte module_id, const byte* msg)
  * Schnittstelle mit Statusmeldungen fuer Module mit zugeordneter Modulnummer.
  * (Siehe dazu den Prototypen-Kommentar in der Header-Datei
  * AuditingSystemSendMsg.h)
@@ -276,10 +299,11 @@ void initAS()
  * 
  * Autor: Felix Blueml
  */
-void sendMsg(byte module_id, byte msg[6])
+void sendMsg(byte module_id, const byte* msg)
 {
 	byte i;
-	// Enthaellt AS_fill_next_msg falschen Wert?
+	
+	// Enthaellt AS_fill_next_msg einen falschen Wert?
 	if(AS_fill_next_msg >= MAX_MELDUNGEN)
 	{
 		// Sicherstellen, dass nicht wahllos in den Speicher
@@ -300,7 +324,7 @@ void sendMsg(byte module_id, byte msg[6])
 		AS_msg_counter = MAX_MELDUNGEN-1;
 	}
 	
-	// Modulnummer und Statusmeldung zusammen im Ringpuffer speichern
+	// Modulnummer und Statusmeldung zusammen im Ringpuffer speichern.
 	// speichere Modulnummer
 	AS_msg_array[AS_fill_next_msg][0] = module_id;
 	
@@ -324,8 +348,6 @@ void sendMsg(byte module_id, byte msg[6])
  * Schnittstelle dient dem Auslesen maximal vier Meldungen der Module aus dem
  * Ringpuffer und deren Versendung ueber den I2C-Bus.
  * Fuer diese Uebertragung werden 28 Bytes versendet.
- * Vor jedem erneuten Aufruf dieser Schnittstelle muessen mindestens 1,102 ms
- * verstrichen sein.
  * 
  * Nach Aufruf dieser Schnittstelle wird ueberprueft, ob der Ringpuffer leer
  * ist. Wenn dem so ist, muessen keine Daten untersucht werden und der Vorgang
@@ -334,7 +356,8 @@ void sendMsg(byte module_id, byte msg[6])
  * gueltigen Index zeigt. Ggf. wird dieser durch Nullsetzen korrigiert.
  * Dadurch soll sichergestellt werden, dass im Folgenden nicht wahllose Werte
  * aus dem Speicher gelesen werden.
- * Es wird versucht die I2C-Bus-Verbindung zum AD herzustellen. Dazu wird die
+ * Es wird eine Wartepause von 1,568 ms eingelegt.
+ * Dann wird versucht die I2C-Bus-Verbindung zum AD herzustellen. Dazu wird die
  * Funktion I2CSendAddr(addr, rd) mit den Parametern (8, WRITE) benutzt.
  * Schlaegt die Verbindung fehl, wird der Vorgang beendet.
  * Danach wird versucht maximal vier Meldungen zu versenden. Dazu werden
@@ -353,10 +376,13 @@ void sendMsg(byte module_id, byte msg[6])
  */
 void workAS()
 {
-	byte max;	// Maximale Anzahl Mitteilungen, die versendet werden
+	// Maximale Anzahl Mitteilungen, die versendet werden.
+	// byte maxSendMsg_workAS; // ist globale Variable
 
-	byte i, j;	// Zaehler fuer die beiden for-Schleifen, fuer die
-			// Versendung von Mitteilungen
+	// Zaehler fuer die beiden for-Schleifen, fuer die Versendung von
+	// Mitteilungen.
+	// byte i_workAS, j_workAS; // sind globale Variablen
+
 
 	// Keine Elemente im Puffer zum versenden?
 	if(!AS_msg_counter)
@@ -365,7 +391,7 @@ void workAS()
 		return;
 	}
 	
-	// Enthaellt AS_read_next_msg falschen Wert?
+	// Enthaellt AS_read_next_msg einen falschen Wert?
 	if(AS_read_next_msg >= MAX_MELDUNGEN)
 	{
 		// Sicherstellen, dass nicht wahllos irgendwelche Werte aus
@@ -373,6 +399,8 @@ void workAS()
 		AS_read_next_msg = 0;
 	}
 	
+	warten(); // eine Wartepause einlegen
+
 
 	// Versuche eine schreibende Verbindung zum Arduino mit der
 	// Adresse 4 herzustellen
@@ -391,23 +419,23 @@ void workAS()
 	// Lese maximal 4 Mitteilungen aus dem Ringpuffer und versende sie
 	if(AS_msg_counter<4)
 	{
-		max = AS_msg_counter;
+		maxSendMsg_workAS = AS_msg_counter;
 	}
 	else
 	{
-		max = 4;
+		maxSendMsg_workAS = 4;
 	}
 
-	for(i=0; i<max; i++)
+	for(i_workAS=0; i_workAS<maxSendMsg_workAS; i_workAS++)
 	{
-		for(j=0; j<7; j++)
+		for(j_workAS=0; j_workAS<7; j_workAS++)
 		{
 			// Versuche ein Byte aus dem Ringpuffer an den Arduino
 			// zu versenden
 
 			_i2c_error = 255; // Status: Kein Fehler
 
-			I2CSendByte(AS_msg_array[AS_read_next_msg][j]);
+			I2CSendByte(AS_msg_array[AS_read_next_msg][j_workAS]);
 			
 			if(_i2c_error != 255) // Fehler erkannt?
 			{
@@ -439,8 +467,8 @@ void workAS()
  * Versendung ueber den I2C-Bus.
  * Diese Schnittstelle darf nur bei deaktiviertem Watchdog aufgerufen werden.
  * 
- * Nach Aufruf dieser Schnittstelle wird zehn mal abwechselnd 1,568 ms
- * gewartet und die Schnittstelle workAS() aufgerufen.
+ * Nach Aufruf dieser Schnittstelle wird solange die Schnittstelle workAS()
+ * aufgerufen, bis keine Meldungen mehr im Ringpuffer vorhanden sind.
  * 
  * Rueckgabe: Keine
  * 
@@ -448,13 +476,10 @@ void workAS()
  */
 void reportAllMsg()
 {
-	byte i;
-  	for(i=0; i<10; i++)
+	while(AS_msg_counter)
 	{
-		warten();
 		workAS();
 	}
-
 }
 
 /*
@@ -470,7 +495,7 @@ void warten()
 	byte i;
   	for(i=0; i<200; i++)
 	{
-		_nop_();
+		_nop_(); // je 600 ns warten
 		_nop_();
 		_nop_();
 		_nop_();
@@ -515,12 +540,13 @@ void _I2CBitDly()
  */
 void _I2CSCLHigh()
 {
-	register int err;
+	// int err__I2CSCLHigh; // ist globale Variable
+	err__I2CSCLHigh = 0;
 	SCL = 1;
 	while(!SCL)
 	{
-		err++;
-		if(!err)
+		err__I2CSCLHigh++;
+		if(!err__I2CSCLHigh)
 		{
 			// SCL stuck, something's holding it down
 			_i2c_error &= 0x02;
@@ -558,8 +584,8 @@ void I2CSendAddr(byte addr, byte rd)
  */
 void I2CSendByte(byte bt)
 {
-	register unsigned char i;
-	for(i=0; i<8; i++)
+	// byte i_I2CSendByte; // ist globale Variable
+	for(i_I2CSendByte=0; i_I2CSendByte<8; i_I2CSendByte++)
 	{
 		if(bt & 0x80)
 		{
