@@ -58,21 +58,21 @@
 	#define SW_TIMER0_STARTWERT	(0xffff - ((SW_ZEITFENSTER * SW_TAKTRATE_C515C) / (SW_TAKTZYKLEN_C515C * 100)))
 #endif
 /*
- * Startwert fuer Timer0: 0x63bf.
+ * Startwert fuer Timer0: 0x7DCA.
  */  
 
 #ifndef SW_T0_STARTWERT_LO
 	#define SW_T0_STARTWERT_LO	(SW_TIMER0_STARTWERT & 0x00ff)
 #endif
 /*
- * Startwert fuer Timer0 (unteres Bit): 0xbf.
+ * Startwert fuer Timer0 (unteres Bit): 0xCA.
  */  
 
 #ifndef SW_T0_STARTWERT_HI
 	#define SW_T0_STARTWERT_HI	((SW_TIMER0_STARTWERT & 0xff00) >> 8)
 #endif
 /*
- * Startwert fuer Timer0 (oberes Bit): 0x63.
+ * Startwert fuer Timer0 (oberes Bit): 0x7D.
  */  
 
 

@@ -345,9 +345,10 @@ void sendMsg(byte module_id, const byte* msg)
 /*
  * workAS()
  * Schnittstelle nur fuer das Modul Betriebsmittelverwaltung. Die
- * Schnittstelle dient dem Auslesen maximal vier Meldungen der Module aus dem
- * Ringpuffer und deren Versendung ueber den I2C-Bus.
- * Fuer diese Uebertragung werden 28 Bytes versendet.
+ * Schnittstelle dient dem Auslesen von maximal vier Meldungen der Module aus
+ * dem Ringpuffer und deren Versendung ueber den I2C-Bus.
+ * Fuer diese Uebertragung werden werden maximal 29 Bytes + Start- und
+ * Stoppbits versendet.
  * 
  * Nach Aufruf dieser Schnittstelle wird ueberprueft, ob der Ringpuffer leer
  * ist. Wenn dem so ist, muessen keine Daten untersucht werden und der Vorgang
