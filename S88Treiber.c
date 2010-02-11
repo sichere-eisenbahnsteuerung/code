@@ -21,7 +21,7 @@
 
 /* Includes *****************************************************************/
 #include <intrins.h>
-#include "S88.h" 
+#include "S88Treiber.h" 
 
 
 /* Definition globaler Konstanten *******************************************/
