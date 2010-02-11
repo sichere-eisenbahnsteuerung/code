@@ -25,6 +25,7 @@
 #include "Betriebsmittelverwaltung.h"
 #include "Notaus.h"
 #include "SoftwareWatchdogStop.h"
+#include "AuditingSystemReportAllMsg.h"
 
 /* Definition globaler Konstanten *******************************************/
 
@@ -53,8 +54,15 @@ void workNOTAUS(void)
 
 void emergency_off(void)
 {
-	NOTAUS_PIN = FALSE; //Relais zuruecksetzen und Strom von der Strecke nehmen
-	//stopSW();//SoftwareWatchdog anhalten
+	// Relais zuruecksetzen und Strom von der Strecke nehmen
+	NOTAUS_PIN = FALSE;
+
+	//SoftwareWatchdog anhalten
+	//stopSW();
+
+	// Verbliebene Meldungen der Module versenden
+	reportAllMsg();
+
 	//Endlosschleife um keine weiteren Aktionen zuzulassen
 	for(;;)
 	{
