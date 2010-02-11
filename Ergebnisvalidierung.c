@@ -60,6 +60,11 @@ typedef enum {
 /* Lokale Konstanten ********************************************************/
 
 /* Lokale Variablen *********************************************************/
+static Streckenbefehl oldSSC = {LEER, LEER, LEER, 0};
+static Streckenbefehl oldRS232 = {LEER, LEER, LEER, 0};
+
+
+
 // Dient zum Zaehlen vergeblicher Schreibversuche in den Shared Memory
 // zum SSC-Treiber
 static byte counterSSC = 0;
@@ -73,11 +78,11 @@ static byte streckenbefehleUngleich = 0;
 
 // Dient zum Speichern des Streckenbefehls aus dem Shared Memory von der
 // Befehlsvalidierung
-static Streckenbefehl internerStreckenbefehl = {LEER, LEER, LEER, LEER};
+static Streckenbefehl internerStreckenbefehl = {LEER, LEER, LEER, 0};
 
 // Dient zum Speichern des Streckenbefehls aus dem Shared Memory vom
 // SSC-Treiber
-static Streckenbefehl externerStreckenbefehl = {LEER, LEER, LEER, LEER};
+static Streckenbefehl externerStreckenbefehl = {LEER, LEER, LEER, 0};
 
 // Gibt an, ob ein neuer Streckenbefehl von der Befehlsvalidierung vorhanden ist
 static boolean isBVNew = FALSE;
@@ -125,6 +130,15 @@ void initEV(void)
 	EV_nachricht[3] = 0;
 	EV_nachricht[4] = 0;
 	EV_nachricht[5] = 0;
+
+	oldSSC.Lok = LEER;
+	oldSSC.Weiche = LEER;
+	oldSSC.Entkoppler = LEER;
+	oldSSC.Fehler = 0;
+	oldRS232.Lok = LEER;
+	oldRS232.Weiche = LEER;
+	oldRS232.Entkoppler = LEER;
+	oldRS232.Fehler = 0;
 }
 
 /*
@@ -287,11 +301,11 @@ static boolean checkForCommunicationErrors(void)
 {
 	// Ueberpruefung, ob der Fehleranteil des Shared Memory vom
 	// RS232-Treiber zurueckgesetzt ist.
-	if(EV_RS232_streckenbefehl.Fehler != 0)
+	if(RS232_EV_streckenbefehl.Fehler != 0)
 	{
 		// Falls nicht, wird der Fehlercode an das Auditing System
 		// uebermittelt, ...
-		sendNachricht(E_RS232_ERROR, A_FEHLER, 0, EV_RS232_streckenbefehl.Fehler, 0);
+		sendNachricht(E_RS232_ERROR, A_FEHLER, 0, RS232_EV_streckenbefehl.Fehler, 0);
 		// ein Not-Aus eingeleitet ...
 		emergency_off();
 		// und die Funktion mit dem Wert TRUE verlassen. 
@@ -324,9 +338,11 @@ static boolean checkForCommunicationErrors(void)
 		{
 			// Falls ja, wird der interne Streckenbefehl in 
 			// diesen geschrieben, ...
-			EV_RS232_streckenbefehl = internerStreckenbefehl;
+//			 EV_RS232_streckenbefehl = internerStreckenbefehl;
 			// der interne Streckenbefehl zurueckgesetzt ...
-			resetStreckenbefehl(&internerStreckenbefehl);
+//			resetStreckenbefehl(&internerStreckenbefehl);
+			EV_RS232_streckenbefehl = oldRS232;
+			resetStreckenbefehl(&oldRS232);
 			// und der Zaehler zurueckgesetzt.
 			counterRS232 = 0;
 
@@ -367,9 +383,11 @@ static boolean checkForCommunicationErrors(void)
 		{
 			// Falls ja, wird der interne Streckenbefehl in 
 			// diesen geschrieben, ...
-			EV_SSC_streckenbefehl = internerStreckenbefehl;
+//			EV_SSC_streckenbefehl = internerStreckenbefehl;
 			// der interne Streckenbefehl zurueckgesetzt ...
-			resetStreckenbefehl(&internerStreckenbefehl);
+//			resetStreckenbefehl(&internerStreckenbefehl);
+			EV_SSC_streckenbefehl = oldSSC;
+			resetStreckenbefehl(&oldSSC);
 			// und der Zaehler zurueckgesetzt.
 			counterSSC = 0;
 
@@ -434,7 +452,8 @@ static void processInternalStreckenbefehl(void)
 	isBVNew = TRUE;
 
 	// Ueberpruefung ob ein alter Streckenbefehl nicht gesendet werden konnte
-	if(counterSSC == 0)
+//	if(counterSSC == 0)
+	if(isStreckenbefehlResetted(&oldSSC))
 	{
 		// Ueberpruefung, ob der Shared Memory zum SSC-Treiber 
 		// zurueckgesetzt ist.
@@ -452,6 +471,7 @@ static void processInternalStreckenbefehl(void)
 			EV_SSC_streckenbefehl = internerStreckenbefehl;
 		} else 
 		{
+			oldSSC = internerStreckenbefehl;
 			sendNachricht(E_SSC_COUNTER, A_WARNING, counterSSC, 0, 0);
 			// Falls nicht, wird der Wert der Zaehlvariable erhoeht.
 			counterSSC = 1;
@@ -538,6 +558,7 @@ void workEV(void)
 		// Falls ja wird das Modul verlassen.
 		return;
 	}
+
 /* 
 * Verarbeitungsschritt 2:
 * Internen Streckenbefehl verarbeiten 
@@ -576,9 +597,9 @@ void workEV(void)
 * Verarbeitungsschritt 5: 
 * Senden des internen Streckenbefehls an den RS232-Treiber 
 */
-
 	// Ueberpruefung ob ein alter Streckenbefehl nicht gesendet werden konnte
-	if(counterRS232 == 0)
+//	if(counterRS232 == 0)
+	if(isStreckenbefehlResetted(&oldRS232))
 	{
 		// Ueberpruefung, ob der Shared Memory zum RS232-Treiber 
 		// zurueckgesetzt ist.
@@ -596,6 +617,8 @@ void workEV(void)
 			EV_RS232_streckenbefehl = internerStreckenbefehl;
 		} else 
 		{
+			oldRS232 = internerStreckenbefehl;
+
 			sendNachricht(E_RS232_COUNTER, A_WARNING, counterRS232, 0, 0);
 			// Falls nicht, wird der Wert der Zaehlvariable erhoeht ...
 			counterRS232 = 1;
@@ -616,7 +639,6 @@ void workEV(void)
 		// Not-Aus einleiten
 		emergency_off();
 	}
-
 
 /*
 * Verarbeitungsschritt 6:
