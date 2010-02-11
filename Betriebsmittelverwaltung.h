@@ -70,7 +70,7 @@ extern Sensordaten S88_BV_sensordaten;
 extern Streckenbefehl BV_EV_streckenbefehl;
 extern Streckenbefehl SSC_EV_streckenbefehl;
 extern Streckenbefehl EV_SSC_streckenbefehl;
-extern byte SW_status_array[6];
+extern byte SW_status_array[7];
 extern Streckenbefehl EV_RS232_streckenbefehl;
 extern Streckenbefehl RS232_EV_streckenbefehl;
 extern byte AS_msg_counter;
