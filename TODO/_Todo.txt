@@ -1,0 +1,9 @@
+ -	Die Sesoren neben den Entkupplungsgleisen müssen noch fixiert
+	werden, nachdem deren genaue Position festgelegt wurde.
+	Um eine realstische Verzögerung vom S88-Modul bis hin zum neuen
+	Streckenbefehl zu berücksichtigen, sollte man beim herausfinden
+	der genauen Sensor-Position das Kupplungsgleis mit der Anwendung
+	schalten (und nicht mit der Multimaus).
+
+ -	Die Geschwindigkeiten für das Entkoppeln und Ankuppeln müssen
+	noch experimentell ermittelt werden.

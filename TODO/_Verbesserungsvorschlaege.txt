@@ -1,0 +1,15 @@
+ -	Frühes Beschäftigen mit der Hardware!!
+	Diese verhält sich erstens anders und zweitens als man glaubt.
+	Zumindest ein Teil der Teilnehmer sollte sich früh	damit auseinandersetzen.
+
+ -	Reset der Anwendung sollte möglich sein, ohne das Programm neu aufzuspielen.
+	Die BMV müsste sich darum kümmern, z.B. würde sie
+	nach einem Not-Aus in einer Endlosschleife verweilen,
+	bis ein Schalter auf dem Microkontroler-Board gedrückt wurde.
+	Dazu müssten u.a. alle Modul-Implementierungen so angepasst werden, dass
+	keine	statischen Variablen-Initialisierungen mehr vorkommen, stattdessen
+	müssten alle Initialisierungen in der InitMODUL() Funktion stattfinden.
+
+ -	Tests sollten erstens umfangreicher und unter Berücksichtigung
+	sicherheitsrelevanter Kriterien erfolgen und zweitens wiederholbar,
+	also automatisch ablaufen. "Regressionstests"
