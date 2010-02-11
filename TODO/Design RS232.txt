@@ -1,0 +1,13 @@
+Legende: 
+# (Änderungen, die schon durchgeführt worden sind aber nicht im Design stehen)
++ (In Zukunft zu ergänzen bzw. zu beachten)
+
+
+
+# CTS/RTS Leitung (5V) wird manuell vom Microcontroller an das li101f geführt.
+# Nullmodem Kabel (gekreuzt) zwischen Microcontroller unde li101f
+# Empfangsinterrupt: Es muss nicht immer 0x01 0x04 0x05 empfangen werden um einen neuen Befehl senden zu können.
+"0x01" reicht dazu.
+
++ CTSPIN Kontrolle. Momentan wird keine Überprüfung durchgeführt ob gesendet werden kann. Allerdings sind bisher auch keine
+	Fehler aufgetreten, wenn vor dem Abschichken eines neuen Befehls eine "0x01" empfangen worden ist.
