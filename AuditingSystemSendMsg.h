@@ -61,7 +61,7 @@ void sendMsg(
 
 	const byte* msg /*
 	*
-	*  Description: Statusmeldung eines Moduls.
+	*  Description: Array der Groesse 6, mit Statusmeldung eines Moduls.
 	*  Direction  : in
 	*  Values     : [0]: 0-255,
 	*               [1]: 0-255,

@@ -23,6 +23,8 @@
 
 #include "SoftwareWatchdog.h"
 #include "Notaus.h"
+#include "AuditingSystem.h"
+#include "AuditingSystemReportAllMsg.h"
 #include "Betriebsmittelverwaltung.h"
 
 
@@ -30,7 +32,7 @@
 
 /* Definition globaler Variablen ********************************************/
 
-byte SW_status_array[7];
+xdata byte SW_status_array[7];
 /*
  *  Description: Ringpuffer zum speichern der Statusmeldungen der Module.
  *  Values     : [0]: Statusmeldung Leitzentrale
