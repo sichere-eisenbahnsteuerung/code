@@ -7,14 +7,15 @@
  *        Autor:        Oliver Gatti
  *
  *
- *        Modul:        RS232-Treiber, 1.2
+ *        Modul:        <RS232-Treiber>, <Version des Moduldesigns>
  *
  *        Beschreibung:
- *        Dieses Modul implementiert die Kommunikation zwischen dem Micro-
- *        controller und dem LI101f Interface. Die Kommunikation findet 
- *        über die RS232 Schnittstelle statt. Die Ergebnisvalidierung legt 
- *        die Streckenbefehle im Shared-Memory ab und der RS232-Treiber liest
- *        diese aus und verarbeitet sie weiter.
+ *        ________________________________________________________________
+ *        ________________________________________________________________
+ *        ________________________________________________________________
+ *        ________________________________________________________________
+ *        ________________________________________________________________
+ *        ________________________________________________________________
  *
  ****************************************************************************/
 
@@ -47,6 +48,8 @@ static byte sendeCounter = 0x00;
 static byte sendeBuffer[6];
 static const byte maxFailures = 0x05; 
 static byte rs232Enabled;
+// 1 Entkupplungsdekoder ist aktiv
+// 0 Entkupplungsdekoder ist nicht aktiv 
 static byte entkupplerActive = 0x01;
 static byte weicheActive = 0x01;    
 
@@ -56,15 +59,14 @@ void konvertWeiche();
 void konvertEntkoppler();
 
 /* Funktionsimplementierungen ***********************************************/
-/*
- *	Verarbeitet ankommende Daten per Interrupt-Service-Routine.
- */
+
 DataReceivedInterrupt () interrupt 4 //Interruptfunktion
 {
+
 	if(RI == 1) 
 	{
 		//Es wurde zuvor ein Antwort-Header-Byte vom LI101F  empfangen
-		if(li101HeaderReceived == 0x01) 
+	/*	if(li101HeaderReceived == 0x01) 
 		{
 			receiveBuffer[3 - bytesToReceive] = SBUF;
 			bytesToReceive--;
@@ -106,6 +108,9 @@ DataReceivedInterrupt () interrupt 4 //Interruptfunktion
 				}
 			}
 		}
+		*/
+		if(SBUF == 0x01)
+			readyToSend = 0x01;	
 		RI = 0;
 	}  
 }
@@ -200,7 +205,7 @@ void workRS232()
 				TI = 0;
 			}
 			//CTS nicht bereit
-			else 
+			/*else 
 			{
 				int verzoegerung = 0;
 				while(verzoegerung  < 2000)
@@ -217,8 +222,9 @@ void workRS232()
 					}
 					verzoegerung++;
 				}
-			}
+			} */
 		}
+		readyToSend = 0x00;
 		//Befehl abgeschickt, entsprechenden Eintrag im Shared-Memory auf 0xFF setzen
 		if(EV_RS232_streckenbefehl.Lok != 0xFF) 
 		{
@@ -243,6 +249,7 @@ void workRS232()
 					else 
 					{
 						EV_RS232_streckenbefehl.Entkoppler = 0xFF;
+						entkupplerActive = 0x01;
 					}
 				}
 			}
@@ -262,10 +269,7 @@ void workRS232()
 	}
 }
 
-/*
- * Diese Funktion konvertiert einen Lok-Fahr-Befehl in das XpressNet-Format
- * und schreibt diesen in den Ausgangsbuffer "sendeBuffer".
- */
+//Konvertiert Streckenbefehl aus dem Shared-Memory ins XpressNet-Format
 void konvertLok()
 {
 	byte v;
@@ -288,8 +292,12 @@ void konvertLok()
 	
 	//Geschwindigkeit ermitteln
 	v = 0x03 & (EV_RS232_streckenbefehl.Lok  >> 2);
-	
-	if(v == 0x01) {
+
+	if(v == 0x00) {
+		sendeBuffer[1] = ((0x02 & EV_RS232_streckenbefehl.Lok) << 6 ) | V_STOPP;	
+	}	
+
+	else if(v == 0x01) {
 		sendeBuffer[1] = ((0x02 & EV_RS232_streckenbefehl.Lok) << 6 ) | V_Abkuppeln;
 	}
 	else {
@@ -304,12 +312,7 @@ void konvertLok()
 	sendeBuffer[0] = ((((sendeBuffer[5] ^ sendeBuffer[4]) ^ sendeBuffer[3]) ^ sendeBuffer[2]) ^ sendeBuffer[1]);
 }
 
-
-/*
- * Diese Funktion konvertiert einen Weichen-Stell-Befehl in das XpressNet-Format
- * und schreibt diesen in den Ausgangsbuffer "sendeBuffer".
- */
-void konvertWeiche() 
+void konvertWeiche() //getestet
 {
 	byte BB;
 	
@@ -369,10 +372,6 @@ void konvertWeiche()
 	sendeBuffer[0] = (sendeBuffer[3] ^ sendeBuffer[2]) ^ sendeBuffer[1];	  
 }
 
-/*
- * Diese Funktion konvertiert einen Entkupplungsbefehl in das XpressNet-Format
- * und schreibt diesen in den Ausgangsbuffer "sendeBuffer".
- */
 void konvertEntkoppler()
 {	 
 	byte BB;
@@ -381,12 +380,12 @@ void konvertEntkoppler()
 	sendeBuffer[3] = 0x52; //Header
 
 	//Entkuppler bestimmen		  	
-	if(EV_RS232_streckenbefehl.Weiche >> 1 == 0x01)
+	if(EV_RS232_streckenbefehl.Entkoppler >> 1 == 0x01)
 	{
 		sendeBuffer[2] = EK1_address >> 2;	
 		BB = EK1_address % 4;	
 	}
-	else if(EV_RS232_streckenbefehl.Weiche >> 1 == 0x02)
+	else if(EV_RS232_streckenbefehl.Entkoppler >> 1 == 0x02)
 	{
 		sendeBuffer[2] = EK2_address >> 2;
 		BB = EK2_address % 4;
@@ -407,16 +406,16 @@ void konvertEntkoppler()
 	sendeBuffer[0] = (sendeBuffer[3] ^ sendeBuffer[2]) ^ sendeBuffer[1];	  
 }
 
-// Derzeit sind alle Zuweisungen, die die Initialisierung der Serielle Schnittstelle durchführen auskommentiert.
-// Die Initialisierung wird per Keil uVision durchgeführt.
+
 void initRS232() 
 {
-	RS232TREIBER_CTSPIN = 1;	
-	EV_RS232_streckenbefehl.Fehler = 0x00;
+//	RS232TREIBER_CTSPIN = 1;	
+
 	rs232Enabled = 0x01;
 
 //	SCON = SCON | 0x80;
 	
+	EV_RS232_streckenbefehl.Fehler = 0x00;
 //	SM0 = 0; 
 //	SM1 = 1;	
 	//RI = 1;
@@ -424,21 +423,53 @@ void initRS232()
 	//SM2 = 0;
 //	SRELH = 0x03;
 //	SRELH = 0xDF;
+
 //	REN = 1;
 //	BD = 1;
-	ES = 1;
 	TI = 0;
-	RI = 0;
+	RI=0;
+
+	ES = 1;
+	EAL = 1;
+
 }
 
-/*
+ /*
 void main(void)
 {
+	int i = 3000;
 
-   initRS232();
+   TESTPIN0 = 0;
+   TESTPIN1 = 1;
+   TESTPIN2 = 1;
+   TESTPIN3 = 1;
+   TESTPIN4 = 1;
+   TESTPIN5 = 1;
+   TESTPIN6 = 1;
+   TESTPIN7 = 1;
+
+   while(!TasterPin) {
+   }
+
+   	initRS232();
+
+
+	EV_RS232_streckenbefehl.Entkoppler = 0x04;
+//	EV_RS232_streckenbefehl.Entkoppler = 0x02;
+	EV_RS232_streckenbefehl.Weiche = 0x03;
+	EV_RS232_streckenbefehl.Lok = 0x06;
+	
+	while(TasterPin) {
+		workRS232();
+   }
+	
+
+	TESTPIN0 = 0;
+   TESTPIN1 = 0;
+   TESTPIN2 = 0;
+
    while(1);	  
-}	
-*/
+}		*/
 
 
 
