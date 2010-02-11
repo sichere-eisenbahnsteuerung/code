@@ -409,7 +409,7 @@ void konvertEntkoppler()
 
 void initRS232() 
 {
-//	RS232TREIBER_CTSPIN = 1;	
+	RS232TREIBER_CTSPIN = 1;	
 
 	rs232Enabled = 0x01;
 
