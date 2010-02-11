@@ -58,8 +58,8 @@ void initS88(void)
 	S88_CLK = LOW;
 	S88_Data = HIGH;
 	sensor_count = 0;
-	S88_BV_sensordaten.Byte0 = 0x00;
-	S88_BV_sensordaten.Byte1 = 0x00;
+	S88_BV_sensordaten.Byte0 = LEER;
+	S88_BV_sensordaten.Byte1 = LEER;
 }
  
 void workS88(void) {
@@ -68,13 +68,13 @@ void workS88(void) {
 //Falls ja, s88-Bus abfragen
 if(S88_BV_sensordaten.Byte0 == LEER && S88_BV_sensordaten.Byte1 == LEER)
 	{
-		return;
+		S88_BV_sensordaten.Byte0 = 0x00;
+		S88_BV_sensordaten.Byte1 = 0x00;
+		get_sensor_data(); //Sensordaten abfragen
 	}
 	else
 	{
-		//S88_BV_sensordaten.Byte0 = 0x00;
-		//S88_BV_sensordaten.Byte1 = 0x00;
-		get_sensor_data(); //Sensordaten abfragen
+		return;
 	}
 }
 
@@ -90,7 +90,6 @@ void get_sensor_data() {
 	S88_RESET = LOW;
 	wait(7);
 	write_sensor_data(0); //1. Sensor auslesen und in Array schreiben
-	//write_sensor_data();
 	S88_PS = LOW;
 	wait(9);
 	for(i = 1;i< 16;i++) 
@@ -106,14 +105,15 @@ void get_sensor_data() {
 
 void write_sensor_data(int sensor_number)
 {
-	sensor_data_new[sensor_number] = S88_Data;	
+	sensor_data_new[sensor_number] = S88_Data;
+	sensor_data_new[sensor_number] = sensor_data_new[sensor_number] <<7;	
 }
 
 void validate_sensor_data()
 {
 	//Alte Sensordaten mit neuen Sensordaten vergleichen
 	//und in Shared Memory schreiben
-	for(i = 0;i< 16;i++) 
+	for(i = 15;i>= 0;i--) 
 	{
 		//Ueberpruefung ob sich Sensordaten seit dem letzten Auslesen geaendert haben
 		if(sensor_data_old[i] == sensor_data_new[i])
@@ -124,9 +124,9 @@ void validate_sensor_data()
 		if( i < 0x08)
 		{
 			//In Byte0 vom struct Sensordaten schreiben
-			S88_BV_sensordaten.Byte0+= sensor_data_new[i];
+			S88_BV_sensordaten.Byte0 += sensor_data_new[i];
 			//Bitshift fuer 1. Sensor = LSB und 8. Sensor = MSB
-			if(sensor_count < 0x07)
+			if(i > 0x00)
 			{
 				S88_BV_sensordaten.Byte0 = S88_BV_sensordaten.Byte0 >> 1;
 			}		
@@ -136,7 +136,7 @@ void validate_sensor_data()
 			//In Byte1 vom struct Sensordaten schreiben
 			S88_BV_sensordaten.Byte1 += sensor_data_new[i];
 		
-			if(sensor_count < 0x0F)
+			if(i > 0x08)
 			{
 				//Bitshift fuer 9. Sensor = LSB und 16. Sensor = MSB
 				S88_BV_sensordaten.Byte1 = S88_BV_sensordaten.Byte1 >> 1;	
