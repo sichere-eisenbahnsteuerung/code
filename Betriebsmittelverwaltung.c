@@ -26,7 +26,7 @@
 // #include "AuditingSystem.h"
 // #include "RS232.h"
 // #include "S88.h"
-// #include "SSCTreiber.h"
+//#include "SSCTreiber.h"
 // #include "Ergebnisvalidierung.h"
 // #include "Befehlsvalidierung.h"
 // #include "Leitzentrale.h"
@@ -45,10 +45,8 @@ Streckenbefehl SSC_EV_streckenbefehl = {LEER,LEER,LEER,0};
 Streckenbefehl EV_SSC_streckenbefehl = {LEER,LEER,LEER,0};
 byte EV_SSC_failure = LEER;
 byte SSC_EV_failure = LEER; 
-byte SW_status_array[6] = {LEER,LEER,LEER,LEER,LEER,LEER}; 
 Streckenbefehl EV_RS232_streckenbefehl = {LEER,LEER,LEER,0};
 Streckenbefehl RS232_EV_streckenbefehl = {LEER,LEER,LEER,0};
-byte AS_msg_counter = LEER;
 
 /**
    Interrupt 1 für SW
@@ -81,7 +79,7 @@ void main (void)
 // 	hello();
 // 	initS88();
 // 	hello(); 
- 	initSSC();
+// 	initSSC();
 // 	hello();
 // 	initEV();
 // 	hello();
@@ -100,7 +98,7 @@ void main (void)
 // 		hello();
 // 		workS88();
 // 		hello();
- 		workSSC();
+// 		workSSC();
 // 		hello();
 // 		workBV();
 // 		hello();
