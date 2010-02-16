@@ -1,3 +1,13 @@
+ -	Mit dem Speichermodell des 8051 beschäftigen, bzw. den Einsatz
+	eines ganz anderen Microkontrollers erwägen.
+	Zum Beispiel funktionieren die Module RS232Treiber und Software-Watchdog
+	mit dem kleinen Speichermodell (Variablen in DATA) einwandfrei.
+	(in Keil uVision unter Projekt->Options for Target ... einzustellen)
+	Für die Integration mit den anderen Modulen reicht dieser Speicher aber
+	nicht aus. Stellt man jedoch das große Speichermodell (Variablen in XDATA)
+	ein, fährt die Bahn nicht los.
+	Probleme könnten die Interrupts machen oder der Keil-Monitor-Treiber.
+
  -	Die Sesoren neben den Entkupplungsgleisen müssen noch fixiert
 	werden, nachdem deren genaue Position festgelegt wurde.
 	Um eine realstische Verzögerung vom S88-Modul bis hin zum neuen
