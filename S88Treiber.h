@@ -10,7 +10,7 @@
  *        Autor:        Icken, Jan-Christopher
  *
  *
- *        Modul:        s88-Treiber, 0.1
+ *        Modul:        s88-Treiber, 0.3
  *
  *        Beschreibung:
  *        Dieses Modul liest die Sensordaten ueber den S88-Bus ein und
