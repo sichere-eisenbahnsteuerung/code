@@ -144,10 +144,10 @@ void initFP()
 
 }//Ende initFP
 
-void workFP()
+/*void workFP()
 {
 
-}//Ende workFP
+}//Ende workFP */
 
 /*
  * Schnittstelle get_command(),

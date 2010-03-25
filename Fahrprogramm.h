@@ -44,6 +44,6 @@ typedef struct
 Fahranweisung get_command(byte Lok);
 
 void initFP();
-void workFP();
+/*void workFP();*/
 
 #endif /* Fahraufgabe.h_H */

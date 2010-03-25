@@ -32,6 +32,17 @@
 
 
 /* Globale Makrodefinitionen ************************************************/
+#ifndef MODUL_LZ
+#define MODUL_LZ 0
+#endif
+
+#ifndef MODUL_BV
+#define MODUL_BV 1
+#endif
+
+#ifndef MODUL_EV
+#define MODUL_EV 2
+#endif	
 
 /* Globale Typdefinitionen **************************************************/
 

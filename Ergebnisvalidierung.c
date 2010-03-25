@@ -311,7 +311,7 @@ static boolean checkForCommunicationErrors(void)
 		// und die Funktion mit dem Wert TRUE verlassen. 
 		// Es wird nicht auf Fehler ueberprueft.
 		return TRUE;
-	}
+	} 
 
 	// Ueberpruefung, ob der Fehleranteil des Shared Memory vom
 	// SSC-Treiber zurueckgesetzt ist.

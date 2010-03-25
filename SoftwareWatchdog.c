@@ -32,7 +32,7 @@
 
 /* Definition globaler Variablen ********************************************/
 
-xdata byte SW_status_array[7];
+byte SW_status_array[7];
 /*
  *  Description: Ringpuffer zum speichern der Statusmeldungen der Module.
  *  Values     : [0]: Statusmeldung Leitzentrale
@@ -80,7 +80,7 @@ void initSW()
 	for(i=0; i<6; i++)
 	{
 		// Statusspeicher initialisieren
-		SW_status_array[i] = 0xff;
+		SW_status_array[i] = LEER;
 	}
 	
 	TR0 = 0;		// Timer0 ersteinmal stoppen

@@ -59,7 +59,7 @@ typedef struct
   RS232-Treiber - 5
   Auditing System - 6
 */
-enum module_id { MODUL_LZ, MODUL_BV, MODUL_EV, MODUL_S88, MODUL_SSC, MODUL_RS232, MODUL_AS};
+enum module_id { MODUL_LZ=0, MODUL_BV=1, MODUL_EV=2, MODUL_S88=3, MODUL_SSC=4, MODUL_RS232=5, MODUL_AS=6};
 
 /* Deklaration von globalen Variablen ***************************************/
 
@@ -70,7 +70,7 @@ extern Sensordaten S88_BV_sensordaten;
 extern Streckenbefehl BV_EV_streckenbefehl;
 extern Streckenbefehl SSC_EV_streckenbefehl;
 extern Streckenbefehl EV_SSC_streckenbefehl;
-extern byte SW_status_array[7];
+//extern byte SW_status_array[6];
 extern Streckenbefehl EV_RS232_streckenbefehl;
 extern Streckenbefehl RS232_EV_streckenbefehl;
 extern byte AS_msg_counter;

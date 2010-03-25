@@ -20,9 +20,9 @@
  ****************************************************************************/
 
 /* Includes *****************************************************************/
-#include<stdio.h>
-#include<RS232Treiber.h>
-#include<Betriebsmittelverwaltung.h>
+//#include<stdio.h>
+#include "RS232Treiber.h"
+#include "Betriebsmittelverwaltung.h"
 
 /* Definition globaler Konstanten *******************************************/
 
@@ -38,11 +38,12 @@
 
 /* Lokale Variablen *********************************************************/
 static byte sbufBuffer;
+char sbufBuffer_temp;
 static byte receiveBuffer[3];
 static byte calledWithoutSentAnswer = 0x00;
 static byte bytesToReceive = 0x00;
 static byte li101HeaderReceived = 0x00;
-static byte readyToSend = 0x01;
+static byte readyToSend = 0x00;
 static byte ctsPinFalse = 0x00;
 static byte sendeCounter = 0x00;
 static byte sendeBuffer[6];
@@ -63,7 +64,7 @@ void konvertEntkoppler();
 DataReceivedInterrupt () interrupt 4 //Interruptfunktion
 {
 
-	if(RI == 1) 
+	if(RI) 
 	{
 		//Es wurde zuvor ein Antwort-Header-Byte vom LI101F  empfangen
 	/*	if(li101HeaderReceived == 0x01) 
@@ -109,9 +110,18 @@ DataReceivedInterrupt () interrupt 4 //Interruptfunktion
 			}
 		}
 		*/
-		if(SBUF == 0x01)
-			readyToSend = 0x01;	
+		sbufBuffer_temp = SBUF;
+		//SBUF = 0x00;
+		if(sbufBuffer_temp == 0x01) 
+		{
+			SBUF = 0x00;
+			readyToSend = 0x01;
+		}	
 		RI = 0;
+	}
+	else 
+	{
+		TI = 0;
 	}  
 }
 
@@ -136,8 +146,12 @@ void workRS232()
 		}
 		return;
 	}
+	else
+	{
+		calledWithoutSentAnswer = 0x00;	
+	}
 	
-	calledWithoutSentAnswer = 0x00;
+	
 	
 	if(RS232TREIBER_CTSPIN == CTS_readyToSend) 
 	{
@@ -413,24 +427,32 @@ void initRS232()
 
 	rs232Enabled = 0x01;
 
-//	SCON = SCON | 0x80;
+	//SCON = SCON | 0x80;
 	
 	EV_RS232_streckenbefehl.Fehler = 0x00;
-//	SM0 = 0; 
-//	SM1 = 1;	
+
+	BD = 1; // Baudratengenerator einschalten
+	SM0 = 0; // Mode 1  8Bit variable Baudrate
+	SM1 = 1;
+	SRELH = 0x03; // 9600 Baud
+	SRELL = 0xDF;
+	REN = 1; // seriellen Empfang einschalten
+	TI = 1;
+	//SM0 = 0; 
+	//SM1 = 1;	
 	//RI = 1;
 	//TI = 1;	
 	//SM2 = 0;
-//	SRELH = 0x03;
-//	SRELH = 0xDF;
+	//SRELH = 0x03;
+	//SRELH = 0xDF;
 
-//	REN = 1;
-//	BD = 1;
-	TI = 0;
-	RI=0;
+	//REN = 1;
+	//BD = 1;
+	//TI = 0;
+	//RI=0;
 
 	ES = 1;
-	EAL = 1;
+	//EAL = 1;
 
 }
 

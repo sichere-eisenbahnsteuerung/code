@@ -48,9 +48,9 @@ void initNOTAUS(void)
 	NOTAUS_PIN = TRUE; //Relais setzen und Strecke mit Strom versorgen
 }
 
-void workNOTAUS(void)
+/*void workNOTAUS(void)
 {
-}
+} */
 
 void emergency_off(void)
 {
@@ -58,7 +58,7 @@ void emergency_off(void)
 	NOTAUS_PIN = FALSE;
 
 	//SoftwareWatchdog anhalten
-	//stopSW();
+	stopSW();
 
 	// Verbliebene Meldungen der Module versenden
 	reportAllMsg();

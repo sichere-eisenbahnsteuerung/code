@@ -47,7 +47,7 @@ byte error;
 void get_sensor_data(void);
 void write_sensor_data(int sensor_number);
 void validate_sensor_data(void);  
-void send_error(byte error);
+/*void send_error(byte error);*/
 void wait(byte times);
 
 /* Funktionsimplementierungen ***********************************************/
@@ -146,10 +146,10 @@ void validate_sensor_data()
 	}	
 }
 
-void send_error(byte error)
+/*void send_error(byte error)
 {
 	S88_BV_sensordaten.Fehler = error;//Setze Error Flag im struct
-}
+} */
 
 void wait(byte times) {
 	while(times > 0) 

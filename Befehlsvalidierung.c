@@ -98,10 +98,10 @@ typedef enum {	// Detailliertheit der Debug-Ausgaben
 
 /* Lokale Variablen *********************************************************/
 
-static byte nextState = 0;
-static byte criticalStateCounter = 0;
-static byte nachricht[6] = {0, 0, 0, 0, 0, 0};
-static byte verbosity = V_ERRORS;
+static xdata byte nextState = 0;
+static xdata byte criticalStateCounter = 0;
+static xdata byte nachricht[6] = {0, 0, 0, 0, 0, 0};
+static xdata byte verbosity = V_ERRORS;
 
 	/* Gleis-Topologie und -Zaehler */
 static Gleisabschnitt streckentopologie[BV_ANZAHL_GLEISABSCHNITTE + 1];

@@ -70,7 +70,7 @@
 
 /* Definition globaler Variablen ********************************************/
 
-xdata volatile byte AS_msg_array[MAX_MELDUNGEN][7];
+xdata byte AS_msg_array[MAX_MELDUNGEN][7];
 /*
  *  Description: Ringpuffer zum speichern der Statusmeldungen der Module.
  *  Values     : [0-(MAX_MELDUNGEN-1)][0]:
@@ -86,19 +86,19 @@ xdata volatile byte AS_msg_array[MAX_MELDUNGEN][7];
  *               (Siehe die Beschreibung des jeweiligen Moduls)
  */
 
-pdata volatile byte AS_read_next_msg;
+byte AS_read_next_msg;
 /*
  *  Description: Lesezeiger ("OUT-Index") fuer den Ringpuffer.
  *  Values     : 0-(MAX_MELDUNGEN-1)	(Lesezeiger)
  */
 
-pdata volatile byte AS_fill_next_msg;
+byte AS_fill_next_msg;
 /*
  *  Description: Schreibezeiger ("IN-Index") fuer den Ringpuffer.
  *  Values     : 0-(MAX_MELDUNGEN-1)	(Schreibezeiger)
  */
 
-pdata volatile byte AS_msg_counter;
+byte AS_msg_counter;
 /*
  *  Description: Fuellstandzaehler fuer den Ringpuffer.
  *  Values     : 0-MAX_MELDUNGEN	(Anzahl der Elemente im Ringpuffer)
@@ -112,7 +112,7 @@ pdata volatile byte AS_msg_counter;
 
 /* Lokale Variablen *********************************************************/
 
-data volatile byte _i2c_error;
+byte _i2c_error;
 /*
  *  Description: Bitfeld mit Fehlerarten fuer I2C-Verbindung.
  *  Values     : 1   = Keine Bestaetigung empfangen
@@ -127,19 +127,19 @@ data volatile byte _i2c_error;
 // des Moduls Software-Watchdog aufrufen zu koennen:        //
 
 // Variablen der Funktion workAS
-data volatile byte maxSendMsg_workAS;
+byte maxSendMsg_workAS;
 /*
  *  Description: Maximale Anzahl Mitteilungen, die versendet werden.
  */
 
-data volatile byte i_workAS, j_workAS;
+byte i_workAS, j_workAS;
 /*
  *  Description: Zaehler fuer die beiden for-Schleifen, fuer die
  *               Versendung von Mitteilungen.
  */
 
 // Variable der Funktion sendMsg
-data volatile byte i_sendMsg;
+byte i_sendMsg;
 /*
  *  Description: Zaehler fuer die for-Schleife, fuer die Speicherung
  *               von Mitteilungen.
@@ -147,10 +147,10 @@ data volatile byte i_sendMsg;
 
 
 // Variable der Funktion I2CSendByte
-data volatile byte i_I2CSendByte;
+byte i_I2CSendByte;
 
 // Variable der Funktion _I2CSCLHigh
-data volatile int err__I2CSCLHigh;
+int err__I2CSCLHigh;
 
 
 /* Prototypen fuer lokale Funktionen ****************************************/

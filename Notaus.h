@@ -34,7 +34,7 @@
 
 /* Deklaration von globalen Funktionen **************************************/
 void initNOTAUS(void); 
-void workNOTAUS(void);
+//void workNOTAUS(void);
 void emergency_off(void);
 
 #endif /* Notaus_H */
