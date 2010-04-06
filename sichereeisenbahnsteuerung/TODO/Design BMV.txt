@@ -1,1 +1,0 @@
-Der Streckenbefehl "RS232_EV_streckenebefehl" wurde hinzugefuegt.
