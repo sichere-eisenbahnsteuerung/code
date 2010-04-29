@@ -63,7 +63,7 @@ void initS88(void)
 }
  
 void workS88(void) {
-//hello(0x03, byte status) %anmelden beim SW  (ID: 3 Status: noch zu klaeren)
+hello(0x03, byte status) /*anmelden beim SW  (ID: 3 Status: noch zu klaeren)*/
 //Ueberpruefen ob Daten aus dem Struct gelesen wurden
 //Falls ja, s88-Bus abfragen
 if(S88_BV_sensordaten.Byte0 == LEER && S88_BV_sensordaten.Byte1 == LEER)
@@ -83,7 +83,7 @@ void get_sensor_data() {
 	wait(3);
 	S88_CLK = HIGH;
 	wait(9);
-	S88_CLK = LOW;
+	S88_CLK = LOW;			   keine
 	wait(9);
 	S88_RESET = HIGH;
 	wait(7);
