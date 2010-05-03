@@ -206,3 +206,4 @@ Fahranweisung get_command(byte lok)
 		return anweisung;
 	}
 }//Ende get_command
+
