@@ -17,15 +17,26 @@
 
 #include <Wire.h>
 
+#ifndef MAX_MELDUNGEN
+#define MAX_MELDUNGEN	30
+#endif
+
+byte message_array[MAX_MELDUNGEN][7];
+int number_of_messages = 0;
+
 void setup()
 {
   Wire.begin(4);                // join i2c bus with address #4
   Wire.onReceive(receiveEvent); // register event
-  Serial.begin(9600);           // start serial for output
+  Serial.begin(115200);           // start serial for output
 }
 
 void loop()
 {
+  if(number_of_messages > 0) {
+    convert_messages();
+    number_of_messages = 0;
+  }
 }
 
 
@@ -34,48 +45,55 @@ void loop()
 void receiveEvent(int howMany)
 {
   //Zaehlen wieviele Auditing Meldungen erhalten wurden
+  Serial.println("");
   Serial.print(howMany);
-  Serial.println(" Auditing Meldungen erhalten.");
-  int number_of_messages = howMany/7;
-  int message_array[7];
+  Serial.print(" Auditing Meldungen erhalten.");
+  Serial.println("");
+  number_of_messages = howMany/7;
+  //byte message_array[7];
   for(int i=0;i<number_of_messages;i++) {
     for(int j=0;j<7;j++) {
-      message_array[i] = Wire.receive();
+      message_array[i][j] = Wire.receive();
+      //Serial.println(message_array[i],BIN);
     }
     //Nachrichten umwandeln
-    convert_message(message_array);
+    //convert_message(message_array);
   }
 }
 
-void convert_message(int array_message[]) {
-  switch(array_message[0]) {
-  case 0: //Nachricht von der Leitzentrale
-    convert_message_lz(array_message);
-    break;
-  case 1: //Nachricht von Befehlsvalidierung
-    convert_message_bv(array_message);
-    break;
-  case 2: //Nachricht von der Ergebnisvalisierdung
-    convert_message_ev(array_message);
-    break;
-    /*16 = Leitzentrale, Pufferueberlauf
-     17 = Befehlsvalidierung, Pufferueberlauf
-     18 = Ergebnisvalidierung, Pufferueberlauf*/
-  case 16: //Leitzentrale Pufferueberlauf
-    Serial.println("Leitzentrale Pufferueberlauf.");
-    break;
-  case 17: //Befehlsvalidierung Pufferueberlauf
-    Serial.println("Befehlsvalidierung Pufferueberlauf.");
-    break;
-  case 18: //Ergebnisvalidierung Pufferueberlauf
-    Serial.println("Ergebnisvalidierung Pufferueberlauf.");
-    break;
-  default:
-    break; 
+void convert_messages() {
+  for(int i =0;i<number_of_messages;i++) {
+    switch(message_array[i][0]) {
+    case 0: //Nachricht von der Leitzentrale
+      convert_message_lz(i);
+      break;
+    case 1: //Nachricht von Befehlsvalidierung
+      convert_message_bv(i);
+      break;
+    case 2: //Nachricht von der Ergebnisvalisierdung
+      convert_message_ev(i);
+      break;
+      /*16 = Leitzentrale, Pufferueberlauf
+       17 = Befehlsvalidierung, Pufferueberlauf
+       18 = Ergebnisvalidierung, Pufferueberlauf*/
+    case 16: //Leitzentrale Pufferueberlauf
+      Serial.println("Leitzentrale Pufferueberlauf.");
+      break;
+    case 17: //Befehlsvalidierung Pufferueberlauf
+      Serial.println("Befehlsvalidierung Pufferueberlauf.");
+      break;
+    case 18: //Ergebnisvalidierung Pufferueberlauf
+      Serial.println("Ergebnisvalidierung Pufferueberlauf.");
+      break;
+    default:
+      break; 
+    }
+
   }
+
 }
 
-void convert_message_lz(int array_message[]) { //Funktion zu Umwandeln der Auditing Nachrichten der Leitzentrale
+void convert_message_lz(int message_number) { //Funktion zu Umwandeln der Auditing Nachrichten der Leitzentrale
   /*[Byte 1]
    Untere 4 Byte Fehlercode
    Fehlercodes:
@@ -89,8 +107,12 @@ void convert_message_lz(int array_message[]) { //Funktion zu Umwandeln der Audit
    7 Ein Gleisabschnitt ist nicht befahrbar
    Obere 4 Byte Loknummer die gerade gesteuert wird*/
   int gleisabschnitt_not_accessible = 0;
-  Serial.print("Leitzentrale: ");
-  switch(array_message[1] & B00001111) {
+  byte fehlercode = 0;
+  byte loknummer = 0;
+  Serial.println("LZ FCODE: ");
+  fehlercode = message_array[message_number][1] & B00001111;
+  loknummer = (message_array[message_number][1] & B11110000)>>4;
+  switch(fehlercode) {
   case 0:
     Serial.print("Nicht existenter Zustand. ");
     break;
@@ -121,7 +143,7 @@ void convert_message_lz(int array_message[]) { //Funktion zu Umwandeln der Audit
     break;
   }
   Serial.print("Loknummer: ");
-  Serial.print(array_message[1] >> 4);
+  Serial.print(loknummer,DEC);
   /*[Byte 2]
    FAHREND = 0
    WARTEND = 1
@@ -131,7 +153,7 @@ void convert_message_lz(int array_message[]) { //Funktion zu Umwandeln der Audit
    HOLT_FAHRANWEISUNG = 5
    Zustand von Lok #1*/
   Serial.print(" Zustand Lok#1: ");
-  switch(array_message[2]) {
+  switch(message_array[message_number][2]) {
   case 0:
     Serial.print("Fahrend");
     break;
@@ -163,7 +185,7 @@ void convert_message_lz(int array_message[]) { //Funktion zu Umwandeln der Audit
    HOLT_FAHRANWEISUNG = 5
    Zustand von Lok #2*/
   Serial.print(" Zustand Lok#2: ");
-  switch(array_message[3]) {
+  switch(message_array[message_number][3]) {
   case 0:
     Serial.print("Fahrend");
     break;
@@ -186,29 +208,30 @@ void convert_message_lz(int array_message[]) { //Funktion zu Umwandeln der Audit
     Serial.print("Unbekannter Zustand");
     break;
   }
-
   /*[Byte 4]
    Die Position von Lok #1*/
   Serial.print(" Position Lok#1: ");
-  Serial.print(array_message[4]);
+  Serial.print(message_array[message_number][4],BIN);
   /*[Byte 5]
    Die Position von Lok #2*/
   Serial.print(" Position Lok#2: ");
-  Serial.print(array_message[5]);
+  Serial.print(message_array[message_number][5],BIN);
   /*[Byte 6]
    Wenn Fehlercode 0-6: Fahrbefehl
    Fehlercode 7:        Gleisabschnitt */
   if(gleisabschnitt_not_accessible) {
-    Serial.print("Fahrbefehl: ");
-    Serial.print(array_message[6]);
+    Serial.print(" Fahrbefehl: ");
+    Serial.print(message_array[message_number][6],BIN);
   }
   else {
-    Serial.print("Gleisabschnitt: ");
-    Serial.print(array_message[6]);
+    Serial.print(" Gleisabschnitt: ");
+    Serial.print(message_array[message_number][6],BIN);
   }
+  Serial.println("");
+
 }
 
-void convert_message_bv(int array_message[]) { //Funktion zu Umwandeln der Auditing Nachrichten der Befehlsvalidierung
+void convert_message_bv(int message_number) { //Funktion zu Umwandeln der Auditing Nachrichten der Befehlsvalidierung
   /*Befehlsvalidierung
    [Byte 0]    
    1 = Befehlsvalidierung
@@ -267,7 +290,7 @@ void convert_message_bv(int array_message[]) { //Funktion zu Umwandeln der Audit
 
 }
 
-void convert_message_ev(int array_message[]) { //Funktion zu Umwandeln der Auditing Nachrichten der Ergebnisvalidierung
+void convert_message_ev(int message_number) { //Funktion zu Umwandeln der Auditing Nachrichten der Ergebnisvalidierung
   /* Ergebnisvalidierung
    [Byte 0]  [Byte 1]  [Byte 2]  [Byte 3]  [Byte 4]  [Byte 5]  [Byte 6]
    2          1        2           X        0          0          0        Warnung: Anzahl aufeinander folgender unterschiedlicher Streckenbefehle
@@ -283,5 +306,8 @@ void convert_message_ev(int array_message[]) { //Funktion zu Umwandeln der Audit
 
 
 }
+
+
+
 
 
