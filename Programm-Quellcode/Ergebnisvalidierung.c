@@ -7,7 +7,7 @@
  *        Autor:        Philip Weber
  *
  *
- *        Modul:        Ergebnisvalidierung, 1.0
+ *        Modul:        Ergebnisvalidierung, 2.0
  *
  *        Beschreibung:
  *		Das Modul Ergebnisvalidierung dient der berprfung der von 
@@ -200,7 +200,7 @@ static boolean isStreckenbefehlResetted(Streckenbefehl *track)
 static void resetStreckenbefehl(Streckenbefehl *track)
 {
 	// Streckenbefehl zuruecksetzen
-	track->Lok = LEER;
+	track->lok = LEER;
 	track->Weiche = LEER;
 	track->Entkoppler = LEER;
 	track->Fehler = 0;

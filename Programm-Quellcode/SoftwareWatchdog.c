@@ -7,7 +7,7 @@
  *        Autor:        Felix Theodor Blueml
  *
  *
- *        Modul:        Software Watchdog, Version 1.6
+ *        Modul:        Software Watchdog, Version 2.0
  *
  *        Beschreibung:
  *        Der Software-Watchdog erkennt Deadlocks im Programmablauf. Bei
@@ -34,7 +34,7 @@
 
 byte SW_status_array[7];
 /*
- *  Description: Ringpuffer zum speichern der Statusmeldungen der Module.
+ *  Description: Ringpuffer zum Speichern der Statusmeldungen der Module.
  *  Values     : [0]: Statusmeldung Leitzentrale
  *               [1]: Statusmeldung Befehlsvalidierung
  *               [2]: Statusmeldung Ergebnisvalidierung
@@ -42,7 +42,7 @@ byte SW_status_array[7];
  *               [4]: Statusmeldung SSC-Treiber
  *               [5]: Statusmeldung RS232-Treiber
  *               [6]: Statusmeldung Auditing System
- *               (Letzter status des jeweiligen Moduls)
+ *               (Letzter Status des jeweiligen Moduls)
  */
 
 /* Lokale Makros ************************************************************/
