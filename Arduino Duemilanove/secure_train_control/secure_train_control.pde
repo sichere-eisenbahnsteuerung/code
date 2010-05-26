@@ -242,8 +242,31 @@ void convert_message_bv(int message_number) { //Funktion zu Umwandeln der Auditi
    2 Programm befindet sich in der Funktion sendSensorDaten()
    3 Programm befindet sich in der Funktion checkStreckenBefehl()
    4 Programm befindet sich in der Funktion sensorNachbarn()
-   5 Programm befindet sich in der Funktion checkKritischerZustand()
-   [Byte 2]
+   5 Programm befindet sich in der Funktion checkKritischerZustand()*/
+  Serial.println("BV Zustand: ");
+  switch(message_array[message_number][1]) {
+  case 0:
+    Serial.print("workBV ");
+    break;
+  case 1:
+    Serial.print("checkSensorDaten ");
+    break;
+  case 2:
+    Serial.print("sendSensorDaten ");
+    break;
+  case 3:
+    Serial.print("checkStreckenBefehl ");
+    break;
+  case 4:
+    Serial.print("sensorNachbarn ");
+    break;
+  case 5:
+    Serial.print("checkKritischerZustand ");
+    break;
+  default:
+    break;
+  }
+  /*[Byte 2]
    Fehlercodes:
    0 Kein Fehler
    --------------------------
@@ -277,16 +300,80 @@ void convert_message_bv(int message_number) { //Funktion zu Umwandeln der Auditi
    32 Ein Zug fährt mit Vollgas in Richtung eines belegten Abschnitts
    33 Zwei Züge in benachbarten Abschnitten fahren aufeinander zu
    34 Ein Zug fährt auf eine für ihn falsch gestellte Weiche
-   35 Zu viele Waggons und Loks sind auf einem Abschnitt
-   [Byte 3]
-   nextState (interner Zustand, vgl. Kapitel 5.1 im Dokument Moduldesign Befehlsvalidierung)
-   [Byte 4]
-   criticalStatecounter (vgl. Kapitel 6.2 im Dokument Moduldesign Befehlsvalidierung)
-   [Byte 5]
-   Position von Zug Nr. 1 (Nr. des Gleisabschnitts)
-   [Byte 6]
-   Position von Zug Nr. 2 (Nr. des Gleisabschnitts)*/
-
+   35 Zu viele Waggons und Loks sind auf einem Abschnitt*/
+  Serial.println("BV Fehler: ");
+  switch(message_array[message_number][2]) {
+  case 0:
+    Serial.print("Kein Fehler ");
+    break;
+  case 1:
+    Serial.print("Sensordaten fehlerhaft ");
+    break;
+  case 2:
+    Serial.print("Kritischer Zustand zu oft aufgetreten ");
+    break;
+  case 3:
+    Serial.print("Kopie der Streckentopologie manipuliert ");
+    break;
+  case 4:
+    Serial.print("Falscher Interner Zustand ");
+    break;
+  case 8:
+    Serial.print("Fehlerbyte in Sensordaten ");
+    break;
+  case 9:
+    Serial.print("Kein Zug neben dem aktivierten Sensor ");
+    break;
+  case 10:
+    Serial.print("Alte Sensordaten noch nicht von LZ verarbeitet ");
+    break;
+  case 11:
+    Serial.print("Sensor hat weder Nachfolger noch Vorgänger ");
+    break;
+  case 16:
+    Serial.print("Syntaxfehler: Entkoppler-Nr. ungültig ");
+    break;
+  case 17:
+    Serial.print("Syntaxfehler: Weichen-Nr. ungültig ");
+    break;
+  case 18:
+    Serial.print("Entkoppeln, während ein schneller Zug auf diesem Gleisabschnitt ist ");
+    break;
+  case 19:
+    Serial.print("Weiche soll gestellt werden, die belegt ist ");
+    break;
+  case 20:
+    Serial.print("Weiche soll gestellt werden, die von einem anderen Zug angefahren wird ");
+    break;
+  case 21:
+    Serial.print("Lokbefehl: Mit Vollgas auf belegtes Gleis fahren ");
+    break;
+  case 22:
+    Serial.print("Lokbefehl: Weiche zum Ziel ist belegt ");
+    break;
+  case 23:
+    Serial.print("Lokbefehl: Weiche zum Ziel ist falsch gestellt ");
+    break;
+  default:
+    break;
+  }
+  /*[Byte 3]   
+   nextState (interner Zustand, vgl. Kapitel 5.1 im Dokument Moduldesign Befehlsvalidierung)*/
+  Serial.print(" Next state: ");
+  Serial.print(message_array[message_number][3],DEC);
+  /*[Byte 4]
+   criticalStatecounter (vgl. Kapitel 6.2 im Dokument Moduldesign Befehlsvalidierung)*/
+  Serial.print(" criticalStatecounter: ");
+  Serial.print(message_array[message_number][4],DEC);
+  /*[Byte 5]
+   Die Position von Lok #1*/
+  Serial.print(" Position Lok#1: ");
+  Serial.print(message_array[message_number][5],BIN);
+  /*[Byte 6]
+   Die Position von Lok #2*/
+  Serial.print(" Position Lok#2: ");
+  Serial.print(message_array[message_number][6],BIN);
+  Serial.println("");
 
 }
 
@@ -303,11 +390,57 @@ void convert_message_ev(int message_number) { //Funktion zu Umwandeln der Auditi
    2          5        3           0        X          0          0        Fehler: Fehlermeldung vom RS232-Treiber kommend
    2          6        1           X        X          X          0        Info: Streckenbefehl der an den SSC-Treiber gesendet wurde
    2          7        1           X        X          X          0        Info: Streckenbefehl der an den RS232-Treiber gesendet wurde.*/
-
-
+  Serial.println("EV Meldung: ");
+  switch(message_array[message_number][1]) {
+  case 1:
+    if(message_array[message_number][2] == 2) {
+      Serial.print("Warnung: Anzahl aufeinander folgender unterschiedlicher Streckenbefehle ");
+      Serial.print(message_array[message_number][3],DEC);
+    }
+    if(message_array[message_number][2] == 3) {
+      Serial.print("Fehler: Streckenbefehle ungleich ");
+    }
+    break;
+  case 2:
+    if(message_array[message_number][2] == 2) {
+      Serial.print("Warnung: Anzahl vergeblicher Versuche den Streckenbefehl an den RS232-Treiber zu senden ");
+      Serial.print(message_array[message_number][3],DEC);
+    }
+    if(message_array[message_number][2] == 3) {
+      Serial.print("Fehler: Streckenbefehl konnte nicht an den RS232-Treiber gesendet werden ");
+    }
+    break;
+  case 3:
+    if(message_array[message_number][2] == 2) {
+      Serial.print("Warnung: Anzahl vergeblicher Versuche den Streckenbefehl an den SSC-Treiber zu senden ");
+      Serial.print(message_array[message_number][3],DEC);
+    }
+    if(message_array[message_number][2] == 3) {
+      Serial.print("Fehler: Streckenbefehl konnte nicht an den SSC-Treiber gesendet werden ");
+    }
+    break;
+  case 4:
+    Serial.print("Fehlermeldung SSC-Treiber ");
+    Serial.print(message_array[message_number][4],BIN);
+    break;
+  case 5:
+    Serial.print("Fehlermeldung RS232-Treiber ");
+    Serial.print(message_array[message_number][4],BIN);
+    break;
+  case 6:
+    Serial.print("Streckenbfehl SSC-Treiber ");
+    Serial.print(message_array[message_number][3],BIN);
+    Serial.print(message_array[message_number][4],BIN);
+    Serial.print(message_array[message_number][5],BIN);
+    break;
+  case 7:
+    Serial.print("Streckenbfehl RS232-Treiber ");
+    Serial.print(message_array[message_number][3],BIN);
+    Serial.print(message_array[message_number][4],BIN);
+    Serial.print(message_array[message_number][5],BIN);
+    break;
+  default:
+    break;
+  }
+  Serial.println("");
 }
-
-
-
-
-
