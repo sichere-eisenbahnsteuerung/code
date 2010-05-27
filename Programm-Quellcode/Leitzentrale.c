@@ -751,6 +751,7 @@ void workLZ() {
 				wiederholen[lok] = FALSE;
 				sendNachricht(ANKUPPEL_VERSUCH);
 			}
+			zustand[lok] = FAHREND;
 			break;
 			// Die Lok kuppelt ab
 		case ABKUPPELND:
@@ -766,8 +767,9 @@ void workLZ() {
 				checkKuppelAktion = BEIM_NAECHSTEN_MAL;
 				wiederholen[lok] = FALSE;
 				sendNachricht(ABKUPPEL_VERSUCH);
-			}
-			break;
+			}		 
+			zustand[lok] = FAHREND;
+			break;	 
 			// Kein gueltiger Zustand, Fehler ans Auditing melden.
 		default:
 			sendNachricht(FEHLER_ZUSTAND);
