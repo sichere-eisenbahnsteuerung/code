@@ -229,7 +229,7 @@ static boolean streckenbefehleEqual(Streckenbefehl *track1, Streckenbefehl *trac
 	}
 
 	// Ueberpruefung, ob die uebergebenen Streckenbefehle leer sind,
-	// falls mindestens einer nicht neu ist
+	// falls beide neu sind
 	if(!isStreckenbefehlResetted(track1) && !isStreckenbefehlResetted(track2))
 	{
 		// Streckenbefehle vergleichen
