@@ -7,7 +7,7 @@
  *        Autor:        Icken, Jan-Christopher
  *
  *
- *        Modul:        NotAus-Treiber, 0.1
+ *        Modul:        NotAus-Treiber, 0.2
  *
  *        Beschreibung:
  *        Dieses Modul stellt den Zugriff auf das extern angeschlossene
@@ -63,8 +63,8 @@ void emergency_off(void)
 	// Verbliebene Meldungen der Module versenden
 	reportAllMsg();
 
-	//Endlosschleife um keine weiteren Aktionen zuzulassen
-	for(;;)
+	//Endlosschleife, bis Reset-Taste betätigt wird
+	while(!P1^0)
 	{
 	}
 }
