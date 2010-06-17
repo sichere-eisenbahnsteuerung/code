@@ -1,13 +1,13 @@
 /*****************************************************************************
  *
- *        Dateiname:    Test_S88Treiber.c
+ *        Dateiname:    Test_SSCTreiber.c
  *
  *        Projekt:      Sichere Eisenbahnsteuerung
  *
  *        Autor:        Jan-Christopher Icken
  *
  *
- *        Modul:        Testskript für das S88-Treiber-Modul
+ *        Modul:        Testskript für das SSC-Treiber-Modul
  *
  *        Beschreibung:
  *        
@@ -19,8 +19,9 @@
  ****************************************************************************/
 
 /* Includes *****************************************************************/
-#include "S88Treiber.h"
-#include "Test_S88Treiber.h"
+#include "SSCTreiber.h"
+#include "Test_SSCTreiber.h"
+#include "Betriebsmittelverwaltung.h"
 #include <stdio.h>
 
 /* Definition globaler Konstanten *******************************************/
@@ -34,13 +35,16 @@
 /* Lokale Konstanten ********************************************************/
 
 /* Lokale Variablen *********************************************************/
-
+int k;
+int l;
 /* Prototypen fuer lokale Funktionen ****************************************/
-void run_test_1(void);
-void run_test_2(void);
-void run_test_3(void);
+void run_ssctest_1(void);
+void run_ssctest_2(void);
+void run_ssctest_3(void);
+void run_ssctest_4(void);
+void run_ssctest_5(void);
 /* Funktionsimplementierungen ***********************************************/
-void work_s88_tests(void) {
+void work_ssc_tests(void) {
 	//Serielle Schnittstelle für Debug Ausgabe einrichten
 	BD = 1; // Baudratengenerator einschalten
 	SM0 = 0; // Mode 1  8Bit variable Baudrate
@@ -49,50 +53,59 @@ void work_s88_tests(void) {
 	SRELL = 0xDF;
 	REN = 1; // seriellen Empfang einschalten
 	TI = 1;
-	run_test_1(); //Ersten Test durchführen
-	run_test_2(); //Zweiten Test durchführen
-	run_test_3(); //Dritten Test durchführen
+	run_ssctest_1(); //Ersten Test durchführen
+	run_ssctest_2(); //Zweiten Test durchführen
+	run_ssctest_3(); //Dritten Test durchführen
+	run_ssctest_4();
+	run_ssctest_5();
 	for(;;) {
+	}   
+}
+
+void run_ssctest_1(void) {
+	//Modul initialisieren
+	initSSC();
+	//zu vergleichenden Streckenbefehl in Shared Memory laden
+	EV_SSC_streckenbefehl.Lok = 0x25;
+	EV_SSC_streckenbefehl.Weiche = 0x92;
+	EV_SSC_streckenbefehl.Entkoppler = 0x5D;
+	for(k = 0; k < 3;k++) { //Test 3x durchlaufen lassen
+	
+	//Streckenbefehle versenden  
+	workSSC();
+	workSSC();
+	workSSC();
+	//Entgegengenommene Bytes vergleichen
+	  
+	
+		if(SSC_EV_streckenbefehl.Lok == 0x25 && SSC_EV_streckenbefehl.Weiche == 0x92 && SSC_EV_streckenbefehl.Entkoppler == 0x5D) {
+		printf("SSC Testfall 1 erfolgreich.\n");
+	}
+	else {
+		printf("SSC Testfall 1 fehlgeschlagen.\n");
+	}
 	}
 }
 
-/*
-*   Test_S88-Treiber_01_SensordatenNochNichtVerarbeitet
-*/
-
-void run_test_1(void)	   
-{      
-	initS88();
-	S88_BV_sensordaten.Byte0 = 0x12;
-	S88_BV_sensordaten.Byte1 = 0x34;
-	workS88();
-	if(S88_BV_sensordaten.Byte0 == 0x12 && S88_BV_sensordaten.Byte1 == 0x34) {
-		printf("Test 1 S88-Treiber-Modul erfolgreich.\n");
-	}
+void run_ssctest_2(void) {
+	//Modul initialisieren
+	//initSSC();
+	//zu vergleichenden Streckenbefehl in Shared Memory laden
+	//EV_SSC_streckenbefehl.Lok = 0x25;
+	//EV_SSC_streckenbefehl.Weiche = 0x92;
+	//EV_SSC_streckenbefehl.Entkoppler = 0x5D;
+	//SRB = 0x25;
+	//workSSC();
 }
 
-/*
-*   Test_S88-Treiber_02_geaenderteSensorsignale
-*/
-
-void run_test_2(void) {
-	initS88();
-	//S88_Data = 1;
-	workS88();
-	if(S88_BV_sensordaten.Byte0 == 0xFF && S88_BV_sensordaten.Byte1 == 0xFF) {
-		printf("Test 2 S88-Treiber-Modul erfolgreich.\n");
-	}
+void run_ssctest_3(void) {
+	//initSSC();
 }
 
-/*
-*   Test_S88-Treiber_03_gleicheSensorsignale
-*/
-
-void run_test_3(void) {
-	initS88();
-	S88_Data = 0;
-	workS88();
-		if(S88_BV_sensordaten.Byte0 == 0x00 && S88_BV_sensordaten.Byte1 == 0x00) {
-		printf("Test 3 S88-Treiber-Modul erfolgreich.\n");
-	}
+void run_ssctest_4(void) {
+	//initSSC();
 }
+
+void run_ssctest_5(void) {
+	//initSSC();
+}   
