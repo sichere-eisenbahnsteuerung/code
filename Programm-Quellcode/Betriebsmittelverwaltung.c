@@ -67,14 +67,21 @@ byte SSC_EV_failure = LEER;
 /* Lokale Variablen *********************************************************/
 
 /* Prototypen fuer lokale Funktionen ****************************************/
+void initAll(void)
+void work(void)
 
 /* Funktionsimplementierungen ***********************************************/
 void main (void)
 {
 	EAL = 1; //enable all interrupts
 	
-//alles initialisieren
-	
+	initAll();
+	work();
+}
+
+void initAll(void)
+{
+	//alles initialisieren
 	initNOTAUS();
  	initSW();
 	initAS();
@@ -92,11 +99,14 @@ void main (void)
  	initLZ();
  	hello();
  	initFP();
- 	hello(); 
+ 	hello();
+}
 
-	for(;;)	//Endlosschleife der aufrufe, s. "C-Programmierung"
+void work(void)
+{
+  	for(;;)	//Endlosschleife der aufrufe, s. "C-Programmierung"
 	{
- 		workLZ();		//modulaufruf
+		workLZ();		//modulaufruf
  		hello();		//beim SW rueckmelden
  		workRS232();
  		hello();

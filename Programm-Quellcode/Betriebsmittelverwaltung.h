@@ -97,6 +97,7 @@ sbit S88_CLK = P5^2;
 sbit S88_Data = P5^3;
 sbit AS_PORT_I2C_SDA = P5^4;
 sbit AS_PORT_I2C_SCL = P5^5;
+sbit Neustart = P1^0;
 
 /* Deklaration von globalen Funktionen **************************************/
 
