@@ -1,0 +1,6 @@
+
+ACHTUNG:
+
+Die Testskripte im Ordner '04.02.10.00_old' sind alte Testskripte und entsprechen nicht der Testspezifikation!!!
+
+	--> nur als Vorlage/ Gedankenstütze nutzen!!!
