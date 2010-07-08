@@ -1,0 +1,4 @@
+folgende Test wurden bereits durchgeführt:
+
+- Test_Sensoren --> jedoch muss die Triggerung des Logic Waves noch eingestellt werden (siehe Tespezifikation_Hardware-undUmgebungskomponenten)und anschließend der Test erneut durchgeführt werden
+- Test_Hardware --> jedoch keine Kommunikation mit dem XpressNet-Adapter - richtiges Kabel verwenden!
