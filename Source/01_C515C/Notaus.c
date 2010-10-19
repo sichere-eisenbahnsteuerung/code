@@ -67,9 +67,9 @@ void emergency_off(void)
 	while(!Neustart)
 	{
 	}
-
+			/*
 	initAll();
-	work()
+	work();	  */
 }
 
 

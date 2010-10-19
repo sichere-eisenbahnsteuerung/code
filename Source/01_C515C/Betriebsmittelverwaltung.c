@@ -66,9 +66,6 @@ byte SSC_EV_failure = LEER;
 
 /* Lokale Variablen *********************************************************/
 
-/* Prototypen fuer lokale Funktionen ****************************************/
-void initAll(void)
-void work(void)
 
 /* Funktionsimplementierungen ***********************************************/
 void main (void)

@@ -101,4 +101,10 @@ sbit Neustart = P1^0;
 
 /* Deklaration von globalen Funktionen **************************************/
 
+
+/* Prototypen fuer lokale Funktionen ****************************************/
+void initAll(void);
+void work(void);
+
+
 #endif /* BETRIEBSMITTELVERWALTUNG_H */

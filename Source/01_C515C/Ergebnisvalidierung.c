@@ -200,7 +200,7 @@ static boolean isStreckenbefehlResetted(Streckenbefehl *track)
 static void resetStreckenbefehl(Streckenbefehl *track)
 {
 	// Streckenbefehl zuruecksetzen
-	track->lok = LEER;
+	track->Lok = LEER;
 	track->Weiche = LEER;
 	track->Entkoppler = LEER;
 	track->Fehler = 0;
