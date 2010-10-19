@@ -1,0 +1,13 @@
+".\AuditingSystem.obj",
+".\Befehlsvalidierung.obj",
+".\Betriebsmittelverwaltung.obj",
+".\Ergebnisvalidierung.obj",
+".\Fahrprogramm.obj",
+".\Leitzentrale.obj",
+".\Notaus.obj",
+".\RS232Treiber.obj",
+".\S88Treiber.obj",
+".\SoftwareWatchdog.obj",
+".\SSCTreiber.obj" 
+TO "save_train_control" 
+RAMSIZE(256) 
