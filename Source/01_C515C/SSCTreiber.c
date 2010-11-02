@@ -9,7 +9,6 @@
  * @date     13.01.2010
  */
 
-
 // Includes
 #include "SSCTreiber.h"
 #include "Betriebsmittelverwaltung.h"
@@ -28,8 +27,8 @@ byte byteToReceive  = 1;
  */
 byte status = 0;
 
-/// die empfangenen Byte des Streckenbefehls werden in diesem Array zwischengespeichert,
-/// solange der Streckenbefehl noch nicht vollstÃ¤ndig empfangen und auf GÃ¼ltigkeit geprÃ¼ft wurde
+// die empfangenen Byte des Streckenbefehls werden in diesem Array zwischengespeichert,
+// solange der Streckenbefehl noch nicht vollstaendig empfangen und auf Gültigkeit geprueft wurde
 byte temp_streckenbefehl[3];
 
 // Prototypen fuer lokale Funktionen:
@@ -62,7 +61,7 @@ void byteToSendInkrementieren()
             byteToSend = 1;
         break;
 	
-        default: // @TODO Hier sollte irgendetwas passieren z.B. eine Fehlermeldung;
+        default: ;// @TODO Hier sollte irgendetwas passieren z.B. eine Fehlermeldung;
     }
 }
 
@@ -91,7 +90,7 @@ void byteToSendDekrementieren()
             byteToSend = 2;
             break;
 		
-        default: // @TODO Hier sollte irgendetwas passieren z.B. eine Fehlermeldung;
+        default: ;// @TODO Hier sollte irgendetwas passieren z.B. eine Fehlermeldung;
     }
 }
 
@@ -120,7 +119,7 @@ void byteToReceiveInkrementieren()
             byteToReceive = 1;
             break;
 		
-        default: // @TODO Hier sollte irgendetwas passieren z.B. eine Fehlermeldung;
+        default: ;// @TODO Hier sollte irgendetwas passieren z.B. eine Fehlermeldung;
     }
 }
 
@@ -149,12 +148,10 @@ void byteToReceiveDekrementieren()
             byteToReceive = 2;
             break;
 		
-        default: // @TODO Hier sollte irgendetwas passieren z.B. eine Fehlermeldung;
+        default: ;// @TODO Hier sollte irgendetwas passieren z.B. eine Fehlermeldung;
     }
 }
 
-/// Streckenbefehl (globale Variable "EV_SSC_streckenbefehl") prÃ¼fen, 
-/// wenn lauter Einsen, dann kein neuer Streckenbefehl sonst ja
 /**
  * @brief   Prüft die globale Variable 'EV_SSC_streckenbefehl'.
  *
@@ -167,7 +164,7 @@ void byteToReceiveDekrementieren()
  */
 boolean checkNeuerStreckenbefehl()
 {	
-    boolean neuerBefehl = true;
+    boolean neuerBefehl = TRUE;
 
     if(EV_SSC_streckenbefehl.Lok == 255 
         && EV_SSC_streckenbefehl.Weiche == 255 
@@ -179,7 +176,6 @@ boolean checkNeuerStreckenbefehl()
     return (neuerBefehl);
 }
 
-/// bei gelesenem Streckenbefehl wird true uebergeben, bei zu sendendem false
 /**
  * @brief   Prüft den anliegenden Strecknbefehl auf Gültigkeit.
  *
@@ -207,7 +203,7 @@ void befehlAufGueltigkeitPruefen(boolean lesen)
 		
         streckenbefehlAn_EVsenden();
 	}
-	/*  //Pruefung, ob nur Einsen vorhanden macht wenig Sinn. Fuer Erweitung erstmal nicht gelÃ¶scht
+	/*  //Pruefung, ob nur Einsen vorhanden macht wenig Sinn. Fuer Erweitung erstmal nicht geloescht
 	else//zu sendender Streckenbefehl
 	{
 		
@@ -244,7 +240,6 @@ void streckenbefehlAn_EVsenden() //@TODO: Name stimmt nicht mit Funktion überein
         status = 10;
     }
 }
-
 
 /**
  * @brief   Interrupt des SSC Treibers.
@@ -297,7 +292,6 @@ void kollisionVerarbeiten()
     }
 }
 
-/// liest das empfangene Byte ein
 /**
  * @brief   Einlesen des empfangenen Bytes.
  *  
@@ -329,7 +323,7 @@ void datenLesen()
     }
 	
     //Transmission Compleded-Bit zuruecksetzen
-    if (SCF & 0x02) //Kollisionsbit (WCOL) gesetzt
+    if (SCF & 0x02)     //Kollisionsbit (WCOL) gesetzt
     {
         SCF = 0x02;
     }
@@ -341,7 +335,7 @@ void datenLesen()
 
 /*boolen byteAufGueltigkeitPruefen(Byte a)
 {
-	//a enthÃ¤lt nur Einsen
+	//a enthält nur Einsen
 	if(a == 255)
 	{
 		return false;

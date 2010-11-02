@@ -3,288 +3,57 @@
 <pre>
 <h1>µVision Build Log</h1>
 <h2>Project:</h2>
-E:\Software\Eisenbahn\Source\01_C515C\uVision Projekt\save_train_control.uvproj
-Project File Date:  10/19/2010
+D:\03 Studium\Semester 07\PROJ Coding\code\Source\01_C515C\uVision Projekt\save_train_control.uvproj
+Project File Date:  11/02/2010
 
 <h2>Output:</h2>
 Build target 'Target 1'
-compiling AuditingSystem.c...
-compiling Befehlsvalidierung.c...
-compiling Betriebsmittelverwaltung.c...
-..\BETRIEBSMITTELVERWALTUNG.C(74): error C132: 'work': not in formal parameter list
-..\BETRIEBSMITTELVERWALTUNG.C(74): error C141: syntax error near 'void'
-..\BETRIEBSMITTELVERWALTUNG.C(75): error C132: 'main': not in formal parameter list
-..\BETRIEBSMITTELVERWALTUNG.C(75): error C141: syntax error near '{'
-..\BETRIEBSMITTELVERWALTUNG.C(76): error C136: 'EAL': 'void' on variable
-..\BETRIEBSMITTELVERWALTUNG.C(76): error C244: 'EAL': can't initialize, bad type or class
-..\BETRIEBSMITTELVERWALTUNG.C(76): error C136: 'EAL': 'void' on variable
-..\BETRIEBSMITTELVERWALTUNG.C(76): error C132: 'EAL': not in formal parameter list
-..\BETRIEBSMITTELVERWALTUNG.C(78): error C132: 'initAll': not in formal parameter list
-..\BETRIEBSMITTELVERWALTUNG.C(79): error C132: 'work': not in formal parameter list
-..\BETRIEBSMITTELVERWALTUNG.C(80): error C141: syntax error near '}'
-compiling Ergebnisvalidierung.c...
-..\ERGEBNISVALIDIERUNG.C(203): error C204: 'lok': undefined member
-compiling Fahrprogramm.c...
-compiling Leitzentrale.c...
-compiling Notaus.c...
-..\NOTAUS.C(71): warning C206: 'initAll': missing function-prototype
-..\NOTAUS.C(72): warning C206: 'work': missing function-prototype
-..\NOTAUS.C(73): error C141: syntax error near '}'
-compiling RS232Treiber.c...
-compiling S88Treiber.c...
-..\S88TREIBER.C(66): warning C206: 'hello': missing function-prototype
-..\S88TREIBER.C(66): error C267: 'hello': requires ANSI-style prototype
-..\S88TREIBER.C(66): error C141: syntax error near 'byte'
-..\S88TREIBER.C(75): error C141: syntax error near 'else'
-..\S88TREIBER.C(87): error C202: 'keine': undefined identifier
-..\S88TREIBER.C(87): error C141: syntax error near 'wait'
-compiling SoftwareWatchdog.c...
-compiling SSCTreiber.c...
-Target not created
-Build target 'Target 1'
-compiling AuditingSystem.c...
-compiling Befehlsvalidierung.c...
 compiling Betriebsmittelverwaltung.c...
 compiling Ergebnisvalidierung.c...
-..\ERGEBNISVALIDIERUNG.C(203): error C204: 'lok': undefined member
-compiling Fahrprogramm.c...
-compiling Leitzentrale.c...
-compiling Notaus.c...
-..\NOTAUS.C(71): warning C206: 'initAll': missing function-prototype
-..\NOTAUS.C(72): warning C206: 'work': missing function-prototype
-..\NOTAUS.C(73): error C141: syntax error near '}'
-compiling RS232Treiber.c...
-compiling S88Treiber.c...
-..\S88TREIBER.C(66): warning C206: 'hello': missing function-prototype
-..\S88TREIBER.C(66): error C267: 'hello': requires ANSI-style prototype
-..\S88TREIBER.C(66): error C141: syntax error near 'byte'
-..\S88TREIBER.C(75): error C141: syntax error near 'else'
-..\S88TREIBER.C(87): error C202: 'keine': undefined identifier
-..\S88TREIBER.C(87): error C141: syntax error near 'wait'
-compiling SoftwareWatchdog.c...
 compiling SSCTreiber.c...
+..\SSCTREIBER.C(65): error C141: syntax error near '}'
+..\SSCTREIBER.C(94): error C141: syntax error near '}'
+..\SSCTREIBER.C(123): error C141: syntax error near '}'
+..\SSCTREIBER.C(152): error C141: syntax error near '}'
+..\SSCTREIBER.C(167): error C202: 'true': undefined identifier
 Target not created
 Build target 'Target 1'
-compiling AuditingSystem.c...
-compiling Befehlsvalidierung.c...
-compiling Betriebsmittelverwaltung.c...
-compiling Ergebnisvalidierung.c...
-compiling Fahrprogramm.c...
-compiling Leitzentrale.c...
-compiling Notaus.c...
-..\NOTAUS.C(71): warning C206: 'initAll': missing function-prototype
-..\NOTAUS.C(72): warning C206: 'work': missing function-prototype
-..\NOTAUS.C(73): error C141: syntax error near '}'
-compiling RS232Treiber.c...
-compiling S88Treiber.c...
-..\S88TREIBER.C(66): warning C206: 'hello': missing function-prototype
-..\S88TREIBER.C(66): error C267: 'hello': requires ANSI-style prototype
-..\S88TREIBER.C(66): error C141: syntax error near 'byte'
-..\S88TREIBER.C(75): error C141: syntax error near 'else'
-..\S88TREIBER.C(87): error C202: 'keine': undefined identifier
-..\S88TREIBER.C(87): error C141: syntax error near 'wait'
-compiling SoftwareWatchdog.c...
 compiling SSCTreiber.c...
+..\SSCTREIBER.C(65): error C141: syntax error near '}'
+..\SSCTREIBER.C(94): error C141: syntax error near '}'
+..\SSCTREIBER.C(123): error C141: syntax error near '}'
+..\SSCTREIBER.C(152): error C141: syntax error near '}'
+..\SSCTREIBER.C(167): error C202: 'true': undefined identifier
 Target not created
 Build target 'Target 1'
-compiling AuditingSystem.c...
-compiling Befehlsvalidierung.c...
-compiling Betriebsmittelverwaltung.c...
-compiling Ergebnisvalidierung.c...
-compiling Fahrprogramm.c...
-compiling Leitzentrale.c...
-compiling Notaus.c...
-..\NOTAUS.C(73): error C141: syntax error near '}'
-compiling RS232Treiber.c...
-compiling S88Treiber.c...
-..\S88TREIBER.C(66): warning C206: 'hello': missing function-prototype
-..\S88TREIBER.C(66): error C267: 'hello': requires ANSI-style prototype
-..\S88TREIBER.C(66): error C141: syntax error near 'byte'
-..\S88TREIBER.C(75): error C141: syntax error near 'else'
-..\S88TREIBER.C(87): error C202: 'keine': undefined identifier
-..\S88TREIBER.C(87): error C141: syntax error near 'wait'
-compiling SoftwareWatchdog.c...
 compiling SSCTreiber.c...
+..\SSCTREIBER.C(94): error C141: syntax error near '}'
+..\SSCTREIBER.C(123): error C141: syntax error near '}'
+..\SSCTREIBER.C(152): error C141: syntax error near '}'
+..\SSCTREIBER.C(167): error C202: 'true': undefined identifier
 Target not created
 Build target 'Target 1'
-compiling Notaus.c...
-..\NOTAUS.C(73): error C141: syntax error near '}'
-compiling S88Treiber.c...
-..\S88TREIBER.C(66): warning C206: 'hello': missing function-prototype
-..\S88TREIBER.C(66): error C267: 'hello': requires ANSI-style prototype
-..\S88TREIBER.C(66): error C141: syntax error near 'byte'
-..\S88TREIBER.C(75): error C141: syntax error near 'else'
-..\S88TREIBER.C(87): error C202: 'keine': undefined identifier
-..\S88TREIBER.C(87): error C141: syntax error near 'wait'
+compiling SSCTreiber.c...
+..\SSCTREIBER.C(123): error C141: syntax error near '}'
+..\SSCTREIBER.C(152): error C141: syntax error near '}'
+..\SSCTREIBER.C(167): error C202: 'true': undefined identifier
 Target not created
 Build target 'Target 1'
-compiling Notaus.c...
-..\NOTAUS.C(73): error C141: syntax error near '}'
-compiling S88Treiber.c...
-..\S88TREIBER.C(66): warning C206: 'hello': missing function-prototype
-..\S88TREIBER.C(66): error C267: 'hello': requires ANSI-style prototype
-..\S88TREIBER.C(66): error C141: syntax error near 'byte'
-..\S88TREIBER.C(87): error C202: 'keine': undefined identifier
-..\S88TREIBER.C(87): error C141: syntax error near 'wait'
+compiling SSCTreiber.c...
+..\SSCTREIBER.C(152): error C141: syntax error near '}'
+..\SSCTREIBER.C(167): error C202: 'true': undefined identifier
 Target not created
 Build target 'Target 1'
-compiling Notaus.c...
-..\NOTAUS.C(73): error C141: syntax error near '}'
-compiling S88Treiber.c...
-..\S88TREIBER.C(66): warning C206: 'hello': missing function-prototype
-..\S88TREIBER.C(66): error C267: 'hello': requires ANSI-style prototype
-..\S88TREIBER.C(66): error C141: syntax error near 'byte'
-..\S88TREIBER.C(87): error C202: 'keine': undefined identifier
-..\S88TREIBER.C(87): error C141: syntax error near 'wait'
+compiling SSCTreiber.c...
+..\SSCTREIBER.C(167): error C202: 'true': undefined identifier
 Target not created
 Build target 'Target 1'
-compiling Notaus.c...
-..\NOTAUS.C(73): error C141: syntax error near '}'
-compiling S88Treiber.c...
-..\S88TREIBER.C(66): error C141: syntax error near 'byte'
+compiling SSCTreiber.c...
+..\SSCTREIBER.C(167): error C202: 'true': undefined identifier
 Target not created
 Build target 'Target 1'
-compiling Notaus.c...
-..\NOTAUS.C(73): error C141: syntax error near '}'
-compiling S88Treiber.c...
-..\S88TREIBER.C(87): error C202: 'keine': undefined identifier
-..\S88TREIBER.C(87): error C141: syntax error near 'wait'
-Target not created
-Build target 'Target 1'
-compiling Notaus.c...
-..\NOTAUS.C(73): error C141: syntax error near '}'
-compiling S88Treiber.c...
-Target not created
-Build target 'Target 1'
-compiling Notaus.c...
+compiling SSCTreiber.c...
 linking...
-*** WARNING L13: RECURSIVE CALL TO SEGMENT
-    SEGMENT: ?PR?EMERGENCY_OFF?NOTAUS
-    CALLER:  ?PR?_HELLOMODUL?SOFTWAREWATCHDOG
-*** WARNING L13: RECURSIVE CALL TO SEGMENT
-    SEGMENT: ?PR?EMERGENCY_OFF?NOTAUS
-    CALLER:  ?PR?WORKBV?BEFEHLSVALIDIERUNG
-*** WARNING L13: RECURSIVE CALL TO SEGMENT
-    SEGMENT: ?PR?EMERGENCY_OFF?NOTAUS
-    CALLER:  ?PR?_COMPARETRACKS?ERGEBNISVALIDIERUNG
-*** WARNING L15: MULTIPLE CALL TO SEGMENT
-    SEGMENT: ?PR?DEFINESTRECKENTOPOLOGIE?BEFEHLSVALIDIERUNG
-    CALLER1: ?PR?TIMER0OVERFLOW?SOFTWAREWATCHDOG
-    CALLER2: ?C_C51STARTUP
-*** WARNING L15: MULTIPLE CALL TO SEGMENT
-    SEGMENT: ?PR?INITLZ?LEITZENTRALE
-    CALLER1: ?PR?TIMER0OVERFLOW?SOFTWAREWATCHDOG
-    CALLER2: ?C_C51STARTUP
-*** WARNING L15: MULTIPLE CALL TO SEGMENT
-    SEGMENT: ?PR?WORKLZ?LEITZENTRALE
-    CALLER1: ?PR?TIMER0OVERFLOW?SOFTWAREWATCHDOG
-    CALLER2: ?C_C51STARTUP
-*** WARNING L15: MULTIPLE CALL TO SEGMENT
-    SEGMENT: ?PR?GETSENSORDATEN?LEITZENTRALE
-    CALLER1: ?PR?TIMER0OVERFLOW?SOFTWAREWATCHDOG
-    CALLER2: ?C_C51STARTUP
-*** WARNING L15: MULTIPLE CALL TO SEGMENT
-    SEGMENT: ?PR?GETFAHRANWEISUNG?LEITZENTRALE
-    CALLER1: ?PR?TIMER0OVERFLOW?SOFTWAREWATCHDOG
-    CALLER2: ?C_C51STARTUP
-*** WARNING L15: MULTIPLE CALL TO SEGMENT
-    SEGMENT: ?PR?_GET_COMMAND?FAHRPROGRAMM
-    CALLER1: ?PR?TIMER0OVERFLOW?SOFTWAREWATCHDOG
-    CALLER2: ?C_C51STARTUP
-*** WARNING L15: MULTIPLE CALL TO SEGMENT
-    SEGMENT: ?PR?_CHECKBEFAHRBARKEIT?LEITZENTRALE
-    CALLER1: ?PR?TIMER0OVERFLOW?SOFTWAREWATCHDOG
-    CALLER2: ?C_C51STARTUP
-*** WARNING L15: MULTIPLE CALL TO SEGMENT
-    SEGMENT: ?PR?_GETNEXTWEICHE?LEITZENTRALE
-    CALLER1: ?PR?TIMER0OVERFLOW?SOFTWAREWATCHDOG
-    CALLER2: ?C_C51STARTUP
-*** WARNING L15: MULTIPLE CALL TO SEGMENT
-    SEGMENT: ?PR?_SETGLEISABSCHNITTGESPERRT?LEITZENTRALE
-    CALLER1: ?PR?TIMER0OVERFLOW?SOFTWAREWATCHDOG
-    CALLER2: ?C_C51STARTUP
-*** WARNING L15: MULTIPLE CALL TO SEGMENT
-    SEGMENT: ?PR?_SENDNACHRICHT?LEITZENTRALE
-    CALLER1: ?PR?TIMER0OVERFLOW?SOFTWAREWATCHDOG
-    CALLER2: ?C_C51STARTUP
-*** WARNING L15: MULTIPLE CALL TO SEGMENT
-    SEGMENT: ?PR?_SENDMSG?AUDITINGSYSTEM
-    CALLER1: ?PR?TIMER0OVERFLOW?SOFTWAREWATCHDOG
-    CALLER2: ?C_C51STARTUP
-*** WARNING L15: MULTIPLE CALL TO SEGMENT
-    SEGMENT: ?PR?SETSTRECKENBEFEHL?LEITZENTRALE
-    CALLER1: ?PR?TIMER0OVERFLOW?SOFTWAREWATCHDOG
-    CALLER2: ?C_C51STARTUP
-*** WARNING L15: MULTIPLE CALL TO SEGMENT
-    SEGMENT: ?PR?_SETZUSTANDFUERFAHRANWEISUNG?LEITZENTRALE
-    CALLER1: ?PR?TIMER0OVERFLOW?SOFTWAREWATCHDOG
-    CALLER2: ?C_C51STARTUP
-*** WARNING L15: MULTIPLE CALL TO SEGMENT
-    SEGMENT: ?PR?_HELLOMODUL?SOFTWAREWATCHDOG
-    CALLER1: ?PR?TIMER0OVERFLOW?SOFTWAREWATCHDOG
-    CALLER2: ?C_C51STARTUP
-*** WARNING L15: MULTIPLE CALL TO SEGMENT
-    SEGMENT: ?PR?WORKRS232?RS232TREIBER
-    CALLER1: ?PR?TIMER0OVERFLOW?SOFTWAREWATCHDOG
-    CALLER2: ?C_C51STARTUP
-*** WARNING L15: MULTIPLE CALL TO SEGMENT
-    SEGMENT: ?PR?WORKBV?BEFEHLSVALIDIERUNG
-    CALLER1: ?PR?TIMER0OVERFLOW?SOFTWAREWATCHDOG
-    CALLER2: ?C_C51STARTUP
-*** WARNING L15: MULTIPLE CALL TO SEGMENT
-    SEGMENT: ?PR?CHECKSENSORDATEN?BEFEHLSVALIDIERUNG
-    CALLER1: ?PR?TIMER0OVERFLOW?SOFTWAREWATCHDOG
-    CALLER2: ?C_C51STARTUP
-*** WARNING L15: MULTIPLE CALL TO SEGMENT
-    SEGMENT: ?PR?_ZUGNEBENSENSOR?BEFEHLSVALIDIERUNG
-    CALLER1: ?PR?TIMER0OVERFLOW?SOFTWAREWATCHDOG
-    CALLER2: ?C_C51STARTUP
-*** WARNING L15: MULTIPLE CALL TO SEGMENT
-    SEGMENT: ?PR?_SENSORNACHBARN?BEFEHLSVALIDIERUNG
-    CALLER1: ?PR?TIMER0OVERFLOW?SOFTWAREWATCHDOG
-    CALLER2: ?C_C51STARTUP
-*** WARNING L15: MULTIPLE CALL TO SEGMENT
-    SEGMENT: ?PR?CHECKKRITISCHERZUSTAND?BEFEHLSVALIDIERUNG
-    CALLER1: ?PR?TIMER0OVERFLOW?SOFTWAREWATCHDOG
-    CALLER2: ?C_C51STARTUP
-*** WARNING L15: MULTIPLE CALL TO SEGMENT
-    SEGMENT: ?PR?_ZIELGLEISUNDWEICHE?BEFEHLSVALIDIERUNG
-    CALLER1: ?PR?TIMER0OVERFLOW?SOFTWAREWATCHDOG
-    CALLER2: ?C_C51STARTUP
-*** WARNING L15: MULTIPLE CALL TO SEGMENT
-    SEGMENT: ?PR?_WEICHERICHTIG?BEFEHLSVALIDIERUNG
-    CALLER1: ?PR?TIMER0OVERFLOW?SOFTWAREWATCHDOG
-    CALLER2: ?C_C51STARTUP
-*** WARNING L15: MULTIPLE CALL TO SEGMENT
-    SEGMENT: ?PR?CHECKSTRECKENBEFEHL?BEFEHLSVALIDIERUNG
-    CALLER1: ?PR?TIMER0OVERFLOW?SOFTWAREWATCHDOG
-    CALLER2: ?C_C51STARTUP
-*** WARNING L15: MULTIPLE CALL TO SEGMENT
-    SEGMENT: ?PR?_ZUGFAEHRTAUFWEICHEZU?BEFEHLSVALIDIERUNG
-    CALLER1: ?PR?TIMER0OVERFLOW?SOFTWAREWATCHDOG
-    CALLER2: ?C_C51STARTUP
-*** WARNING L15: MULTIPLE CALL TO SEGMENT
-    SEGMENT: ?PR?CHECKSTRECKENTOPOLOGIE?BEFEHLSVALIDIERUNG
-    CALLER1: ?PR?TIMER0OVERFLOW?SOFTWAREWATCHDOG
-    CALLER2: ?C_C51STARTUP
-*** WARNING L15: MULTIPLE CALL TO SEGMENT
-    SEGMENT: ?PR?_SENDNACHRICHT?ERGEBNISVALIDIERUNG
-    CALLER1: ?PR?TIMER0OVERFLOW?SOFTWAREWATCHDOG
-    CALLER2: ?C_C51STARTUP
-*** WARNING L15: MULTIPLE CALL TO SEGMENT
-    SEGMENT: ?PR?_STRECKENBEFEHLEEQUAL?ERGEBNISVALIDIERUNG
-    CALLER1: ?PR?TIMER0OVERFLOW?SOFTWAREWATCHDOG
-    CALLER2: ?C_C51STARTUP
-*** WARNING L15: MULTIPLE CALL TO SEGMENT
-    SEGMENT: ?PR?_COMPARETRACKS?ERGEBNISVALIDIERUNG
-    CALLER1: ?PR?TIMER0OVERFLOW?SOFTWAREWATCHDOG
-    CALLER2: ?C_C51STARTUP
-Program Size: data=9.5 xdata=1147 code=10616
-creating hex file from "save_train_control"...
-"save_train_control" - 0 Error(s), 31 Warning(s).
-Build target 'Target 1'
-compiling Notaus.c...
-linking...
-Program Size: data=9.4 xdata=1102 code=10611
+Program Size: data=9.4 xdata=1102 code=10614
 creating hex file from "save_train_control"...
 "save_train_control" - 0 Error(s), 0 Warning(s).
