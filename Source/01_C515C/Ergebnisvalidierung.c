@@ -1,129 +1,140 @@
-/*****************************************************************************
+/**
+ * @file     Ergebnisvalidierung.c
  *
- *        Dateiname:    Ergebnisvalidierung.c
+ * @author   Philip Weber
+ *   
+ * @brief    Ueberpruefung der Streckenbefehle auf Korrektheit.
+ * 
+ *		     Hierzu werden diese ueber die SSC-Schnittstelle zwischen den 
+ *		     Mikrocontrollern ausgetauscht und verglichen. Unterscheiden 
+ *		     sich diese voneinander, wird ein Not-Aus-Signal erzeugt und 
+ *		     eine Statusmeldung mit den abweichenden Werten an das 
+ *		     Auditing-System zur Protokollierung gesendet.
  *
- *        Projekt:      Sichere Eisenbahnsteuerung
- *
- *        Autor:        Philip Weber
- *
- *
- *        Modul:        Ergebnisvalidierung, 2.0
- *
- *        Beschreibung:
- *		Das Modul Ergebnisvalidierung dient der berprfung der von 
- *		der Anwendung erzeugten Streckenbefehle auf Korrektheit. 
- *		Hierzu werden diese ber die SSC-Schnittstelle zwischen den 
- *		Mikrocontrollern ausgetauscht und verglichen. Unterscheiden 
- *		sich diese voneinander, wird ein Not-Aus-Signal erzeugt und 
- *		eine Statusmeldung mit den abweichenden Werten an das 
- *		Auditing-System zur Protokollierung gesendet.
- *
- *
- ****************************************************************************/
+ * @date     13.01.2010
+ */
 
-/* Includes *****************************************************************/
+// Includes:
 #include "Ergebnisvalidierung.h"
 #include "Betriebsmittelverwaltung.h"
 #include "AuditingSystemSendMsg.h"
 #include "Notaus.h"
 
-/* Definition globaler Konstanten *******************************************/
 
-/* Definition globaler Variablen ********************************************/
-
-/* Lokale Makros ************************************************************/
-#ifndef MAXSCCCOUNTER 
+// Lokale Makros:
+#if ndef MAXSCCCOUNTER 
 #define MAXSSCCOUNTER 3
-#endif
-#ifndef	MAXRS232COUNTER
+#endif 
+#if ndef	MAXRS232COUNTER
 #define MAXRS232COUNTER 3
-#endif
-#ifndef	MAXSTRECKENBEFEHLEUNGLEICH
+#endif 
+#if ndef	MAXSTRECKENBEFEHLEUNGLEICH
 #define MAXSTRECKENBEFEHLEUNGLEICH 3
-#endif
+#endif 
 
-/* Lokale Typen *************************************************************/
+// Lokale Typen:
 typedef enum {
-	E_STRECKENBEFEHLEUNGLEICH = 1,
-	E_SSC_COUNTER = 2,
-	E_RS232_COUNTER = 3,
-	E_SSC_ERROR = 4,
-	E_RS232_ERROR = 5
+	E_STRECKENBEFEHLEUNGLEICH   = 1,
+	E_SSC_COUNTER               = 2,
+	E_RS232_COUNTER             = 3,
+	E_SSC_ERROR                 = 4,
+	E_RS232_ERROR               = 5
 } Element;
 
 typedef enum {
-	A_INFO = 1,
-	A_WARNING = 2,
-	A_FEHLER = 3
+	A_INFO      = 1,
+	A_WARNING   = 2,
+	A_FEHLER    = 3
 } Art;
 
-/* Lokale Konstanten ********************************************************/
+// Lokale Variablen: 
+/**
+ * @brief   Speichern der alten Streckenbefehl des SCC Treibers.
+ */
+static Streckenbefehl oldSSC = {LEER, LEER, LEER, 0};  
 
-/* Lokale Variablen *********************************************************/
-static Streckenbefehl oldSSC = {LEER, LEER, LEER, 0};
+/**
+ * @brief   Speichern der alten Streckenbefehl des RS232 Treibers.  
+ */  
 static Streckenbefehl oldRS232 = {LEER, LEER, LEER, 0};
 
-
-
-// Dient zum Zaehlen vergeblicher Schreibversuche in den Shared Memory
-// zum SSC-Treiber
+/**
+ * @brief   Dient zum Zaehlen vergeblicher Schreibversuche in den 
+ *          Shared Memory zum SSC-Treiber.
+ */
 static byte counterSSC = 0;
 
-// Dient zum Zaehlen vergeblicher Schreibversuche in den Shared Memory
-// zum RS232-Treiber
+/**
+ * @brief   Dient zum Zaehlen vergeblicher Schreibversuche in den 
+ *          Shared Memory zum RS232-Treiber.
+ */
 static byte counterRS232 = 0;
 
-// Dient zum Zaehlen der Streckenbefehl-Vergleich-Versuche
+/**
+ * @brief   Dient zum Zaehlen der Streckenbefehl-Vergleich-Versuche  
+ */
 static byte streckenbefehleUngleich = 0;
 
-// Dient zum Speichern des Streckenbefehls aus dem Shared Memory von der
-// Befehlsvalidierung
+/**
+ * @brief   Dient zum Speichern des Streckenbefehls aus dem Shared 
+ *          Memory von der Befehlsvalidierung. 
+ */
 static Streckenbefehl internerStreckenbefehl = {LEER, LEER, LEER, 0};
 
-// Dient zum Speichern des Streckenbefehls aus dem Shared Memory vom
-// SSC-Treiber
+/**
+ * @brief   Dient zum Speichern des Streckenbefehls aus dem Shared 
+ *          Memory vom SSC-Treiber.
+ */ 
 static Streckenbefehl externerStreckenbefehl = {LEER, LEER, LEER, 0};
 
-// Gibt an, ob ein neuer Streckenbefehl von der Befehlsvalidierung vorhanden ist
+/**
+ * @brief   Gibt an, ob ein neuer Streckenbefehl von der Befehlsvalidierung 
+ *          vorhanden ist. 
+ */
 static boolean isBVNew = FALSE;
 
-// Gibt an, ob ein neuer Sreckenbefehl vom SSC-Treiber vorhanden ist
+/**
+ * @brief   Gibt an, ob ein neuer Sreckenbefehl vom SSC-Treiber vorhanden ist. 
+ */
 static boolean isSSCNew = FALSE;
 
-// Nachricht, die an das Auditing System gesendet wird
+/**
+ * @brief   Nachricht, die an das Auditing System gesendet wird.  
+ */
 static byte EV_nachricht[6];
 
-/* Prototypen fuer lokale Funktionen ****************************************/
-static boolean compareTracks(Streckenbefehl *track1, Streckenbefehl *track2);
-static boolean isStreckenbefehlResetted(Streckenbefehl *track);
-static boolean processExternalStreckenbefehl(void);
-static boolean streckenbefehleEqual(Streckenbefehl *track1, Streckenbefehl *track2);
-static void processInternalStreckenbefehl(void);
-static void resetStreckenbefehl(Streckenbefehl *track);
-static void sendNachricht(Element element, Art art, byte data1, byte data2, byte data3);
+// Prototypen fuer lokale Funktionen:
+static boolean  compareTracks(Streckenbefehl *track1, Streckenbefehl *track2);
+static boolean  isStreckenbefehlResetted(Streckenbefehl *track);
+static boolean  processExternalStreckenbefehl(void);
+static boolean  streckenbefehleEqual(Streckenbefehl *track1, Streckenbefehl *track2);
+static void     processInternalStreckenbefehl(void);
+static void     resetStreckenbefehl(Streckenbefehl *track);
+static void     sendNachricht(Element element, Art art, byte data1, byte data2, byte data3);
 
 void initEV(void);
 void workEV(void);
 
-/* Funktionsimplementierungen ***********************************************/
-/*
-* Name		: initEV
-* Description	: Dient zum Initialisieren der vom Modul benoetigten Variablen.
-* Author	: Philip Weber
-*/
+/**
+ * @brief   Initialisierung aller benoetigten Variablen des Moduls.
+ */
 void initEV(void)
 {
-	counterSSC = 0;
-	counterRS232 = 0;
+	counterSSC      = 0;
+	counterRS232    = 0;
+
 	streckenbefehleUngleich = 0;
-	internerStreckenbefehl.Lok = LEER;
-	internerStreckenbefehl.Weiche = LEER;
-	internerStreckenbefehl.Entkoppler = LEER;
-	internerStreckenbefehl.Fehler = 0;
-	externerStreckenbefehl.Lok = LEER;
-	externerStreckenbefehl.Weiche = LEER;
-	externerStreckenbefehl.Entkoppler = LEER;
-	externerStreckenbefehl.Fehler = 0;
+
+	internerStreckenbefehl.Lok          = LEER;
+	internerStreckenbefehl.Weiche       = LEER;
+	internerStreckenbefehl.Entkoppler   = LEER;
+	internerStreckenbefehl.Fehler       = 0;
+
+	externerStreckenbefehl.Lok          = LEER;
+	externerStreckenbefehl.Weiche       = LEER;
+	externerStreckenbefehl.Entkoppler   = LEER;
+	externerStreckenbefehl.Fehler       = 0;
+
 	EV_nachricht[0] = 0;
 	EV_nachricht[1] = 0;
 	EV_nachricht[2] = 0;
@@ -131,27 +142,31 @@ void initEV(void)
 	EV_nachricht[4] = 0;
 	EV_nachricht[5] = 0;
 
-	oldSSC.Lok = LEER;
-	oldSSC.Weiche = LEER;
-	oldSSC.Entkoppler = LEER;
-	oldSSC.Fehler = 0;
-	oldRS232.Lok = LEER;
-	oldRS232.Weiche = LEER;
+	oldSSC.Lok          = LEER;
+	oldSSC.Weiche       = LEER;
+	oldSSC.Entkoppler   = LEER;
+	oldSSC.Fehler       = 0;
+
+	oldRS232.Lok        = LEER;
+	oldRS232.Weiche     = LEER;
 	oldRS232.Entkoppler = LEER;
-	oldRS232.Fehler = 0;
+	oldRS232.Fehler     = 0;
 }
 
-/*
-* Name		: sendNachricht
-* Description	: Dient zum senden von Nachrichten an das Auditing System.
-* Parameter	: element	- Art des Typs, der den Fehler geworfen hat
-		  art		- Art der Nachricht (Info, Warnung, Fehler)
-		  data1		- z.B. Streckenbefehl.Lok, Zaehlerwert
-		  data2		- z.B. Streckenbefehl.Weiche, Streckenbefehl.Fehler
-		  data3		- z.B. Streckenbefehl.Entkoppler
-* Author	: Philip Weber
-*/
-static void sendNachricht(Element element, Art art, byte data1, byte data2, byte data3)
+/**
+ * @brief   Dient zum senden von Nachrichten an das Auditing System.  
+ *
+ * @param   element	Art des Typs, der den Fehler geworfen hat
+ *
+ * @param   art     Art der Nachricht (Info, Warnung, Fehler)
+ *
+ * @param   data1   Erster Datensatz z.B. Streckenbefehl.Lok, Zaehlerwert.
+ *
+ * @param   data2	Zweiter Datensatz z.B. Streckenbefehl.Weiche, Streckenbefehl.Fehler.
+ *
+ * @param   data3   Dritter Datensatz z.B. Streckenbefehl.Entkoppler.
+ */
+static void sendNachricht(Element element, Art art, byte data1, byte data2, byte data3)      //@todo: Besser const Referenzen (&) verwenden.
 {
 	EV_nachricht[0] = element;
 	EV_nachricht[1] = art;
@@ -164,22 +179,23 @@ static void sendNachricht(Element element, Art art, byte data1, byte data2, byte
 	sendMsg(MODUL_EV, EV_nachricht);
 }
 
-/*
-* Name		: isStreckenbefehlResetted
-* Description	: Ueberprueft, ob der uebergebene Streckenbefehl komplett
-		  zurueckgesetzt ist.
-* Parameter	: track	- Zu ueberpruefender Streckenbefehl.
-* Return value	: TRUE wenn der Streckenbefehl zurueckgesetzt ist,
-		  FALSE falls nicht
-* Author	: Philip Weber
-*/
-static boolean isStreckenbefehlResetted(Streckenbefehl *track)
+
+/**
+ * @brief   Ueberprueft, ob der uebergebene Streckenbefehl komplett
+ *          zurueckgesetzt ist.
+ *
+ * @param   track Zu ueberpruefender Streckenbefehl.
+ *
+ * @return  Gibt true zurueck, wenn der Streckenbefehl zurueck gesetzt
+ *          ist. Andernfalls false.
+ */
+static boolean isStreckenbefehlResetted(Streckenbefehl *track)          //@todo: Besser const Referenzen verwenden.
 {
 	// Ueberpruefung, ob der Streckenbefehl zurueckgesetzt ist.
 	// Der Fehler ist an dieser Stelle irrelevant.
-	if(track->Lok != LEER ||
-	   track->Weiche != LEER ||
-	   track->Entkoppler != LEER)
+	if  (track->Lok != LEER 
+        || track->Weiche != LEER 
+        || track->Entkoppler != LEER)
 	{
 		// Falls einer der Werte des Streckenbefehls nicht den
 		// Wert LEER besitzt, gilt dieser nicht als zurueckgesetzt
@@ -191,36 +207,37 @@ static boolean isStreckenbefehlResetted(Streckenbefehl *track)
 	return TRUE;
 }
 
-/*
-* Name		: resetStreckenbefehl
-* Description	: Setzt den uebergebenen Streckenbefehl zurueck.
-* Parameter	: track - Streckenbefehl
-* Author	: Philip Weber
-*/
-static void resetStreckenbefehl(Streckenbefehl *track)
+
+/**
+ * @brief   Setzt den gegebenen Streckenbefehl zurueck. 
+ *
+ * @param   track Streckenbefehl der zurueck gesetzt wird.       
+ */
+static void resetStreckenbefehl(Streckenbefehl *track)      //@todo: Besser Referenzen verwenden.
 {
 	// Streckenbefehl zuruecksetzen
-	track->Lok = LEER;
-	track->Weiche = LEER;
-	track->Entkoppler = LEER;
-	track->Fehler = 0;
+	track->Lok          = LEER;
+	track->Weiche       = LEER;
+	track->Entkoppler   = LEER;
+	track->Fehler       = 0;
 }
 
-/*
-* Name		: streckenbefehleEqual
-* Description	: Ueberprueft, ob die uebergebenen Streckenbefehle
-		  gleich sind.
-* Parameter	: track1 - 1. Streckenbefehl
-		  track2 - 2. Streckenbefehl
-* Return value	: TRUE wenn die Streckenbefehle identisch sind,
-		  FALSE falls nicht.
-* Author	: Philip Weber
-*/
-static boolean streckenbefehleEqual(Streckenbefehl *track1, Streckenbefehl *track2)
+
+/**
+ * @brief   Ueberprueft, ob die uebergebenen Streckenbefehle auf Gleichheit.
+ *
+ * @param   track1   1. Streckenbefehl
+ *
+ * @param   track2   2. Streckenbefehl
+ *
+ * @return  Gibt true zurueck, wenn die Streckenbefehl identisch sind. 
+ *          Andernfalls false.
+ */
+static boolean streckenbefehleEqual(Streckenbefehl *track1, Streckenbefehl *track2)     //@todo: Besser const Referenzen verwenden.
 {
 	// Ueberpruefung, ob jeweils ein neuer Streckenbefehl von der
 	// Befehlsvalidierung und dem SSC-Treiber vorhanden sind
-	if(isBVNew && isSSCNew)
+	if  (isBVNew && isSSCNew)
 	{
 		// Zuruecksetzen des Zaehlers, 
 		streckenbefehleUngleich = 0;
@@ -230,10 +247,10 @@ static boolean streckenbefehleEqual(Streckenbefehl *track1, Streckenbefehl *trac
 
 	// Ueberpruefung, ob die uebergebenen Streckenbefehle leer sind,
 	// falls beide neu sind
-	if(!isStreckenbefehlResetted(track1) && !isStreckenbefehlResetted(track2))
+	if (!isStreckenbefehlResetted(track1) && !isStreckenbefehlResetted(track2))
 	{
 		// Streckenbefehle vergleichen
-		if(compareTracks(track1, track2))
+		if  (compareTracks(track1, track2))
 		{
 			// Zuruecksetzen des Zaehlers
 			streckenbefehleUngleich = 0;
@@ -244,22 +261,22 @@ static boolean streckenbefehleEqual(Streckenbefehl *track1, Streckenbefehl *trac
 	return FALSE;
 }
 
-/*
- * Name		: compareTracks
- * Description	: Ueberprueft, ob die uebergebenen Streckenbefehle
- gleich sind.
- * Parameter	: track1 - 1. Streckenbefehl
- track2 - 2. Streckenbefehl
- * Return value	: TRUE wenn die Streckenbefehle identisch sind,
- FALSE falls nicht.
- * Author	: Philip Weber
+/**
+ * @brief   Ueberprueft, ob die uebergebenen Streckenbefehle auf Gleichheit.
+ *
+ * @param   track1   1. Streckenbefehl
+ *
+ * @param   track2   2. Streckenbefehl
+ *
+ * @return  Gibt true zurueck, wenn die Streckenbefehl identisch sind. 
+ *          Andernfalls false.
  */
-static boolean compareTracks(Streckenbefehl *track1, Streckenbefehl *track2)
+static boolean compareTracks(Streckenbefehl *track1, Streckenbefehl *track2)            //@todo: Besser const Referenzen (&) verwenden.
 {
 	// Vergleichen der beiden Streckenbefehle
-	if(track1->Lok == track2->Lok &&
-	   track1->Weiche == track2->Weiche &&
-	   track1->Entkoppler == track2->Entkoppler)
+	if  (track1->Lok == track2->Lok 
+	    && track1->Weiche == track2->Weiche
+	    && track1->Entkoppler == track2->Entkoppler)
 	{
 		// und die Funktion mit dem Wert TRUE verlassen.
 		return TRUE;
@@ -267,7 +284,7 @@ static boolean compareTracks(Streckenbefehl *track1, Streckenbefehl *track2)
 	
 	// Sind die Streckenbefehle ungleich, wird ueberprueft, wie oft
 	// die Streckenbefehle bereits voneinander abwichen.
-	if(streckenbefehleUngleich < MAXSTRECKENBEFEHLEUNGLEICH)
+	if  (streckenbefehleUngleich < MAXSTRECKENBEFEHLEUNGLEICH)
 	{
 		sendNachricht(E_STRECKENBEFEHLEUNGLEICH, A_WARNING, streckenbefehleUngleich, 0, 0);
 		// Ist der Wert kleiner 3 der Zaehler inkrementiert ...
@@ -288,20 +305,22 @@ static boolean compareTracks(Streckenbefehl *track1, Streckenbefehl *track2)
 	return FALSE;
 }
 
-/*
-* Name		: checkForCommunicationErrors
-* Description	: Ueberprueft, ob bei der Kommunikation mit den Treibern
-		  Fehler aufgetreten sind. Ist dies der Fall soll das 
-		  Modul beendet werden.
-* Return value	: TRUE wenn Kommunikationsfehler gefunden wurden,
-		  FALSE falls nicht.
-* Author	: Philip Weber
-*/
+
+/**
+ * @brief   Überprüfung der Kommunikation mit den Treibern. 
+ *
+ *          Ueberprueft, ob bei der Kommunikation mit den Treibern
+ *          Fehler aufgetreten sind. Ist dies der Fall soll das 
+ *          Modul beendet werden.
+ *
+ * @return  TRUE wenn Kommunikationsfehler gefunden wurden,
+ *          FALSE falls nicht.
+ */
 static boolean checkForCommunicationErrors(void)
 {
 	// Ueberpruefung, ob der Fehleranteil des Shared Memory vom
 	// RS232-Treiber zurueckgesetzt ist.
-	if(RS232_EV_streckenbefehl.Fehler != 0)
+	if  (RS232_EV_streckenbefehl.Fehler != 0)
 	{
 		// Falls nicht, wird der Fehlercode an das Auditing System
 		// uebermittelt, ...
@@ -315,7 +334,7 @@ static boolean checkForCommunicationErrors(void)
 
 	// Ueberpruefung, ob der Fehleranteil des Shared Memory vom
 	// SSC-Treiber zurueckgesetzt ist.
-	if(SSC_EV_streckenbefehl.Fehler != 0)
+	if  (SSC_EV_streckenbefehl.Fehler != 0)
 	{
 		// Falls nicht, wird der Fehlercode an das Auditing System
 		// uebermittelt, ...
@@ -330,11 +349,11 @@ static boolean checkForCommunicationErrors(void)
 	// Ueberpruefung, ob beim letzten Modulaufruf der interne
 	// Streckenbefehl in den Shared Memory zum RS232-Treiber
 	// geschrieben wurde. Dann waere counterRS232 == 0. 	
-	if(counterRS232 > 0)
+	if (counterRS232 > 0)
 	{
 		// Falls nicht wird ueberprueft, ob der Shared Memory zum
 		// RS232-Treiber in der Zwischenzeit zurueckgesetzt wurde.
-		if(isStreckenbefehlResetted(&EV_RS232_streckenbefehl))
+		if (isStreckenbefehlResetted(&EV_RS232_streckenbefehl))
 		{
 			// Falls ja, wird der interne Streckenbefehl in 
 			// diesen geschrieben, ...
@@ -349,7 +368,8 @@ static boolean checkForCommunicationErrors(void)
 		// Falls der Shared Memory zum RS232-Treiber nicht 
 		// zurueckgesetzt ist, wird ueberprueft, wie oft vergeblich
 		// versucht wurde in diesen zu schreiben.
-		} else if(counterRS232 < MAXRS232COUNTER)
+		} 
+        else if (counterRS232 < MAXRS232COUNTER)
 		{
 			sendNachricht(E_RS232_COUNTER, A_WARNING, counterRS232, 0, 0);
 			// Falls die Versuche einen Wert kleiner 3 aufweisen,
@@ -359,7 +379,8 @@ static boolean checkForCommunicationErrors(void)
 		// Falls der Shared Memory zum RS232-Treiber nicht 
 		// zurueckgesetzt ist und schon 3 oder mehr Male versucht
 		// wurde in diesen zu schreiben, ...
-		} else 
+		} 
+        else 
 		{
 			// wird ein Fehlercode an das Auditing System 
 			// uebermittelt, ...
@@ -375,11 +396,11 @@ static boolean checkForCommunicationErrors(void)
 	// Ueberpruefung, ob beim letzten Modulaufruf der interne
 	// Streckenbefehl in den Shared Memory zum RS232-Treiber
 	// geschrieben wurde. Dann waere counterSSC == 0.
-	if(counterSSC > 0)
+	if (counterSSC > 0)
 	{
 		// Falls nicht wird ueberprueft, ob der Shared Memory zum
 		// RS232-Treiber in der Zwischenzeit zurueckgesetzt wurde.
-		if(isStreckenbefehlResetted(&EV_SSC_streckenbefehl))
+		if (isStreckenbefehlResetted(&EV_SSC_streckenbefehl))
 		{
 			// Falls ja, wird der interne Streckenbefehl in 
 			// diesen geschrieben, ...
@@ -394,7 +415,8 @@ static boolean checkForCommunicationErrors(void)
 		// Falls der Shared Memory zum SSC-Treiber nicht 
 		// zurueckgesetzt ist, wird ueberprueft, wie oft vergeblich
 		// versucht wurde in diesen zu schreiben.
-		} else if(counterSSC < MAXSSCCOUNTER)
+		} 
+        else if (counterSSC < MAXSSCCOUNTER)
 		{
 			sendNachricht(E_SSC_COUNTER, A_WARNING, counterSSC, 0, 0);
 			// Falls die Versuche einen Wert kleiner 3 aufweisen,
@@ -404,7 +426,8 @@ static boolean checkForCommunicationErrors(void)
 		// Falls der Shared Memory zum SSC-Treiber nicht 
 		// zurueckgesetzt ist und schon 3 oder mehr Male versucht
 		// wurde in diesen zu schreiben, ...
-		} else 
+		} 
+        else 
 		{
 			// wird ein Fehlercode an das Auditing System 
 			// uebermittelt, ...
@@ -422,19 +445,19 @@ static boolean checkForCommunicationErrors(void)
 	return FALSE;
 }
 
-/*
-* Name		: processInternalStreckenbefehl
-* Description	: Ueberprueft den Shared Memory zur Befehlsvalidierung.
-		  Falls dieser neu ist, wird er in den Shared Memory
-		  zum SSC-Treiber geschrieben.
-* Author	: Philip Weber
-*/
+
+/**
+ * @brief   Ueberprueft den Shared Memory zur Befehlsvalidierung.   
+ *
+ *          Falls dieser neu ist, wird er in den Shared Memory
+ *          zum SSC-Treiber geschrieben.     
+ */
 static void processInternalStreckenbefehl(void)
 {
 	isBVNew = FALSE;
 
 	// Neuer Streckenbefehl im Shared Memory von der Befehlsvalidierung?
-	if(isStreckenbefehlResetted(&BV_EV_streckenbefehl))
+	if (isStreckenbefehlResetted(&BV_EV_streckenbefehl))
 	{
 		// Falls kein neuer Streckenbefehl vorhanden ist,
 		// wird die Funktion verlassen
@@ -452,12 +475,12 @@ static void processInternalStreckenbefehl(void)
 	isBVNew = TRUE;
 
 	// Ueberpruefung ob ein alter Streckenbefehl nicht gesendet werden konnte
-//	if(counterSSC == 0)
-	if(isStreckenbefehlResetted(&oldSSC))
+//	if (counterSSC == 0)
+	if (isStreckenbefehlResetted(&oldSSC))
 	{
 		// Ueberpruefung, ob der Shared Memory zum SSC-Treiber 
 		// zurueckgesetzt ist.
-		if(isStreckenbefehlResetted(&EV_SSC_streckenbefehl))
+		if (isStreckenbefehlResetted(&EV_SSC_streckenbefehl))
 		{
 			sendNachricht(
 				E_SSC_COUNTER, 
@@ -469,22 +492,24 @@ static void processInternalStreckenbefehl(void)
 			// Falls ja kann der interne Streckenbefehl in diesen 
 			// geschrieben werden.
 			EV_SSC_streckenbefehl = internerStreckenbefehl;
-		} else 
+		} 
+        else 
 		{
 			oldSSC = internerStreckenbefehl;
 			sendNachricht(E_SSC_COUNTER, A_WARNING, counterSSC, 0, 0);
 			// Falls nicht, wird der Wert der Zaehlvariable erhoeht.
 			counterSSC = 1;
 		}
-	} else 
+	} 
+    else 
 	{
 		// Fehler da ein alter Streckenbefehl nicht gesendet wurde
 		sendNachricht(
-			E_SSC_COUNTER, 
-			A_FEHLER, 
-			internerStreckenbefehl.Lok, 
-			internerStreckenbefehl.Weiche, 
-			internerStreckenbefehl.Entkoppler
+    			E_SSC_COUNTER, 
+    			A_FEHLER, 
+    			internerStreckenbefehl.Lok, 
+    			internerStreckenbefehl.Weiche, 
+    			internerStreckenbefehl.Entkoppler
 			);
 		
 		// Not-Aus einleiten
@@ -493,23 +518,26 @@ static void processInternalStreckenbefehl(void)
 
 }
 
-/*
-* Name		: processExternalStreckenbefehl
-* Description	: Ueberprueft, ob ein neuer Streckenbefehl im Shared Memory 
-		  vorhanden ist. Falls ja wird dieser in eine interne Variable
-		  und setzt den Shared Memory zurueck.
-* Return value	: TRUE falls der externe und/oder der interne Streckenbefehl 
-		       neu sind.
-		  FALSE falls weder der externe noch der interne 
-		  	Streckenbefehl neu sind 
-* Author	: Philip Weber
-*/
+
+/**
+ * @brief   Ueberprueft, ob ein neuer Streckenbefehl im Shared Memory 
+ *		    vorhanden ist. 
+ *
+ *          Falls ja wird dieser in eine interne Variable und setzt 
+ *          den Shared Memory zurueck.
+ *
+ * @return  TRUE falls der externe und/oder der interne Streckenbefehl 
+ *		    neu sind.
+ *		    FALSE falls weder der externe noch der interne 
+ *		  	Streckenbefehl neu sind. 
+ *
+ */
 static boolean processExternalStreckenbefehl(void)
 {
 	isSSCNew = FALSE;
 
 	// Neuer Streckenbefehl im Shared Memory vom SSC-Treiber?
-	if(!isStreckenbefehlResetted(&SSC_EV_streckenbefehl))
+	if (!isStreckenbefehlResetted(&SSC_EV_streckenbefehl))
 	{
 		// Falls ja Shared Memory vom SSC-Treiber in lokaler 
 		// Variable fuer spaeter Ueberpruefungen speichern
@@ -527,7 +555,7 @@ static boolean processExternalStreckenbefehl(void)
 
 	// Falls sich kein neuer Streckenbefehl im Shared Memory befindet,
 	// wird ueberprueft, ob der interne Streckenbefehl neu ist.
-	if(isBVNew)
+	if (isBVNew)
 	{
 		// Falls ja wird die Funktion mit dem Wert TRUE verlassen
 		return TRUE;
@@ -538,13 +566,14 @@ static boolean processExternalStreckenbefehl(void)
 	return FALSE;
 }
 
-/*
-* Name		: workEV
-* Description	: Diese Funktion wird von der Betriebsmittelsteuerung 
-		  aufgerufen. Sie stellt die gesamte Funktionalitaet des
-		  Moduls Ergebnisvalidierung bereit.
-* Author	: Philip Weber
-*/
+
+/**
+ * @brief   Schnittstelle zum Modul bz. Startet die Ergebnisvalidierung.
+ *
+ *          Diese Funktion wird von der Betriebsmittelsteuerung 
+ *          aufgerufen. Sie stellt die gesamte Funktionalitaet des
+ *          Moduls Ergebnisvalidierung bereit. 
+ */
 void workEV(void)
 {
 /* 
@@ -553,7 +582,7 @@ void workEV(void)
 */
 	// Als erstes wird ueberprueft, ob bei der Kommunikation mit den
 	// Treibern Fehler oder Probleme aufgetreten sind.
-	if(checkForCommunicationErrors())
+	if (checkForCommunicationErrors())
 	{
 		// Falls ja wird das Modul verlassen.
 		return;
@@ -574,7 +603,7 @@ void workEV(void)
 */
 	// Danach wird der Streckenbefehl aus dem Shared Memory vom 
 	// SSC-Treiber (externer Streckenbefehl) verarbeitet.
-	if(!processExternalStreckenbefehl())
+	if (!processExternalStreckenbefehl())
 	{
 		// Falls weder der externe noch der interne Streckenbefehl
 		// neu sind, wird das Modul verlassen.
@@ -587,7 +616,7 @@ void workEV(void)
 */
 	// Daraufhin werden der interne und der externe Streckenbefehl 
 	// miteinander verglichen.
-	if(!streckenbefehleEqual(&internerStreckenbefehl, &externerStreckenbefehl))
+	if (!streckenbefehleEqual(&internerStreckenbefehl, &externerStreckenbefehl))
 	{
 		// Sind diese nicht gleich, wird das Modul verlassen.
 		return;
@@ -598,24 +627,25 @@ void workEV(void)
 * Senden des internen Streckenbefehls an den RS232-Treiber 
 */
 	// Ueberpruefung ob ein alter Streckenbefehl nicht gesendet werden konnte
-//	if(counterRS232 == 0)
-	if(isStreckenbefehlResetted(&oldRS232))
+//	if (counterRS232 == 0)
+	if (isStreckenbefehlResetted(&oldRS232))
 	{
 		// Ueberpruefung, ob der Shared Memory zum RS232-Treiber 
 		// zurueckgesetzt ist.
-		if(isStreckenbefehlResetted(&EV_RS232_streckenbefehl))
+		if (isStreckenbefehlResetted(&EV_RS232_streckenbefehl))
 		{
 			sendNachricht(
-				E_RS232_COUNTER, 
-				A_INFO, 
-				internerStreckenbefehl.Lok, 
-				internerStreckenbefehl.Weiche, 
-				internerStreckenbefehl.Entkoppler
+    				E_RS232_COUNTER, 
+    				A_INFO, 
+    				internerStreckenbefehl.Lok, 
+    				internerStreckenbefehl.Weiche, 
+    				internerStreckenbefehl.Entkoppler
 				);
 			// Falls ja kann der interne Streckenbefehl in diesen 
 			// geschrieben werden.
 			EV_RS232_streckenbefehl = internerStreckenbefehl;
-		} else 
+		} 
+        else 
 		{
 			oldRS232 = internerStreckenbefehl;
 
@@ -625,15 +655,16 @@ void workEV(void)
 			// und das Modul verlassen.
 			return;
 		}
-	} else 
+	} 
+    else 
 	{
 		// Fehler senden, da ein alter Streckenbefehl nicht gesendet werden konnte
 		sendNachricht(
-			E_RS232_COUNTER, 
-			A_FEHLER, 
-			internerStreckenbefehl.Lok, 
-			internerStreckenbefehl.Weiche, 
-			internerStreckenbefehl.Entkoppler
+    			E_RS232_COUNTER, 
+    			A_FEHLER, 
+    			internerStreckenbefehl.Lok, 
+    			internerStreckenbefehl.Weiche, 
+    			internerStreckenbefehl.Entkoppler
 			);
 		
 		// Not-Aus einleiten
