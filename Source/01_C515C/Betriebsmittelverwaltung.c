@@ -1,23 +1,15 @@
-/*****************************************************************************
+/**
+ * @file    Betriebsmittelverwaltung.c
  *
- *        Dateiname:    Betriebsmittelverwaltung.c
+ * @project Sichere Eisenbahnsteuerung
+ * @author  Altan Gottwald
+ * @author  Vitali Voroth
+ * @author  Jan-Christopher Icken
+ * 
+ * @brief   Initialisierung & Aufruf aller Module
  *
- *        Projekt:      Sichere Eisenbahnsteuerung
- *
- *        Autor:        Altan Gottwald, Vitali Voroth, Jan-Christopher Icken
- *
- *
- *        Modul:        Betriebsmittelverwaltung
- *
- *        Beschreibung:
- *        Init aller Module
- *        Aufruf aller Module
- *        _______________________________________________________________
- *        ________________________________________________________________
- *        ________________________________________________________________
- *        ________________________________________________________________
- *
- ****************************************************************************/
+ * @date    01.11.2010
+ */
 
 /* Includes *****************************************************************/
 #include "Betriebsmittelverwaltung.h"
@@ -33,52 +25,47 @@
 #include "Leitzentrale.h"
 #include "Fahrprogramm.h"
 
-/* Definition globaler Konstanten *******************************************/
-
 /* Definition globaler Variablen ********************************************/
-
-Streckenbefehl LZ_BV_streckenbefehl = {LEER,LEER,LEER,0};
-Streckenbefehl BV_EV_streckenbefehl = {LEER,LEER,LEER,0};
-Streckenbefehl SSC_EV_streckenbefehl = {LEER,LEER,LEER,0};
-Streckenbefehl EV_SSC_streckenbefehl = {LEER,LEER,LEER,0};
+Streckenbefehl LZ_BV_streckenbefehl    = {LEER,LEER,LEER,0};
+Streckenbefehl BV_EV_streckenbefehl    = {LEER,LEER,LEER,0};
+Streckenbefehl SSC_EV_streckenbefehl   = {LEER,LEER,LEER,0};
+Streckenbefehl EV_SSC_streckenbefehl   = {LEER,LEER,LEER,0};
 Streckenbefehl EV_RS232_streckenbefehl = {LEER,LEER,LEER,0};
 Streckenbefehl RS232_EV_streckenbefehl = {LEER,LEER,LEER,0};
 
-Sensordaten BV_LZ_sensordaten = {LEER,LEER,0}; 	
+Sensordaten BV_LZ_sensordaten  = {LEER,LEER,0}; 	
 Sensordaten S88_BV_sensordaten = {LEER,LEER,0};
 
 byte BV_LZ_bestaetigung = LEER; 
-byte EV_SSC_failure = LEER;
-byte SSC_EV_failure = LEER; 
-
+byte EV_SSC_failure     = LEER;
+byte SSC_EV_failure     = LEER; 
 
 /**
-   Interrupt 1 für SW
-   Interrupt 4 für RS232
-   Interrupt 18 für S88
+ * Interrupt 1 für SW
+ * Interrupt 4 für RS232
+ * Interrupt 18 für S88
 **/
 
-/* Lokale Makros ************************************************************/
-
-/* Lokale Typen *************************************************************/
-
-/* Lokale Konstanten ********************************************************/
-
-/* Lokale Variablen *********************************************************/
-
-
 /* Funktionsimplementierungen ***********************************************/
+
+/**
+ * @brief   Initialisierung & Aufruf aller zu steuernder Methoden
+ */
 void main (void)
 {
-	EAL = 1; //enable all interrupts
+	EAL = 1;        //enable all interrupts
 	
 	initAll();
 	work();
 }
 
+/**
+ * @brief   Initialisierung aller Module 
+ *          
+ *          Es werden alle Initialisierungsfunktionen der benötigten Module ausgeführt.
+ */
 void initAll(void)
 {
-	//alles initialisieren
 	initNOTAUS();
  	initSW();
 	initAS();
@@ -99,12 +86,21 @@ void initAll(void)
  	hello();
 }
 
+/**
+ * @brief   Zyklischer Aufruf & Rückmeldung an Watchdog
+ *
+ *          Die Funktion 'work()' ruft in einer Endlosschleife 
+ *          die Module der Eisenbahnsteuerung auf. Melden die sich
+ *          erfolgreich zurück wird der Software Watchdog zurückgesetzt
+ *          ('hello()'), ansonsten wird der Not-Aus eingeleitet.
+ */
 void work(void)
 {
-  	for(;;)	//Endlosschleife der aufrufe, s. "C-Programmierung"
+    //Endlosschleife der aufrufe, s. "C-Programmierung"
+  	for(;;)	
 	{
-		workLZ();		//modulaufruf
- 		hello();		//beim SW rueckmelden
+		workLZ();		//Modulaufruf
+ 		hello();		//Beim SW rueckmelden
  		workRS232();
  		hello();
  		workS88();

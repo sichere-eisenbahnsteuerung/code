@@ -1,28 +1,24 @@
 #ifndef BETRIEBSMITTELVERWALTUNG_H
 #define BETRIEBSMITTELVERWALTUNG_H
-/*****************************************************************************
+/**
+ * @file    Betriebsmittelverwaltung.h
  *
- *        Dateiname:    Betriebsmittelverwaltung.h
+ * @project Sichere Eisenbahnsteuerung
+ * @author  Altan Gottwald
+ * @author  Vitali Voroth
+ * @author  Jan-Christopher Icken
+ * 
+ * @brief   Betriebsmittelverwaltung Deklarationen
  *
- *        Projekt:      Sichere Eisenbahnsteuerung
- *
- *        Autor:        Altan Gottwald, Vitali Voroth, Jan-Christopher Icken
- *
- *
- *        Modul:        Betriebsmittelverwaltung
- *
- *        Beschreibung:
  *        Belegung von Ressourcen
  *        unsigned char sind als typedef bye definiert
  *        Timer0 wird vom SW verwendet
  *        Benennenung der verwendeten Ports
- *        ________________________________________________________________
- *        ________________________________________________________________
- *
- ****************************************************************************/
+ */
+
+
 #include <reg515c.h>
 /* Globale Makrodefinitionen ************************************************/
-
 #define TRUE 1 
 #define FALSE 0 
 #define LEER 255
@@ -38,28 +34,39 @@ typedef struct
 	byte Weiche; 
 	byte Entkoppler; 
 	byte Fehler;
-} Streckenbefehl;
+}
+Streckenbefehl;
 
 typedef struct 
 { 
 	byte Byte0; 
 	byte Byte1; 
 	byte Fehler; 
-} Sensordaten;
+}
+Sensordaten;
 
 /* Deklaration von globalen Konstanten **************************************/
 /*
-  Modul IDs für SW
-
-  Leitzentrale - 0
-  Befehlsvalidierung - 1
-  Ergebnisvalidierung - 2
-  S88-Treiber - 3
-  SSC-Treiber - 4
-  RS232-Treiber - 5
-  Auditing System - 6
-*/
-enum module_id { MODUL_LZ=0, MODUL_BV=1, MODUL_EV=2, MODUL_S88=3, MODUL_SSC=4, MODUL_RS232=5, MODUL_AS=6};
+ * Modul IDs für SW
+ *
+ * Leitzentrale - 0
+ * Befehlsvalidierung - 1
+ * Ergebnisvalidierung - 2
+ * S88-Treiber - 3
+ * SSC-Treiber - 4
+ * RS232-Treiber - 5
+ * Auditing System - 6
+ */
+enum module_id
+{
+    MODUL_LZ=0,
+    MODUL_BV=1,
+    MODUL_EV=2,
+    MODUL_S88=3,
+    MODUL_SSC=4,
+    MODUL_RS232=5,
+    MODUL_AS=6
+};
 
 /* Deklaration von globalen Variablen ***************************************/
 
@@ -76,35 +83,31 @@ extern Streckenbefehl RS232_EV_streckenbefehl;
 extern byte AS_msg_counter;
 
 /**
-   Interrupt 1 für SW
-   Interrupt 4 für RS232
-   Interrupt 18 für S88
-**/
+ * Interrupt 1 für SW
+ * Interrupt 4 für RS232
+ * Interrupt 18 für S88
+ */
 
 //Pins
 //P4.1 bis P4.4 fuer SSC reserviert
 //P4.6 und P4.7 fuer CAN reserviert
 
 /**
-* sbit Zuweisung muss in einer Headerdatei erfolgen
-* siehe: http://www.keil.com/support/docs/1317.htm
-**/
-sbit NOTAUS_PIN	= P3^4;
+ * sbit Zuweisung muss in einer Headerdatei erfolgen
+ * siehe: http://www.keil.com/support/docs/1317.htm
+ */
+sbit NOTAUS_PIN          = P3^4;
 sbit RS232TREIBER_CTSPIN = P3^5;
-sbit S88_PS = P5^0; 
-sbit S88_RESET = P5^1;     
-sbit S88_CLK = P5^2;
-sbit S88_Data = P5^3;
-sbit AS_PORT_I2C_SDA = P5^4;
-sbit AS_PORT_I2C_SCL = P5^5;
-sbit Neustart = P1^0;
-
-/* Deklaration von globalen Funktionen **************************************/
-
+sbit S88_PS              = P5^0; 
+sbit S88_RESET           = P5^1;     
+sbit S88_CLK             = P5^2;
+sbit S88_Data            = P5^3;
+sbit AS_PORT_I2C_SDA     = P5^4;
+sbit AS_PORT_I2C_SCL     = P5^5;
+sbit Neustart            = P1^0;
 
 /* Prototypen fuer lokale Funktionen ****************************************/
 void initAll(void);
 void work(void);
-
 
 #endif /* BETRIEBSMITTELVERWALTUNG_H */
