@@ -11,7 +11,7 @@
  * @date    01.11.2010
  */
 
-/* Includes *****************************************************************/
+// Includes
 #include "Betriebsmittelverwaltung.h"
 
 #include "SoftwareWatchdog.h"
@@ -25,7 +25,7 @@
 #include "Leitzentrale.h"
 #include "Fahrprogramm.h"
 
-/* Definition globaler Variablen ********************************************/
+// Definition globaler Variablen
 Streckenbefehl LZ_BV_streckenbefehl    = {LEER,LEER,LEER,0};
 Streckenbefehl BV_EV_streckenbefehl    = {LEER,LEER,LEER,0};
 Streckenbefehl SSC_EV_streckenbefehl   = {LEER,LEER,LEER,0};
@@ -46,7 +46,7 @@ byte SSC_EV_failure     = LEER;
  * Interrupt 18 für S88
 **/
 
-/* Funktionsimplementierungen ***********************************************/
+// Funktionsimplementierungen
 
 /**
  * @brief   Initialisierung & Aufruf aller zu steuernder Methoden

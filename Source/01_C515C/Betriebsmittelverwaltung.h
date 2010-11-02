@@ -18,12 +18,12 @@
 
 
 #include <reg515c.h>
-/* Globale Makrodefinitionen ************************************************/
+// Globale Makrodefinitionen ************************************************/
 #define TRUE 1 
 #define FALSE 0 
 #define LEER 255
 
-/* Globale Typdefinitionen **************************************************/
+// Globale Typdefinitionen **************************************************/
 
 typedef unsigned char byte;
 typedef bit boolean;	
@@ -45,7 +45,7 @@ typedef struct
 }
 Sensordaten;
 
-/* Deklaration von globalen Konstanten **************************************/
+// Deklaration von globalen Konstanten
 /*
  * Modul IDs für SW
  *
@@ -68,7 +68,7 @@ enum module_id
     MODUL_AS=6
 };
 
-/* Deklaration von globalen Variablen ***************************************/
+// Deklaration von globalen Variablen
 
 extern Streckenbefehl LZ_BV_streckenbefehl;
 extern Sensordaten BV_LZ_sensordaten;
@@ -106,7 +106,7 @@ sbit AS_PORT_I2C_SDA     = P5^4;
 sbit AS_PORT_I2C_SCL     = P5^5;
 sbit Neustart            = P1^0;
 
-/* Prototypen fuer lokale Funktionen ****************************************/
+// Prototypen fuer lokale Funktionen
 void initAll(void);
 void work(void);
 
