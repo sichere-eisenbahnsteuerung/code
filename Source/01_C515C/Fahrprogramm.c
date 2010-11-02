@@ -1,50 +1,39 @@
-/*****************************************************************************
-*
-* Dateiname:    Fahrprogramm.c
-*
-* Projekt:      Sichere Eisenbahnsteuerung
-*
-* Autor:        Thomas Musialski
-*
-*
-* Modul:        Fahrprogramm, Version 0.2
-*
-* Beschreibung:
-* Das Fahrprogramm hat die Aufgabe die notwendige Funktionalität
-* für die im Pflichtenheft beschriebene Fahraufgabe bereitzustellen.
-* Das Modul Fahraufgabe befindet sich in der Anwenderschicht und steht
-* in direkter Kommunikation mit der Leitzentrale.
-* Die notwendigen Anweisungen für eine Fahraufgabe werden in einem
-*Ringpuffer hinterlegt und der Leitzentrale zur Verfügung gestellt.
-*
-****************************************************************************/
+/**
+ * @file    Fahrprogramm.c
+ *
+ * @author  Thomas Musialski
+ *
+ * @brief   Bereitstellung der f�r Fahraufgabe n�tigen Funktionen
+ *
+ *          Das Fahrprogramm hat die Aufgabe die notwendige Funktionalitaet
+ * 	        fuer die im Pflichtenheft beschriebene Fahraufgabe bereitzustellen.
+ * 	        Das Modul Fahraufgabe befindet sich in der Anwenderschicht und steht
+ * 	        in direkter Kommunikation mit der Leitzentrale.
+ * 	        Die notwendigen Anweisungen fuer eine Fahraufgabe werden in einem
+ * 	        Ringpuffer hinterlegt und der Leitzentrale zur Verfuegung gestellt.
+ */
 
-/* Includes *****************************************************************/
+// Includes 
 #include "Fahrprogramm.h"
 #include "Betriebsmittelverwaltung.h"
 
 
-/* Definition globaler Konstanten *******************************************/
+// Definition globaler Konstanten
 
 #define lok1    0x0        // Lokomotive 0 nur im Zugbetrieb
 #define lok2    0x1        // Lokomotive 1 im Zug- und Rangierbetrieb
 #define err     0xFF       // Error
 #define null    '\0'       // Null
 
-// Fahrprogramm: Groeße des verwendeten Arrays
+// Fahrprogramm: Groesse des verwendeten Arrays
 #define row     50          // Zeilen
 #define col     2           // Spalten
 
-/* Definition globaler Variablen ********************************************/
-
-/* Lokale Makros ************************************************************/
-
-/* Lokale Typen *************************************************************/
-
+// Lokale Typen
 typedef int     Fahrprogramm[row][col];     // Definition Fahrprogrammarrays
 
 /*
- * \enum Gleisabschnitt
+ * @enum Gleisabschnitt
  *
  * Definition aller verwendeten Geisabschnitte. Das verwendete Gleislayout, 
  * siehe 'Modul-Design Befehlsvaledierung', besteht aus 9 Geisabschnitten. 
@@ -64,9 +53,9 @@ typedef enum
 } Gleisabschnitt;
 
 /*
- * \enum Fahrbefehl
+ * @enum Fahrbefehl
  *
- * Definition aller möglichen Fahrbefehle.
+ * Definition aller moeglichen Fahrbefehle.
  */
 typedef enum 
 {
@@ -79,12 +68,10 @@ typedef enum
     haltLok2_30         = 0x27,
 } Fahrbefehl;
 
-/* Lokale Konstanten ********************************************************/
-
-/* Lokale Variablen *********************************************************/
+// Lokale Variablen                                                             
 
 /*
- * Fahrprogramm_1 enthält Fahrbefehle für die Lok#1 (nur Zugbetreieb).
+ * Fahrprogramm_1 enthaelt Fahrbefehle fuer die Lok#1 (nur Zugbetreieb).
  * Fahraufgabe, siehe 'Pflichtenheft'.
  */
 static Fahrprogramm fahrprogramm_1  = 
@@ -97,7 +84,7 @@ static Fahrprogramm fahrprogramm_1  =
 };
 
 /*
- * Fahrprogramm_2 enthält Fahrbefehle für die Lok#2 (Zug- und Rangierbetreieb).
+ * Fahrprogramm_2 enthaelt Fahrbefehle fuer die Lok#2 (Zug- und Rangierbetreieb).
  * Fahraufgabe, siehe 'Pflichtenheft'
  */
 static Fahrprogramm fahrprogramm_2  = 
@@ -131,9 +118,7 @@ static Fahrprogramm fahrprogramm_2  =
     { haltLok2_20,  gleisAbschnitt_8 },     // Warte 20 Sekunden
 };
 
-/* Prototypen fuer lokale Funktionen ****************************************/
-
-/* Funktionsimplementierungen ***********************************************/
+// Funktionsimplementierungen
 
 /*
  * @brief   Initialisierung des Fahrprogrammes
@@ -145,14 +130,14 @@ void initFP()
 }
 
 /*
- * @brief   Ermittlung des aktuellen Kommandos für eine Lok
+ * @brief   Ermittlung des aktuellen Kommandos fuer eine Lok
  *
  *          Die Methode ermittelt anhand der uebergeben Lok die naechste Fahranweisung. Die
- *          Fahranweisungen sind für jede Lok gemaess des Pflichenhefts statisch im Code
+ *          Fahranweisungen sind fuer jede Lok gemaess des Pflichenhefts statisch im Code
  *          des Fahrprogrammes definiert.
  *
- * @param   lok     Für welche Lok soll die nächste Fahranweisung ermittelt werden.
- * @return  Nächste Fahranweisung für die übergebene
+ * @param   lok     Fuer welche Lok soll die n�echste Fahranweisung ermittelt werden.
+ * @return  Naechste Fahranweisung fuer die Uebergebene
  */
 
 Fahranweisung get_command(byte lok)
@@ -163,41 +148,41 @@ Fahranweisung get_command(byte lok)
     Fahranweisung anweisung;
 
     /*
-     * Überprüfen des Wertes von 'lok' und Übergabe der jeweils gültigen
+     * Ueberpruefen des Wertes von 'lok' und Uebergabe der jeweils gueltigen
      * Fahranweisung an die Leitzentrale. Die Fahraufgabe beinhaltet 2 Loks,
      * siehe 'Pflichtenheft'.
      */
     if (lok == lok1)
     {
-        if (fahrprogramm_1[f1_Index][1] == null) // Prüfung, fahrprogramm_1 Array Ende
+        if (fahrprogramm_1[f1_Index][1] == null) // Pruefung, fahrprogramm_1 Array Ende
         {
             f1_Index = 0;
         }
 
-        // Aufruf von gültiger Fahranweisung
+        // Aufruf von gueltiger Fahranweisung
         anweisung.fahrbefehl = fahrprogramm_1[f1_Index][0];
         anweisung.gleisabschnittNr = fahrprogramm_1[f1_Index][1];
 
         f1_Index ++;
 
-        // Rückgabe aktuelle Fahranweisung, anweisung = (fahrbefehl_n,gleisabschnit_n)
+        // Rueckgabe aktuelle Fahranweisung, anweisung = (fahrbefehl_n,gleisabschnit_n)
         return anweisung;
 
     }
     else if (lok == lok2)
     { 
-        if (fahrprogramm_2[f2_Index][1] == null) // Prüfung, fahrprogramm_2 Array Ende
+        if (fahrprogramm_2[f2_Index][1] == null) // Pruefung, fahrprogramm_2 Array Ende
         {
             f2_Index = 0;
         }
 
-        // Aufruf von gültiger Fahranweisung
+        // Aufruf von gueltiger Fahranweisung
         anweisung.fahrbefehl = fahrprogramm_2[f2_Index][0];
         anweisung.gleisabschnittNr = fahrprogramm_2[f2_Index][1];
 
         f2_Index++;
 
-        // Rückgabe aktuelle Fahranweisung, anweisung = (fahrbefehl_n,gleisabschnit_n)
+        // Rueckgabe aktuelle Fahranweisung, anweisung = (fahrbefehl_n,gleisabschnit_n)
         return anweisung;
     }
     // Fehler Anweisung bei falscher bzw. nicht vorhandener Lok
@@ -206,7 +191,7 @@ Fahranweisung get_command(byte lok)
         anweisung.fahrbefehl = err;
         anweisung.gleisabschnittNr = err;
  
-        // Rückgabe aktuelle Anweisung = (Fahrbefehl_err,Gleisabschnit_err)
+        // Rueckgabe aktuelle Anweisung = (Fahrbefehl_err,Gleisabschnit_err)
         return anweisung;
     }
 }

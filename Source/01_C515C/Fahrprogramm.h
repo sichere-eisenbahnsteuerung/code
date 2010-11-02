@@ -1,38 +1,32 @@
 #ifndef Fahrprogramm_H
 #define Fahrprogramm_H
 
-/*****************************************************************************
+/**
+ * @file    Fahrprogramm.c
  *
- * Dateiname:    Fahrprogramm.h
+ * @author  Thomas Musialski
  *
- * Projekt:      Sichere Eisenbahnsteuerung
+ * @brief   Bereitstellung der f�r Fahraufgabe n�tigen Funktionen
  *
- * Autor:        Thomas Musialski
- *
- *
- * Modul:        Fahrprogramm, Version 0.2
- *
- * Beschreibung:
- * Das Fahrprogramm hat die Aufgabe die notwendige Funktionalität
- * für die im Pflichtenheft beschriebene Fahraufgabe bereitzustellen. 
- * Das Modul Fahraufgabe befindet sich in der Anwenderschicht und steht
- * in direkter Kommunikation mit der Leitzentrale.
- * Die notwendigen Anweisungen für eine Fahraufgabe werden in einem 
- * Ringpuffer hinterlegt und der Leitzentrale zur Verfügung gestellt.
- *
- ****************************************************************************/
+ *          Das Fahrprogramm hat die Aufgabe die notwendige Funktionalitaet
+ * 	        fuer die im Pflichtenheft beschriebene Fahraufgabe bereitzustellen.
+ * 	        Das Modul Fahraufgabe befindet sich in der Anwenderschicht und steht
+ * 	        in direkter Kommunikation mit der Leitzentrale.
+ * 	        Die notwendigen Anweisungen fuer eine Fahraufgabe werden in einem
+ * 	        Ringpuffer hinterlegt und der Leitzentrale zur Verfuegung gestellt.
+ */
 
 #include "Betriebsmittelverwaltung.h"
 
-/* Globale Makrodefinitionen ************************************************/
+// Globale Makrodefinitionen
 
-/* Globale Typdefinitionen **************************************************/
+// Globale Typdefinitionen
 
 /*
  * Definition einer Fahranweisung. 
  *
  * Eine Fahranweisung besteht aus zwei Bytes, die angeben in welchen Gleisabschnitt der
- * angegebene Fahrbefehlt ausgeführt werden soll.
+ * angegebene Fahrbefehlt ausgefuehrt werden soll.
  */
 typedef struct
 {
