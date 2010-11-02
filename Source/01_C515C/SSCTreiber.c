@@ -1,169 +1,211 @@
-/*****************************************************************************
+/**
+ * @file     SSCTreiber.c
  *
- *        Dateiname:    SSCTreiber.c
+ * @author   Matthias Buss
+ *   
+ * @brief    Das SSC-Modul sorgt fuer die Kommunikation zwischen den
+ *  	        redudanten Mikrocontrollern
  *
- *        Projekt:      Sichere Eisenbahnsteuerung
- *
- *        Autor:        Matthias Buss	
- *        Datum:        09.02.2010
- *
- *        Modul:        SSC, 0.8
- *
- *        Beschreibung:
- *        Das SSC-Modul sorgt fuer die Kommunikation zwischen den
- *  	  redudanten Mikrocontrollern
- *
- ****************************************************************************/
+ * @date     13.01.2010
+ */
 
-/* Includes *****************************************************************/
+
+// Includes
 #include "SSCTreiber.h"
 #include "Betriebsmittelverwaltung.h"
 
+// Lokale Variablen 
+byte byteToSend     = 1;
+byte byteToReceive  = 1;
 
-/* Definition globaler Konstanten *******************************************/
-
-/* Definition globaler Variablen ********************************************/
-
-/* Lokale Makros ************************************************************/
-
-/* Lokale Typen *************************************************************/
-
-/* Lokale Konstanten ********************************************************/
-
-/* Lokale Variablen *********************************************************/
-byte byteToSend = 1;
-byte byteToReceive = 1;
-
-/// die Variable status speichert den Fortschritt des Moduls (zu erweitern) bzw den Punkt, 
-/// an dem das Modul den Token an die Betriebsmittelverwaltung abgegeben hat,
-/// um an dieser Stelle wieder weiter zu arbeiten
-/// 0: 	startpunkt
-/// 10:	das Modul wartet auf die Freigabe der Variablen SSC_EV_streckenbefehl, um einen Streckenbefehl zu schreiben
+/**
+ * Speichert den Fortschritt des Moduls bzw. den Punkt, an dem das Modul den Token an 
+ * die Betriebsmittelverwaltung abgegeben hat. 
+ *
+ * 0  = Startpunkt/Datenfreigabe (Daten senden)
+ * 10 = Das Modul wartet auf die Freigabe der Variabelen SSC_EV_streckenbefehl, um 
+ *      Streckenbefehl und Daten an die Ergebnisvalidierung zu senden.
+ */
 byte status = 0;
 
 /// die empfangenen Byte des Streckenbefehls werden in diesem Array zwischengespeichert,
 /// solange der Streckenbefehl noch nicht vollstÃ¤ndig empfangen und auf GÃ¼ltigkeit geprÃ¼ft wurde
 byte temp_streckenbefehl[3];
 
-/* Prototypen fuer lokale Funktionen ****************************************/
+// Prototypen fuer lokale Funktionen:
 void streckenbefehlAn_EVsenden();
 void datenLesen();
 void kollisionVerarbeiten();
 
-/* Funktionsimplementierungen ***********************************************/
 
-/// ErhÃ¶ht das byteToSend, wobei byteToSend nur die Werte 1,2 und 3 annehmen darf
+/**
+ * @brief   Inkrementiert die lokale Variabel 'byteToSend'.
+ *
+ *          Erhöht den Wert von 'byteToSend' um eins. Dabei wechselt der Wert
+ *          zwischen eins und drei. Ist der Wert von 'byteToSend' drei, wird  
+ *          'byteToSend' wieder auf eins gesetzt. 
+ *                  Bsp. 1 -> 2 -> 3 => 1 -> 2 -> 3 => 1 -> ...
+ */
 void byteToSendInkrementieren()
 {
-	switch (byteToSend)
-	{
-		case 1:
-			byteToSend = 2;
-			break;
+    switch (byteToSend)
+    {
+        case 1:
+            byteToSend = 2;
+            break;
 		
-		case 2:
-			byteToSend = 3;
-			break;
+        case 2:
+            byteToSend = 3;
+            break;
 			
-		case 3:
-			byteToSend = 1;
-			break;
-		
-		default: ;
-	}
+        case 3:
+            byteToSend = 1;
+        break;
+	
+        default: // @TODO Hier sollte irgendetwas passieren z.B. eine Fehlermeldung;
+    }
 }
 
-/// Verringert das byteToSend, wobei byteToSend nur die Werte 1,2 und 3 annehmen darf
+
+/**
+ * @brief   Dekrementiert die lokale Variabel 'byteToSend'.
+ *
+ *          Verringert den Wert von 'byteToSend' um eins. Dabei wechselt der Wert
+ *          zwischen drei und eins. Ist der Wert von 'byteToSend' eins, wird  
+ *          'byteToSend' wieder auf drei gesetzt. 
+ *                  Bsp. 3 -> 2 -> 1 => 3 -> 2 -> 1 => 3 -> ...
+ */
 void byteToSendDekrementieren()
 {
-	switch (byteToSend)
-	{
-		case 1:
-			byteToSend = 3;
-			break;
+    switch (byteToSend)
+    {
+        case 1:
+            byteToSend = 3;
+            break;
 		
-		case 2:
-			byteToSend = 1;
-			break;
+        case 2:
+            byteToSend = 1;
+            break;
 			
-		case 3:
-			byteToSend = 2;
-			break;
+        case 3:
+            byteToSend = 2;
+            break;
 		
-		default: ;
-	}
+        default: // @TODO Hier sollte irgendetwas passieren z.B. eine Fehlermeldung;
+    }
 }
 
-/// ErhÃ¶ht das byteToReceive, wobei byteToReceive nur die Werte 1,2 und 3 annehmen darf
+
+/**
+ * @brief   Inkrementiert die lokale Variabel 'bbyteToReceive'.
+ *
+ *          Erhöht den Wert von 'bbyteToReceive' um eins. Dabei wechselt der Wert
+ *          zwischen eins und drei. Ist der Wert von 'byteToSend' drei, wird  
+ *          'byteToSend' wieder auf eins gesetzt. 
+ *                  Bsp. 1 -> 2 -> 3 => 1 -> 2 -> 3 => 1 -> ...
+ */
 void byteToReceiveInkrementieren()
 {
-	switch (byteToReceive)
-	{
-		case 1:
-			byteToReceive = 2;
-			break;
-		
-		case 2:
-			byteToReceive = 3;
-			break;
+    switch (byteToReceive)
+    {
+        case 1:
+            byteToReceive = 2;
+            break;
+
+        case 2:
+            byteToReceive = 3;
+            break;
 			
-		case 3:
-			byteToReceive = 1;
-			break;
+        case 3:
+            byteToReceive = 1;
+            break;
 		
-		default: ;
-	}
+        default: // @TODO Hier sollte irgendetwas passieren z.B. eine Fehlermeldung;
+    }
 }
 
-/// Verringert das byteToReceive, wobei byteToReceive nur die Werte 1,2 und 3 annehmen darf
+
+/**
+ * @brief   Dekrementiert die lokale Variabel 'bbyteToReceive'.
+ *
+ *          Verringert den Wert von 'byteToSend' um eins. Dabei wechselt der Wert
+ *          zwischen drei und eins. Ist der Wert von 'bbyteToReceive' eins, wird  
+ *          'bbyteToReceive' wieder auf drei gesetzt. 
+ *                  Bsp. 3 -> 2 -> 1 => 3 -> 2 -> 1 => 3 -> ...
+ */
 void byteToReceiveDekrementieren()
 {
-	switch (byteToReceive)
-	{
-		case 1:
-			byteToReceive = 3;
-			break;
+    switch (byteToReceive)
+    {
+        case 1:
+            byteToReceive = 3;
+            break;
 		
-		case 2:
-			byteToReceive = 1;
-			break;
+        case 2:
+            byteToReceive = 1;
+            break;
 			
-		case 3:
-			byteToReceive = 2;
-			break;
+        case 3:
+            byteToReceive = 2;
+            break;
 		
-		default: ;
-	}
+        default: // @TODO Hier sollte irgendetwas passieren z.B. eine Fehlermeldung;
+    }
 }
 
 /// Streckenbefehl (globale Variable "EV_SSC_streckenbefehl") prÃ¼fen, 
 /// wenn lauter Einsen, dann kein neuer Streckenbefehl sonst ja
+/**
+ * @brief   Prüft die globale Variable 'EV_SSC_streckenbefehl'.
+ *
+ *          Enthält die globale Variable 'EV_SSC_streckenbefehl' nur
+ *          einsen, liegt keiner neuer Streckenbefehl an und die Funktion
+ *          gibt false zurück. 
+ *
+ * @return  Gibt true zurück, wenn ein neuer Streckenbefehl anliegt. 
+ *          Ansonsten false.
+ */
 boolean checkNeuerStreckenbefehl()
 {	
-	if(EV_SSC_streckenbefehl.Lok == 255 && EV_SSC_streckenbefehl.Weiche == 255 && EV_SSC_streckenbefehl.Entkoppler == 255) 
-	{
-		return FALSE;
-	}
-	else
-	{
-		return TRUE;
-	}
+    boolean neuerBefehl = true;
+
+    if(EV_SSC_streckenbefehl.Lok == 255 
+        && EV_SSC_streckenbefehl.Weiche == 255 
+        && EV_SSC_streckenbefehl.Entkoppler == 255) 
+    {
+        neuerBefehl = FALSE;
+    }
+
+    return (neuerBefehl);
 }
 
 /// bei gelesenem Streckenbefehl wird true uebergeben, bei zu sendendem false
+/**
+ * @brief   Prüft den anliegenden Strecknbefehl auf Gültigkeit.
+ *
+ *          Handelt es sich um den anliegenden Streckenbefehl um einen 
+ *          zu lesende (gegeben durch den Übergabeparameter 'lesen'),
+ *          wird der Streckenbefehl geprüft und ggf. die Ergebnisvalidierung, 
+ *          funktion streckenbefehlAn_EVsenden(), aufgerufen, wenn der 
+ *          Streckenbefehl gültig ist.
+ *
+ * @param   lesen Zu lesendener Streckenbefehlt (true) oder zu 
+ *          sendenen Streckenbefehl (false).
+ */
 void befehlAufGueltigkeitPruefen(boolean lesen) 
 {
-	//zu lesender Streckenbefehl
-	if(lesen)
-	{		
-		if (temp_streckenbefehl[0] == 255 && temp_streckenbefehl[1] == 255 && temp_streckenbefehl[2] == 255)
+	// Zu lesender Streckenbefehl
+    if(lesen == TRUE)
+    {		
+		if (temp_streckenbefehl[0] == 255 
+            && temp_streckenbefehl[1] == 255 
+            && temp_streckenbefehl[2] == 255)
 		{				
-			//kritischer Fehler (128 - 255) setzen
-			SSC_EV_streckenbefehl.Fehler = 255;
+            //kritischer Fehler (128 - 255) setzen
+            SSC_EV_streckenbefehl.Fehler = 255;
 		}
 		
-		streckenbefehlAn_EVsenden();
-	
+        streckenbefehlAn_EVsenden();
 	}
 	/*  //Pruefung, ob nur Einsen vorhanden macht wenig Sinn. Fuer Erweitung erstmal nicht gelÃ¶scht
 	else//zu sendender Streckenbefehl
@@ -174,99 +216,127 @@ void befehlAufGueltigkeitPruefen(boolean lesen)
 			EV_SSC_streckenbefehl.Fehler;
 		}
 	}*/
-
 }
 
-void streckenbefehlAn_EVsenden()
+
+/**
+ * @brief   Setzt das status bit. 
+ *          
+ *          Ist der Streckenbefehl freigegeben, wird die lokale Variable 'status'
+ *          auf 0 gesetzt. Ansonsten auf 10.   
+ */
+void streckenbefehlAn_EVsenden() //@TODO: Name stimmt nicht mit Funktion überein.
 {
-	//pruefen, ob SSC_EV_streckenbefehl zum Ueberschreiben freigegeben wurde
-	if(SSC_EV_streckenbefehl.Lok == 255 &&  SSC_EV_streckenbefehl.Weiche == 255 && SSC_EV_streckenbefehl.Entkoppler == 255)
-	{
-		SSC_EV_streckenbefehl.Lok = temp_streckenbefehl[0];
-		SSC_EV_streckenbefehl.Weiche = temp_streckenbefehl[1];
-		SSC_EV_streckenbefehl.Entkoppler = temp_streckenbefehl[2];
-		SSC_EV_streckenbefehl.Fehler = 0;
-		status = 0;
+    // Pruefen, ob SSC_EV_streckenbefehl zum Ueberschreiben freigegeben wurde
+    if(SSC_EV_streckenbefehl.Lok == 255 
+        &&  SSC_EV_streckenbefehl.Weiche == 255 
+        && SSC_EV_streckenbefehl.Entkoppler == 255)
+    {
+        SSC_EV_streckenbefehl.Lok        = temp_streckenbefehl[0];
+        SSC_EV_streckenbefehl.Weiche     = temp_streckenbefehl[1];
+        SSC_EV_streckenbefehl.Entkoppler = temp_streckenbefehl[2];
+        SSC_EV_streckenbefehl.Fehler     = 0;
+
+        status = 0;
 	}
-	
-	//wenn nicht freigegeben, Wartezustand speichern
-	else
-	{
-		status = 10;
-	}
+    else // Wenn nicht freigegeben, Wartezustand speichern
+    {
+        status = 10;
+    }
 }
 
-/// wird bei einem SSC interrupt aufgerufen,
-/// wobei entweder Daten empfangen oder eine Kollision festgestellt wurde
+
+/**
+ * @brief   Interrupt des SSC Treibers.
+ *
+ *          Wird bei einem SCC Interrupt aufgerufen. Je nach Interrupttyp 
+ *          werden Daten empfangen oder eine Kollision verarbeitet. 
+ */
 SSCinterrupt() interrupt 18
 {	
-	//Ueberpruefen, welcher Interrupt vorliegt und danach entsprechnete Funktion aufrufen
+    //Ueberpruefen, welcher Interrupt vorliegt und danach entsprechnete Funktion aufrufen
 
-	//bitweise UND des TC (LSB) und 00000001
-	if (SCF & 0x01 )
-	{		
-		datenLesen();
-	}
+    //bitweise UND des TC (LSB) und 00000001
+    if (SCF & 0x01 )
+    {		
+        datenLesen();
+    }
 
-	//bitweise UND des WCOL und 00000010
-	if (SCF & 0x02)
-	{
-		kollisionVerarbeiten();		
-	}
+    //bitweise UND des WCOL und 00000010
+    if (SCF & 0x02)
+    {
+        kollisionVerarbeiten();		
+    }
 }
 
-/// setzt nach einer Kollision die Nummer der zu empfangenden und des zu sendenden Bytes herab, 
-/// damit dieses beim nÃ¤chsten Aufruf von work() erneut gesendet bzw. empfangen werden kann
+
+/**
+ * @brief   Verarbeitung einer anliegenden Interrupt Kollision.
+ *
+ *          Setzt nach einer Kollision die Nummer der zu empfangenden  
+ *          und des zu sendenden Bytes herab, damit dieses beim nächsten 
+ *          Aufruf von work() erneut gesendet bzw. empfangen werden kann 
+ *
+ * @param
+ *
+ * @return
+ */
 void kollisionVerarbeiten()
 {	
-	byteToSendDekrementieren();
-	byteToReceiveDekrementieren();
+    byteToSendDekrementieren();
+    byteToReceiveDekrementieren();
 	
-	//Kollisionsbit (WCOL) zuruecksetzen
-	if (SCF & 0x01)	//TC gesetzt
-	{
-		SCF = 0x01;
-	}
-	else
-	{
-		SCF = 0x00;
-	}
-	
+    //Kollisionsbit (WCOL) zuruecksetzen
+    if (SCF & 0x01)	//TC gesetzt
+    {
+        SCF = 0x01;
+    }
+    else
+    {
+        SCF = 0x00;
+    }
 }
 
 /// liest das empfangene Byte ein
+/**
+ * @brief   Einlesen des empfangenen Bytes.
+ *  
+ *          Liest die die empfangenen Daten temporaer ein und setzt das 
+ *          Statusbyte (inkrement 'byteToReceive'). Außerdem wird das 
+ *          'Transmission Compleded-Bit' zurueck gesetzen.   
+ */
 void datenLesen()
 {
+    switch(byteToReceive)
+    {
+        case 1:			
+            temp_streckenbefehl[0] = SRB;
+            byteToReceiveInkrementieren();			
+            break;
+		
+        case 2:			
+            temp_streckenbefehl[1] = SRB;
+            byteToReceiveInkrementieren();				
+            break;
+		
+        case 3: 			
+            temp_streckenbefehl[2] = SRB;
+            byteToReceiveInkrementieren();	
+            befehlAufGueltigkeitPruefen(TRUE);							
+            break;
+
+        //@todo: Default Fall einbauen
+    }
 	
-	switch(byteToReceive)
-	{
-		case 1:			
-			temp_streckenbefehl[0] = SRB;
-			byteToReceiveInkrementieren();			
-			break;
-		
-		case 2:			
-			temp_streckenbefehl[1] = SRB;
-			byteToReceiveInkrementieren();				
-			break;
-		
-		case 3: 			
-			temp_streckenbefehl[2] = SRB;
-			byteToReceiveInkrementieren();	
-			befehlAufGueltigkeitPruefen(TRUE);							
-			break;
-	}
-	
-	//Transmission Compleded-Bit zuruecksetzen
-	if (SCF & 0x02) //Kollisionsbit (WCOL) gesetzt
-	{
-		SCF = 0x02;
-	}
-	else
-	{
-		SCF = 0x00;
-	}
-		
+    //Transmission Compleded-Bit zuruecksetzen
+    if (SCF & 0x02) //Kollisionsbit (WCOL) gesetzt
+    {
+        SCF = 0x02;
+    }
+    else
+    {
+        SCF = 0x00;
+    }	
 }
 
 /*boolen byteAufGueltigkeitPruefen(Byte a)
@@ -283,75 +353,90 @@ void datenLesen()
 	
 }*/
 
-
+/**
+ * @brief   Senden von Daten. 
+ *          
+ *          Je nach Wert von byteToSend setzt die Funktion die entsprechenden
+ *          globalen Daten z.B. byteToSend = 2, die Daten für die Weiche werden 
+ *          gesetzt. 
+ */
 void datenSenden()
 {
-	//checkByteToSend
-	switch(byteToSend)
-	{
-		//erstes Byte
-		case 1:	
-			if(checkNeuerStreckenbefehl())
-			{										  								
-				//erstes Byte senden
-				STB = EV_SSC_streckenbefehl.Lok;
-				byteToSendInkrementieren();
-			}
-			break;
+    //checkByteToSend      @todo: Vorher prüfen, ob Modul überhaupt initialisiert.
+    switch(byteToSend)
+    {
+	    //erstes Byte
+        case 1:	
+            if(checkNeuerStreckenbefehl() == TRUE)
+            {										  								
+                //erstes Byte senden
+                STB = EV_SSC_streckenbefehl.Lok;
+                byteToSendInkrementieren();
+            }
+            break;
 		
-		//zweites Byte
-		case 2:	
-			//zweites Byte senden
-			STB = EV_SSC_streckenbefehl.Weiche;
-			byteToSendInkrementieren();
-			break;
+        //zweites Byte
+        case 2:	
+            //zweites Byte senden
+            STB = EV_SSC_streckenbefehl.Weiche;
+            byteToSendInkrementieren();
+            break;
 		
-		//drittes Byte
-		case 3:	
-			//drittes Byte Senden
-			STB = EV_SSC_streckenbefehl.Entkoppler;
-			byteToSendInkrementieren();
+        //drittes Byte
+        case 3:	
+            //drittes Byte Senden
+            STB = EV_SSC_streckenbefehl.Entkoppler;
+            byteToSendInkrementieren();
 			
-			//Sichergehen, dass keine Kollision aufgetreten ist, die das byteToSend wieder auf 3 gesetzt hat.
-			//Dann wurde das Byte erfolgreich Ã¼bertragen und es kann die globale Variable mit einem neuen Streckenbefehl Ã¼berschrieben werden
-			if (byteToSend == 1)
-			{
-				EV_SSC_streckenbefehl.Lok = 255;
-				EV_SSC_streckenbefehl.Weiche = 255;
-				EV_SSC_streckenbefehl.Entkoppler = 255;
-				EV_SSC_streckenbefehl.Fehler = 0;
-			}
-			break;
+            /**
+             *  Sichergehen, dass keine Kollision aufgetreten ist, die das byteToSend 
+             *  wieder auf 3 gesetzt hat.
+             *  Dann wurde das Byte erfolgreich Uebertragen und es kann die globale 
+             *  Variable mit einem neuen Streckenbefehl Ã¼berschrieben werden.
+             */
+            if (byteToSend == 1)
+            {
+                EV_SSC_streckenbefehl.Lok        = 255;
+                EV_SSC_streckenbefehl.Weiche     = 255;
+                EV_SSC_streckenbefehl.Entkoppler = 255;
+                EV_SSC_streckenbefehl.Fehler     = 0;
+            }
+            break;
 				
-		default:
-			;//Fehlermeldung oder gar nichts
+        default:
+                ;//@todo: Fehlermeldung oder gar nichts
 	}
 }
 
-/// Hauptmethode des Moduls,
-/// wid als Schnittstelle von auÃŸerhalb aufgerufen
+
+/**
+ * @brief   Schnittstelle des Moduls, wird von außerhalb aufgerufen. 
+ */
 void workSSC()
 {
-	switch (status)
-	{
-		case 0:
-			datenSenden();
-			break;
-		
-		case 10:
-			streckenbefehlAn_EVsenden();
-			break;
-			
-		default:
-			datenSenden();
-			break;
-	}
+    switch (status)
+    {
+        case 0:
+            datenSenden();
+            break;
+    		
+        case 10:
+            streckenbefehlAn_EVsenden();
+            break;
+    			
+        default:
+            datenSenden();
+            break;
+    }
 
-	//SW-watchdog noch zu prÃ¼fen
-	//hello(4, status);	
-			
+//@todo: SW-watchdog noch zu prüfen
+//hello(4, status);		
 }
 	
+
+/**
+ * @brief   Initialisiert den SSC Treiber. 
+ */
 void initSSC()
 {
 	//SSC Einstellungen in Master Mode 
