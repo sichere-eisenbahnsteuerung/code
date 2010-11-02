@@ -1,8 +1,8 @@
-BL51 BANKED LINKER/LOCATER V6.22                                                        10/19/2010  10:16:54  PAGE 1
+BL51 BANKED LINKER/LOCATER V6.22                                                        11/02/2010  12:56:09  PAGE 1
 
 
 BL51 BANKED LINKER/LOCATER V6.22, INVOKED BY:
-C:\KEIL\C51\BIN\BL51.EXE .\AuditingSystem.obj, .\Befehlsvalidierung.obj, .\Betriebsmittelverwaltung.obj, .\Ergebnisvalid
+D:\KEIL\C51\BIN\BL51.EXE .\AuditingSystem.obj, .\Befehlsvalidierung.obj, .\Betriebsmittelverwaltung.obj, .\Ergebnisvalid
 >> ierung.obj, .\Fahrprogramm.obj, .\Leitzentrale.obj, .\Notaus.obj, .\RS232Treiber.obj, .\S88Treiber.obj, .\SoftwareWat
 >> chdog.obj, .\SSCTreiber.obj TO save_train_control RAMSIZE (256)
 
@@ -22,15 +22,15 @@ INPUT MODULES INCLUDED:
   .\S88Treiber.obj (S88TREIBER)
   .\SoftwareWatchdog.obj (SOFTWAREWATCHDOG)
   .\SSCTreiber.obj (SSCTREIBER)
-  C:\KEIL\C51\LIB\C51L.LIB (?C_STARTUP)
-  C:\KEIL\C51\LIB\C51L.LIB (?C?COPY)
-  C:\KEIL\C51\LIB\C51L.LIB (?C?CLDPTR)
-  C:\KEIL\C51\LIB\C51L.LIB (?C?CLDOPTR)
-  C:\KEIL\C51\LIB\C51L.LIB (?C?CSTPTR)
-  C:\KEIL\C51\LIB\C51L.LIB (?C?CSTOPTR)
-  C:\KEIL\C51\LIB\C51L.LIB (?C?IMUL)
-  C:\KEIL\C51\LIB\C51L.LIB (?C?UIDIV)
-  C:\KEIL\C51\LIB\C51L.LIB (?C_INIT)
+  D:\KEIL\C51\LIB\C51L.LIB (?C_STARTUP)
+  D:\KEIL\C51\LIB\C51L.LIB (?C?COPY)
+  D:\KEIL\C51\LIB\C51L.LIB (?C?CLDPTR)
+  D:\KEIL\C51\LIB\C51L.LIB (?C?CLDOPTR)
+  D:\KEIL\C51\LIB\C51L.LIB (?C?CSTPTR)
+  D:\KEIL\C51\LIB\C51L.LIB (?C?CSTOPTR)
+  D:\KEIL\C51\LIB\C51L.LIB (?C?IMUL)
+  D:\KEIL\C51\LIB\C51L.LIB (?C?UIDIV)
+  D:\KEIL\C51\LIB\C51L.LIB (?C_INIT)
 
 
 LINK MAP OF MODULE:  save_train_control (AUDITINGSYSTEM)
@@ -59,7 +59,7 @@ LINK MAP OF MODULE:  save_train_control (AUDITINGSYSTEM)
             XDATA   042CH     0015H     UNIT         ?XD?RS232TREIBER
             XDATA   0441H     0007H     UNIT         ?XD?SOFTWAREWATCHDOG
             XDATA   0448H     0006H     UNIT         ?XD?SSCTREIBER
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 2
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 2
 
 
 
@@ -119,7 +119,7 @@ LINK MAP OF MODULE:  save_train_control (AUDITINGSYSTEM)
             CODE    2328H     0038H     UNIT         ?PR?STRECKENBEFEHLAN_EVSENDEN?SSCTREIBER
             CODE    2360H     0037H     UNIT         ?PR?SENDSTRECKENBEFEHL?BEFEHLSVALIDIERUNG
             CODE    2397H     0037H     UNIT         ?PR?_WRITE_SENSOR_DATA?S88TREIBER
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 3
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 3
 
 
             CODE    23CEH     0037H     UNIT         ?PR?DATENLESEN?SSCTREIBER
@@ -179,7 +179,7 @@ LINK MAP OF MODULE:  save_train_control (AUDITINGSYSTEM)
 
 OVERLAY MAP OF MODULE:   save_train_control (AUDITINGSYSTEM)
 
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 4
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 4
 
 
 
@@ -239,7 +239,7 @@ SEGMENT                                             BIT_GROUP          XDATA_GRO
 
 ?PR?KOLLISIONVERARBEITEN?SSCTREIBER              -----    -----      -----    -----
   +--> ?PR?BYTETOSENDDEKREMENTIEREN?SSCTREIBER
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 5
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 5
 
 
   +--> ?PR?BYTETORECEIVEDEKREMENTIEREN?SSCTR...
@@ -299,7 +299,7 @@ SEGMENT                                             BIT_GROUP          XDATA_GRO
   +--> ?PR?WORKS88?S88TREIBER
   +--> ?PR?WORKSSC?SSCTREIBER
   +--> ?PR?WORKBV?BEFEHLSVALIDIERUNG
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 6
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 6
 
 
   +--> ?PR?WORKAS?AUDITINGSYSTEM
@@ -359,7 +359,7 @@ SEGMENT                                             BIT_GROUP          XDATA_GRO
 
 ?PR?_SENDNACHRICHT?LEITZENTRALE                  -----    -----      03ADH    0006H
   +--> ?PR?LEITZENTRALE
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 7
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 7
 
 
   +--> ?PR?_SENDMSG?AUDITINGSYSTEM
@@ -419,7 +419,7 @@ SEGMENT                                             BIT_GROUP          XDATA_GRO
   +--> ?PR?DATENSENDEN?SSCTREIBER
 
 ?PR?DATENSENDEN?SSCTREIBER                       -----    -----      -----    -----
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 8
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 8
 
 
   +--> ?PR?SSCTREIBER
@@ -479,7 +479,7 @@ SEGMENT                                             BIT_GROUP          XDATA_GRO
   +--> ?PR?_ZIELGLEISUNDWEICHE?BEFEHLSVALIDI...
   +--> ?PR?_WEICHERICHTIG?BEFEHLSVALIDIERUNG
   +--> ?PR?_SENDNACHRICHT?BEFEHLSVALIDIERUNG
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 9
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 9
 
 
 
@@ -539,7 +539,7 @@ SEGMENT                                             BIT_GROUP          XDATA_GRO
   +--> ?PR?ERGEBNISVALIDIERUNG
   +--> ?PR?_SENDNACHRICHT?ERGEBNISVALIDIERUNG
   +--> ?PR?EMERGENCY_OFF?NOTAUS
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 10
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 10
 
 
 
@@ -599,7 +599,7 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   -------         PROC          INITAS
   C:2909H         LINE#         267
   C:2909H         LINE#         268
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 11
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 11
 
 
   C:2909H         LINE#         270
@@ -659,7 +659,7 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   C:19F7H         LINE#         442
   C:1A04H         LINE#         443
   C:1A04H         LINE#         447
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 12
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 12
 
 
   C:1A0AH         LINE#         449
@@ -719,7 +719,7 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   C:25C6H         LINE#         555
   C:25CDH         LINE#         556
   C:25CFH         LINE#         557
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 13
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 13
 
 
   C:25D2H         LINE#         558
@@ -779,7 +779,7 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   C:28AFH         LINE#         671
   C:28B1H         LINE#         672
   C:28B4H         LINE#         673
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 14
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 14
 
 
   C:28B7H         LINE#         674
@@ -839,7 +839,7 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   C:0CE5H         SYMBOL        L?0237
   C:0CEDH         SYMBOL        L?0238
   C:0CF0H         SYMBOL        L?0239
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 15
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 15
 
 
   C:0CF8H         SYMBOL        L?0240
@@ -899,7 +899,7 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   C:0E24H         SYMBOL        L?0295
   C:0E2BH         SYMBOL        L?0296
   C:0E34H         SYMBOL        L?0297
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 16
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 16
 
 
   C:0E34H         SYMBOL        L?0298
@@ -959,7 +959,7 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   C:13F8H         LINE#         265
   C:13F8H         LINE#         266
   C:13FAH         LINE#         267
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 17
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 17
 
 
   C:13FAH         LINE#         269
@@ -1019,7 +1019,7 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   C:0BF6H         LINE#         331
   C:0C13H         LINE#         332
   C:0C2AH         LINE#         333
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 18
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 18
 
 
   C:0C41H         LINE#         334
@@ -1079,7 +1079,7 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   C:064FH         LINE#         388
   C:0662H         LINE#         389
   C:0662H         LINE#         393
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 19
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 19
 
 
   C:0672H         LINE#         398
@@ -1139,7 +1139,7 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   C:24FDH         LINE#         474
   C:24FDH         LINE#         477
   C:250AH         LINE#         478
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 20
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 20
 
 
   C:250BH         LINE#         479
@@ -1199,7 +1199,7 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   C:09D8H         LINE#         507
   C:09D8H         LINE#         510
   C:09E0H         LINE#         511
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 21
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 21
 
 
   C:09E0H         LINE#         512
@@ -1259,7 +1259,7 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   C:0AC3H         LINE#         582
   C:0AC5H         LINE#         584
   C:0AC8H         LINE#         585
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 22
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 22
 
 
   C:0AC8H         LINE#         586
@@ -1319,7 +1319,7 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   C:2310H         LINE#         660
   C:2315H         LINE#         662
   C:2317H         LINE#         663
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 23
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 23
 
 
   C:2317H         LINE#         664
@@ -1379,7 +1379,7 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   C:130FH         LINE#         726
   C:1312H         LINE#         729
   C:1312H         LINE#         730
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 24
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 24
 
 
   C:1315H         LINE#         731
@@ -1439,7 +1439,7 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   C:0E45H         LINE#         783
   C:0E4AH         LINE#         786
   C:0E4AH         LINE#         787
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 25
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 25
 
 
   C:0E4AH         LINE#         788
@@ -1499,7 +1499,7 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   D:0007H         SYMBOL        sensorNr
   X:03B9H         SYMBOL        nextAbs
   X:03BCH         SYMBOL        prevAbs
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 26
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 26
 
 
   X:03BFH         SYMBOL        nSwitch
@@ -1559,7 +1559,7 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   C:1576H         LINE#         895
   C:157FH         LINE#         899
   C:1592H         LINE#         902
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 27
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 27
 
 
   C:15A3H         LINE#         903
@@ -1619,7 +1619,7 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   C:1AA0H         LINE#         963
   C:1AA0H         LINE#         964
   C:1AA2H         LINE#         965
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 28
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 28
 
 
   C:1AA2H         LINE#         966
@@ -1679,7 +1679,7 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   C:1631H         LINE#         1009
   C:1631H         LINE#         1011
   C:1647H         LINE#         1012
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 29
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 29
 
 
   C:1650H         LINE#         1013
@@ -1739,7 +1739,7 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   X:03F6H         PUBLIC        BV_LZ_sensordaten
   X:03F9H         PUBLIC        BV_LZ_bestaetigung
   X:03FAH         PUBLIC        S88_BV_sensordaten
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 30
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 30
 
 
   X:03FDH         PUBLIC        BV_EV_streckenbefehl
@@ -1799,7 +1799,7 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   C:2150H         LINE#         116
   C:2153H         LINE#         117
   C:2156H         LINE#         118
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 31
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 31
 
 
   C:2159H         LINE#         119
@@ -1859,7 +1859,7 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   C:1C0FH         SYMBOL        L?0052
   C:1C23H         SYMBOL        L?0053
   C:1C23H         SYMBOL        L?0054
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 32
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 32
 
 
   C:1C27H         SYMBOL        L?0055
@@ -1876,34 +1876,34 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   -------         PROC          COM002F
   -------         ENDPROC       COM002F
   -------         PROC          INITEV
-  C:27C1H         LINE#         114
-  C:27C1H         LINE#         115
-  C:27C1H         LINE#         116
-  C:27C5H         LINE#         117
-  C:27C5H         LINE#         118
-  C:27C5H         LINE#         119
-  C:27C8H         LINE#         120
-  C:27C8H         LINE#         121
-  C:27C8H         LINE#         122
-  C:27C8H         LINE#         123
-  C:27C8H         LINE#         124
-  C:27C8H         LINE#         125
-  C:27C8H         LINE#         126
-  C:27CBH         LINE#         127
-  C:27CCH         LINE#         128
-  C:27CCH         LINE#         129
-  C:27CCH         LINE#         130
-  C:27D0H         LINE#         131
-  C:27D2H         LINE#         132
-  C:27D4H         LINE#         134
-  C:27D7H         LINE#         135
-  C:27D7H         LINE#         136
-  C:27D7H         LINE#         137
-  C:27D7H         LINE#         138
-  C:27D7H         LINE#         139
-  C:27D7H         LINE#         140
-  C:27D7H         LINE#         141
-  C:27DAH         LINE#         142
+  C:27C1H         LINE#         122
+  C:27C1H         LINE#         123
+  C:27C1H         LINE#         124
+  C:27C5H         LINE#         125
+  C:27C5H         LINE#         127
+  C:27C5H         LINE#         129
+  C:27C8H         LINE#         130
+  C:27C8H         LINE#         131
+  C:27C8H         LINE#         132
+  C:27C8H         LINE#         134
+  C:27C8H         LINE#         135
+  C:27C8H         LINE#         136
+  C:27C8H         LINE#         137
+  C:27CBH         LINE#         139
+  C:27CCH         LINE#         140
+  C:27CCH         LINE#         141
+  C:27CCH         LINE#         142
+  C:27D0H         LINE#         143
+  C:27D2H         LINE#         144
+  C:27D4H         LINE#         146
+  C:27D7H         LINE#         147
+  C:27D7H         LINE#         148
+  C:27D7H         LINE#         149
+  C:27D7H         LINE#         151
+  C:27D7H         LINE#         152
+  C:27D7H         LINE#         153
+  C:27D7H         LINE#         154
+  C:27DAH         LINE#         155
   -------         ENDPROC       INITEV
   -------         PROC          _SENDNACHRICHT
   D:0007H         SYMBOL        element
@@ -1911,222 +1911,224 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   D:0003H         SYMBOL        data1
   X:03ABH         SYMBOL        data2
   X:03ACH         SYMBOL        data3
-  C:2648H         LINE#         154
-  C:2648H         LINE#         155
-  C:2648H         LINE#         156
-  C:264DH         LINE#         157
-  C:2650H         LINE#         158
-  C:2653H         LINE#         159
-  C:265BH         LINE#         160
-  C:2663H         LINE#         161
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 33
+  C:2648H         LINE#         170
+  C:2648H         LINE#         171
+  C:2648H         LINE#         172
+  C:264DH         LINE#         173
+  C:2650H         LINE#         174
+  C:2653H         LINE#         175
+  C:265BH         LINE#         176
+  C:2663H         LINE#         177
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 33
 
 
-  C:2666H         LINE#         164
+  C:2666H         LINE#         180
   -------         ENDPROC       _SENDNACHRICHT
   -------         PROC          _ISSTRECKENBEFEHLRESETTED
   D:0001H         SYMBOL        track
-  C:2824H         LINE#         176
-  C:2824H         LINE#         177
-  C:2824H         LINE#         180
-  C:2836H         LINE#         183
-  C:2836H         LINE#         187
-  C:2838H         LINE#         188
-  C:2838H         LINE#         191
-  C:2839H         LINE#         192
+  C:2824H         LINE#         193
+  C:2824H         LINE#         194
+  C:2824H         LINE#         197
+  C:2836H         LINE#         200
+  C:2836H         LINE#         204
+  C:2838H         LINE#         205
+  C:2838H         LINE#         208
+  C:2839H         LINE#         209
   -------         ENDPROC       _ISSTRECKENBEFEHLRESETTED
   -------         PROC          _RESETSTRECKENBEFEHL
   D:0001H         SYMBOL        track
-  C:27DBH         LINE#         200
-  C:27DBH         LINE#         201
-  C:27DBH         LINE#         203
-  C:27E0H         LINE#         204
-  C:27E6H         LINE#         205
-  C:27EEH         LINE#         206
+  C:27DBH         LINE#         217
+  C:27DBH         LINE#         218
+  C:27DBH         LINE#         220
+  C:27E0H         LINE#         221
+  C:27E6H         LINE#         222
+  C:27EEH         LINE#         223
   -------         ENDPROC       _RESETSTRECKENBEFEHL
   -------         PROC          _STRECKENBEFEHLEEQUAL
   X:039CH         SYMBOL        track1
   X:039FH         SYMBOL        track2
-  C:21C4H         LINE#         219
-  C:21CFH         LINE#         220
-  C:21CFH         LINE#         223
-  C:21D5H         LINE#         224
-  C:21D5H         LINE#         226
-  C:21DAH         LINE#         228
-  C:21E0H         LINE#         229
-  C:21E0H         LINE#         233
-  C:21F3H         LINE#         234
-  C:21F3H         LINE#         236
-  C:21FBH         LINE#         237
-  C:21FBH         LINE#         239
-  C:2200H         LINE#         240
-  C:2201H         LINE#         241
-  C:2201H         LINE#         242
-  C:2201H         LINE#         244
-  C:2202H         LINE#         245
+  C:21C4H         LINE#         237
+  C:21CFH         LINE#         238
+  C:21CFH         LINE#         241
+  C:21D5H         LINE#         242
+  C:21D5H         LINE#         244
+  C:21DAH         LINE#         246
+  C:21E0H         LINE#         247
+  C:21E0H         LINE#         251
+  C:21F3H         LINE#         252
+  C:21F3H         LINE#         254
+  C:21FBH         LINE#         255
+  C:21FBH         LINE#         257
+  C:2200H         LINE#         258
+  C:2201H         LINE#         259
+  C:2201H         LINE#         260
+  C:2201H         LINE#         262
+  C:2202H         LINE#         263
   -------         ENDPROC       _STRECKENBEFEHLEEQUAL
   -------         PROC          _COMPARETRACKS
   X:03A2H         SYMBOL        track1
   X:03A5H         SYMBOL        track2
-  C:1CF0H         LINE#         257
-  C:1CFBH         LINE#         258
-  C:1CFBH         LINE#         260
-  C:1D3BH         LINE#         263
-  C:1D3BH         LINE#         265
-  C:1D3DH         LINE#         266
-  C:1D3DH         LINE#         270
-  C:1D4BH         LINE#         271
-  C:1D4BH         LINE#         272
-  C:1D55H         LINE#         274
-  C:1D5BH         LINE#         277
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 34
+  C:1CF0H         LINE#         275
+  C:1CFBH         LINE#         276
+  C:1CFBH         LINE#         278
+  C:1D3BH         LINE#         281
+  C:1D3BH         LINE#         283
+  C:1D3DH         LINE#         284
+  C:1D3DH         LINE#         288
+  C:1D4BH         LINE#         289
+  C:1D4BH         LINE#         290
+  C:1D55H         LINE#         292
+  C:1D5BH         LINE#         295
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 34
 
 
-  C:1D5DH         LINE#         278
-  C:1D5DH         LINE#         283
-  C:1D69H         LINE#         285
-  C:1D6CH         LINE#         288
-  C:1D6DH         LINE#         289
+  C:1D5DH         LINE#         296
+  C:1D5DH         LINE#         301
+  C:1D69H         LINE#         303
+  C:1D6CH         LINE#         306
+  C:1D6DH         LINE#         307
   -------         ENDPROC       _COMPARETRACKS
   -------         PROC          CHECKFORCOMMUNICATIONERRORS
-  C:1478H         LINE#         300
-  C:1478H         LINE#         301
-  C:1478H         LINE#         304
-  C:147EH         LINE#         305
-  C:147EH         LINE#         308
-  C:1483H         LINE#         310
-  C:1483H         LINE#         313
-  C:1486H         LINE#         314
-  C:1486H         LINE#         318
-  C:148DH         LINE#         319
-  C:148DH         LINE#         322
-  C:1492H         LINE#         324
-  C:1492H         LINE#         327
-  C:1495H         LINE#         328
-  C:1495H         LINE#         333
-  C:149EH         LINE#         334
-  C:149EH         LINE#         337
-  C:14A9H         LINE#         338
-  C:14A9H         LINE#         344
-  C:14B8H         LINE#         345
-  C:14C1H         LINE#         347
-  C:14C6H         LINE#         352
-  C:14D2H         LINE#         353
-  C:14D2H         LINE#         354
-  C:14DCH         LINE#         357
-  C:14E2H         LINE#         362
-  C:14E4H         LINE#         363
-  C:14E4H         LINE#         366
-  C:14EDH         LINE#         368
-  C:14EDH         LINE#         371
-  C:14EFH         LINE#         372
-  C:14EFH         LINE#         373
-  C:14EFH         LINE#         378
-  C:14F8H         LINE#         379
-  C:14F8H         LINE#         382
-  C:1503H         LINE#         383
-  C:1503H         LINE#         389
-  C:1512H         LINE#         390
-  C:151BH         LINE#         392
-  C:1520H         LINE#         397
-  C:152CH         LINE#         398
-  C:152CH         LINE#         399
-  C:1536H         LINE#         402
-  C:153CH         LINE#         407
-  C:153EH         LINE#         408
-  C:153EH         LINE#         411
-  C:154AH         LINE#         413
-  C:154DH         LINE#         416
-  C:154FH         LINE#         417
-  C:154FH         LINE#         418
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 35
+  C:1478H         LINE#         320
+  C:1478H         LINE#         321
+  C:1478H         LINE#         324
+  C:147EH         LINE#         325
+  C:147EH         LINE#         328
+  C:1483H         LINE#         330
+  C:1483H         LINE#         333
+  C:1486H         LINE#         334
+  C:1486H         LINE#         338
+  C:148DH         LINE#         339
+  C:148DH         LINE#         342
+  C:1492H         LINE#         344
+  C:1492H         LINE#         347
+  C:1495H         LINE#         348
+  C:1495H         LINE#         353
+  C:149EH         LINE#         354
+  C:149EH         LINE#         357
+  C:14A9H         LINE#         358
+  C:14A9H         LINE#         364
+  C:14B8H         LINE#         365
+  C:14C1H         LINE#         367
+  C:14C6H         LINE#         372
+  C:14C8H         LINE#         373
+  C:14D2H         LINE#         374
+  C:14D2H         LINE#         375
+  C:14DCH         LINE#         378
+  C:14E2H         LINE#         383
+  C:14E4H         LINE#         385
+  C:14E4H         LINE#         388
+  C:14EDH         LINE#         390
+  C:14EDH         LINE#         393
+  C:14EFH         LINE#         394
+  C:14EFH         LINE#         395
+  C:14EFH         LINE#         400
+  C:14F8H         LINE#         401
+  C:14F8H         LINE#         404
+  C:1503H         LINE#         405
+  C:1503H         LINE#         411
+  C:1512H         LINE#         412
+  C:151BH         LINE#         414
+  C:1520H         LINE#         419
+  C:1522H         LINE#         420
+  C:152CH         LINE#         421
+  C:152CH         LINE#         422
+  C:1536H         LINE#         425
+  C:153CH         LINE#         430
+  C:153EH         LINE#         432
+  C:153EH         LINE#         435
+  C:154AH         LINE#         437
+  C:154DH         LINE#         440
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 35
 
 
-  C:154FH         LINE#         422
-  C:1550H         LINE#         423
+  C:154FH         LINE#         441
+  C:154FH         LINE#         442
+  C:154FH         LINE#         446
+  C:1550H         LINE#         447
   -------         ENDPROC       CHECKFORCOMMUNICATIONERRORS
   -------         PROC          PROCESSINTERNALSTRECKENBEFEHL
-  C:1D6EH         LINE#         432
-  C:1D6EH         LINE#         433
-  C:1D6EH         LINE#         434
-  C:1D70H         LINE#         437
-  C:1D7BH         LINE#         438
-  C:1D7BH         LINE#         442
-  C:1D7BH         LINE#         446
-  C:1D86H         LINE#         449
-  C:1D8FH         LINE#         452
-  C:1D91H         LINE#         456
-  C:1D9AH         LINE#         457
-  C:1D9AH         LINE#         460
-  C:1DA3H         LINE#         461
-  C:1DA3H         LINE#         462
-  C:1DADH         LINE#         471
-  C:1DC0H         LINE#         472
-  C:1DC0H         LINE#         473
-  C:1DC0H         LINE#         474
-  C:1DC7H         LINE#         475
-  C:1DD4H         LINE#         477
-  C:1DDAH         LINE#         478
-  C:1DDAH         LINE#         479
-  C:1DDBH         LINE#         480
-  C:1DDBH         LINE#         482
-  C:1DE5H         LINE#         491
-  C:1DE8H         LINE#         492
-  C:1DE8H         LINE#         494
+  C:1D6EH         LINE#         456
+  C:1D6EH         LINE#         457
+  C:1D6EH         LINE#         458
+  C:1D70H         LINE#         461
+  C:1D7BH         LINE#         462
+  C:1D7BH         LINE#         466
+  C:1D7BH         LINE#         470
+  C:1D86H         LINE#         473
+  C:1D8FH         LINE#         476
+  C:1D91H         LINE#         480
+  C:1D9AH         LINE#         481
+  C:1D9AH         LINE#         484
+  C:1DA3H         LINE#         485
+  C:1DA3H         LINE#         486
+  C:1DADH         LINE#         495
+  C:1DC0H         LINE#         496
+  C:1DC0H         LINE#         498
+  C:1DC0H         LINE#         499
+  C:1DC7H         LINE#         500
+  C:1DD4H         LINE#         502
+  C:1DDAH         LINE#         503
+  C:1DDAH         LINE#         504
+  C:1DDBH         LINE#         506
+  C:1DDBH         LINE#         508
+  C:1DE5H         LINE#         517
+  C:1DE8H         LINE#         518
+  C:1DE8H         LINE#         520
   -------         ENDPROC       PROCESSINTERNALSTRECKENBEFEHL
   -------         PROC          PROCESSEXTERNALSTRECKENBEFEHL
-  C:261EH         LINE#         507
-  C:261EH         LINE#         508
-  C:261EH         LINE#         509
-  C:2620H         LINE#         512
-  C:262BH         LINE#         513
-  C:262BH         LINE#         516
-  C:2634H         LINE#         519
-  C:263DH         LINE#         522
-  C:263FH         LINE#         525
-  C:2641H         LINE#         526
-  C:2641H         LINE#         530
-  C:2644H         LINE#         531
-  C:2644H         LINE#         533
-  C:2646H         LINE#         534
-  C:2646H         LINE#         538
-  C:2647H         LINE#         539
+  C:261EH         LINE#         536
+  C:261EH         LINE#         537
+  C:261EH         LINE#         538
+  C:2620H         LINE#         541
+  C:262BH         LINE#         542
+  C:262BH         LINE#         545
+  C:2634H         LINE#         548
+  C:263DH         LINE#         551
+  C:263FH         LINE#         554
+  C:2641H         LINE#         555
+  C:2641H         LINE#         559
+  C:2644H         LINE#         560
+  C:2644H         LINE#         562
+  C:2646H         LINE#         563
+  C:2646H         LINE#         567
+  C:2647H         LINE#         568
   -------         ENDPROC       PROCESSEXTERNALSTRECKENBEFEHL
   -------         PROC          WORKEV
-  C:1DE9H         LINE#         548
-  C:1DE9H         LINE#         549
-  C:1DE9H         LINE#         556
-  C:1DEEH         LINE#         557
-  C:1DEEH         LINE#         560
-  C:1DEEH         LINE#         569
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 36
+  C:1DE9H         LINE#         578
+  C:1DE9H         LINE#         579
+  C:1DE9H         LINE#         586
+  C:1DEEH         LINE#         587
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 36
 
 
-  C:1DF1H         LINE#         577
-  C:1DF6H         LINE#         578
-  C:1DF6H         LINE#         582
-  C:1DF6H         LINE#         590
-  C:1E0FH         LINE#         591
-  C:1E0FH         LINE#         594
-  C:1E0FH         LINE#         602
-  C:1E1AH         LINE#         603
-  C:1E1AH         LINE#         606
-  C:1E23H         LINE#         607
-  C:1E23H         LINE#         608
-  C:1E2DH         LINE#         617
-  C:1E34H         LINE#         618
-  C:1E36H         LINE#         619
-  C:1E36H         LINE#         620
-  C:1E3DH         LINE#         622
-  C:1E4AH         LINE#         624
-  C:1E51H         LINE#         627
-  C:1E51H         LINE#         628
-  C:1E51H         LINE#         629
-  C:1E51H         LINE#         631
-  C:1E5BH         LINE#         640
-  C:1E5EH         LINE#         641
-  C:1E5EH         LINE#         647
-  C:1E61H         LINE#         648
+  C:1DEEH         LINE#         590
+  C:1DEEH         LINE#         599
+  C:1DF1H         LINE#         607
+  C:1DF6H         LINE#         608
+  C:1DF6H         LINE#         612
+  C:1DF6H         LINE#         620
+  C:1E0FH         LINE#         621
+  C:1E0FH         LINE#         624
+  C:1E0FH         LINE#         632
+  C:1E1AH         LINE#         633
+  C:1E1AH         LINE#         636
+  C:1E23H         LINE#         637
+  C:1E23H         LINE#         638
+  C:1E2DH         LINE#         647
+  C:1E34H         LINE#         648
+  C:1E36H         LINE#         650
+  C:1E36H         LINE#         651
+  C:1E3DH         LINE#         653
+  C:1E4AH         LINE#         655
+  C:1E51H         LINE#         658
+  C:1E51H         LINE#         659
+  C:1E51H         LINE#         661
+  C:1E51H         LINE#         663
+  C:1E5BH         LINE#         672
+  C:1E5EH         LINE#         673
+  C:1E5EH         LINE#         679
+  C:1E61H         LINE#         680
   -------         ENDPROC       WORKEV
   -------         ENDMOD        ERGEBNISVALIDIERUNG
 
@@ -2157,11 +2159,11 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   -------         ENDPROC       COM0011
   -------         PROC          INITFP
   C:0092H         LINE#         142
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 37
+
+
   C:0092H         LINE#         143
   C:0092H         LINE#         145
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 37
-
-
   -------         ENDPROC       INITFP
   -------         PROC          _GET_COMMAND
   D:0005H         SYMBOL        lok
@@ -2217,11 +2219,11 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   C:038EH         PUBLIC        workLZ
   X:03CDH         PUBLIC        wiederholen
   X:03CFH         PUBLIC        fahranweisungRingpuffer
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 38
+
+
   X:03DBH         PUBLIC        fahranweisung
   X:03DFH         PUBLIC        zustand
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 38
-
-
   X:03E1H         PUBLIC        zeit
   X:03E3H         PUBLIC        kuppelAktion
   X:03E4H         PUBLIC        checkKuppelAktion
@@ -2277,11 +2279,11 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   C:1166H         SYMBOL        L?0146
   C:1166H         SYMBOL        L?0147
   C:1172H         SYMBOL        L?0148
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 39
+
+
   C:1174H         SYMBOL        L?0149
   C:117BH         SYMBOL        L?0150
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 39
-
-
   C:118CH         SYMBOL        L?0151
   C:119BH         SYMBOL        L?0152
   C:11A9H         SYMBOL        L?0153
@@ -2337,11 +2339,11 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   C:2698H         LINE#         316
   C:2698H         LINE#         317
   -------         ENDPROC       CHECKZEIT
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 40
+
+
   -------         PROC          GETFAHRANWEISUNG
   -------         DO            
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 40
-
-
   X:03C9H         SYMBOL        lesen
   X:03CBH         SYMBOL        schreiben
   X:03A7H         SYMBOL        fa
@@ -2397,11 +2399,11 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   C:2458H         LINE#         389
   C:2458H         LINE#         390
   C:246BH         LINE#         391
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 41
+
+
   C:246BH         LINE#         392
   C:2470H         LINE#         393
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 41
-
-
   -------         ENDPROC       _GETNEXTWEICHE
   -------         PROC          _CHECKBELEGT
   D:0007H         SYMBOL        gleisabschnittNr
@@ -2457,11 +2459,11 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   C:1ED9H         LINE#         461
   C:1EDAH         LINE#         462
   -------         ENDPROC       _CHECKBEFAHRBARKEIT
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 42
+
+
   -------         PROC          _SETGLEISABSCHNITTGESPERRT
   D:0007H         SYMBOL        gleisabschnittNr
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 42
-
-
   B:0020H.3       SYMBOL        gesperrt
   C:289DH         LINE#         464
   C:289DH         LINE#         465
@@ -2517,11 +2519,11 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   X:03A7H         SYMBOL        gleisabschnittNr
   -------         DO            
   X:03A8H         SYMBOL        streckenbefehl
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 43
+
+
   -------         ENDDO         
   C:2021H         LINE#         520
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 43
-
-
   C:2026H         LINE#         524
   C:203EH         LINE#         530
   C:203EH         LINE#         532
@@ -2577,11 +2579,11 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   X:039CH         SYMBOL        verlassenerGleisabschnitt
   X:039EH         SYMBOL        gleisabschnittNr
   X:03A0H         SYMBOL        streckenbefehl
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 44
+
+
   X:03A4H         SYMBOL        sensordaten
   -------         ENDDO         
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 44
-
-
   C:038EH         LINE#         582
   C:038EH         LINE#         585
   C:0399H         LINE#         587
@@ -2637,11 +2639,11 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   C:0512H         LINE#         708
   C:0512H         LINE#         710
   C:0512H         LINE#         711
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 45
+
+
   C:0512H         LINE#         712
   C:0512H         LINE#         713
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 45
-
-
   C:0512H         LINE#         714
   C:0512H         LINE#         715
   C:0512H         LINE#         716
@@ -2697,11 +2699,11 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   -------         MODULE        NOTAUS
   C:0000H         SYMBOL        _ICE_DUMMY_
   D:00D0H         PUBLIC        PSW
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 46
+
+
   D:00D8H         PUBLIC        ADCON0
   D:00A8H         PUBLIC        IEN0
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 46
-
-
   D:00B8H         PUBLIC        IEN1
   D:00C0H         PUBLIC        IRCON
   D:0090H         PUBLIC        P1
@@ -2757,11 +2759,11 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   B:0098H.7       PUBLIC        SM0
   B:0098H.6       PUBLIC        SM1
   B:0098H.4       PUBLIC        REN
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 47
+
+
   B:0098H.1       PUBLIC        TI
   B:0098H.0       PUBLIC        RI
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 47
-
-
   B:00D8H.7       PUBLIC        BD
   B:00B0H.5       PUBLIC        RS232TREIBER_CTSPIN
   X:042CH         SYMBOL        sbufBuffer
@@ -2817,11 +2819,11 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   -------         ENDDO         
   C:0F98H         LINE#         128
   C:0F98H         LINE#         129
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 48
+
+
   C:0F98H         LINE#         131
   C:0F9EH         LINE#         132
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 48
-
-
   C:0F9EH         LINE#         133
   C:0FA4H         LINE#         134
   C:0FA6H         LINE#         135
@@ -2877,11 +2879,11 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   C:103CH         LINE#         211
   C:103FH         LINE#         212
   C:103FH         LINE#         213
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 49
+
+
   C:104CH         LINE#         215
   C:104FH         LINE#         216
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 49
-
-
   C:104FH         LINE#         217
   C:1055H         LINE#         219
   C:1057H         LINE#         220
@@ -2937,11 +2939,11 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   C:1EFFH         LINE#         302
   C:1F03H         LINE#         303
   C:1F03H         LINE#         304
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 50
+
+
   C:1F09H         LINE#         305
   C:1F09H         LINE#         308
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 50
-
-
   C:1F0FH         LINE#         310
   C:1F11H         LINE#         311
   C:1F14H         LINE#         312
@@ -2997,11 +2999,11 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   C:0076H         LINE#         371
   C:0076H         LINE#         374
   C:007DH         LINE#         375
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 51
+
+
   C:007DH         LINE#         376
   C:0080H         LINE#         377
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 51
-
-
   C:0082H         LINE#         380
   C:0082H         LINE#         381
   C:0088H         LINE#         382
@@ -3057,11 +3059,11 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   -------         ENDPROC       INITRS232
   -------         ENDMOD        RS232TREIBER
 
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 52
+
+
   -------         MODULE        S88TREIBER
   C:0000H         SYMBOL        _ICE_DUMMY_
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 52
-
-
   D:00D0H         PUBLIC        PSW
   D:00D8H         PUBLIC        ADCON0
   D:00A8H         PUBLIC        IEN0
@@ -3117,11 +3119,11 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   C:2819H         LINE#         71
   C:281EH         LINE#         72
   C:2820H         LINE#         73
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 53
+
+
   C:2823H         LINE#         74
   C:2823H         LINE#         76
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 53
-
-
   C:2823H         LINE#         78
   C:2823H         LINE#         79
   -------         ENDPROC       WORKS88
@@ -3177,11 +3179,11 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   C:1808H         LINE#         131
   C:1808H         LINE#         132
   C:1808H         LINE#         133
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 54
+
+
   C:180AH         LINE#         134
   C:1815H         LINE#         135
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 54
-
-
   C:1815H         LINE#         137
   C:182DH         LINE#         139
   C:1838H         LINE#         140
@@ -3237,11 +3239,11 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   -------         ENDPROC       COM000C
   -------         PROC          INITSW
   -------         DO            
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 55
+
+
   D:0006H         SYMBOL        i
   -------         ENDDO         
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 55
-
-
   C:25F2H         LINE#         77
   C:25F2H         LINE#         78
   C:25F2H         LINE#         80
@@ -3297,11 +3299,11 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
 
   -------         MODULE        SSCTREIBER
   C:0000H         SYMBOL        _ICE_DUMMY_
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 56
+
+
   C:284FH         PUBLIC        initSSC
   C:288AH         PUBLIC        workSSC
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 56
-
-
   D:00D0H         PUBLIC        PSW
   D:00D8H         PUBLIC        ADCON0
   D:00A8H         PUBLIC        IEN0
@@ -3357,11 +3359,11 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   C:26F4H         LINE#         65
   C:26FAH         LINE#         66
   C:26FBH         LINE#         68
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 57
+
+
   C:26FBH         LINE#         69
   C:2701H         LINE#         70
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 57
-
-
   C:2701H         LINE#         72
   C:2701H         LINE#         73
   C:2701H         LINE#         74
@@ -3417,11 +3419,11 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   C:275EH         LINE#         132
   C:2764H         LINE#         133
   C:2764H         LINE#         135
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 58
+
+
   C:2764H         LINE#         136
   C:2764H         LINE#         137
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 58
-
-
   -------         ENDPROC       BYTETORECEIVEDEKREMENTIEREN
   -------         PROC          CHECKNEUERSTRECKENBEFEHL
   C:283AH         LINE#         141
@@ -3477,11 +3479,11 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   C:210FH         LINE#         215
   C:210FH         LINE#         216
   -------         ENDPROC       SSCINTERRUPT
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 59
+
+
   -------         PROC          KOLLISIONVERARBEITEN
   C:2877H         LINE#         220
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 59
-
-
   C:2877H         LINE#         221
   C:2877H         LINE#         222
   C:287AH         LINE#         223
@@ -3537,11 +3539,11 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   C:2219H         LINE#         303
   C:2219H         LINE#         305
   C:221FH         LINE#         306
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 60
+
+
   C:2222H         LINE#         307
   C:2222H         LINE#         310
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 60
-
-
   C:2222H         LINE#         312
   C:2228H         LINE#         313
   C:222BH         LINE#         317
@@ -3597,11 +3599,11 @@ SYMBOL TABLE OF MODULE:  save_train_control (AUDITINGSYSTEM)
   -------         MODULE        ?C?CLDOPTR
   C:08D7H         PUBLIC        ?C?CLDOPTR
   -------         ENDMOD        ?C?CLDOPTR
+BL51 BANKED LINKER/LOCATER V6.22                                                      11/02/2010  12:56:09  PAGE 61
+
+
 
   -------         MODULE        ?C?CSTPTR
-BL51 BANKED LINKER/LOCATER V6.22                                                      10/19/2010  10:16:54  PAGE 61
-
-
   C:0904H         PUBLIC        ?C?CSTPTR
   -------         ENDMOD        ?C?CSTPTR
 

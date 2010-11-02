@@ -20,20 +20,20 @@
 #include "AuditingSystemSendMsg.h"
 #include "Notaus.h"
 
-
 // Lokale Makros:
-#if ndef MAXSCCCOUNTER 
+#ifndef MAXSCCCOUNTER 
 #define MAXSSCCOUNTER 3
 #endif 
-#if ndef	MAXRS232COUNTER
+#ifndef	MAXRS232COUNTER
 #define MAXRS232COUNTER 3
 #endif 
-#if ndef	MAXSTRECKENBEFEHLEUNGLEICH
+#ifndef	MAXSTRECKENBEFEHLEUNGLEICH
 #define MAXSTRECKENBEFEHLEUNGLEICH 3
 #endif 
 
 // Lokale Typen:
-typedef enum {
+typedef enum 
+{
 	E_STRECKENBEFEHLEUNGLEICH   = 1,
 	E_SSC_COUNTER               = 2,
 	E_RS232_COUNTER             = 3,
@@ -41,7 +41,8 @@ typedef enum {
 	E_RS232_ERROR               = 5
 } Element;
 
-typedef enum {
+typedef enum 
+{
 	A_INFO      = 1,
 	A_WARNING   = 2,
 	A_FEHLER    = 3
@@ -49,12 +50,12 @@ typedef enum {
 
 // Lokale Variablen: 
 /**
- * @brief   Speichern der alten Streckenbefehl des SCC Treibers.
+ * @brief   Speichern der alten Streckenbefehle des SCC Treibers.
  */
 static Streckenbefehl oldSSC = {LEER, LEER, LEER, 0};  
 
 /**
- * @brief   Speichern der alten Streckenbefehl des RS232 Treibers.  
+ * @brief   Speichern der alten Streckenbefehle des RS232 Treibers.  
  */  
 static Streckenbefehl oldRS232 = {LEER, LEER, LEER, 0};
 
@@ -230,7 +231,7 @@ static void resetStreckenbefehl(Streckenbefehl *track)      //@todo: Besser Refe
  *
  * @param   track2   2. Streckenbefehl
  *
- * @return  Gibt true zurueck, wenn die Streckenbefehl identisch sind. 
+ * @return  Gibt true zurueck, wenn die Streckenbefehle identisch sind. 
  *          Andernfalls false.
  */
 static boolean streckenbefehleEqual(Streckenbefehl *track1, Streckenbefehl *track2)     //@todo: Besser const Referenzen verwenden.
@@ -357,9 +358,9 @@ static boolean checkForCommunicationErrors(void)
 		{
 			// Falls ja, wird der interne Streckenbefehl in 
 			// diesen geschrieben, ...
-//			 EV_RS232_streckenbefehl = internerStreckenbefehl;
+//EV_RS232_streckenbefehl = internerStreckenbefehl;
 			// der interne Streckenbefehl zurueckgesetzt ...
-//			resetStreckenbefehl(&internerStreckenbefehl);
+//resetStreckenbefehl(&internerStreckenbefehl);
 			EV_RS232_streckenbefehl = oldRS232;
 			resetStreckenbefehl(&oldRS232);
 			// und der Zaehler zurueckgesetzt.
@@ -404,9 +405,9 @@ static boolean checkForCommunicationErrors(void)
 		{
 			// Falls ja, wird der interne Streckenbefehl in 
 			// diesen geschrieben, ...
-//			EV_SSC_streckenbefehl = internerStreckenbefehl;
+//EV_SSC_streckenbefehl = internerStreckenbefehl;
 			// der interne Streckenbefehl zurueckgesetzt ...
-//			resetStreckenbefehl(&internerStreckenbefehl);
+//resetStreckenbefehl(&internerStreckenbefehl);
 			EV_SSC_streckenbefehl = oldSSC;
 			resetStreckenbefehl(&oldSSC);
 			// und der Zaehler zurueckgesetzt.
@@ -475,7 +476,7 @@ static void processInternalStreckenbefehl(void)
 	isBVNew = TRUE;
 
 	// Ueberpruefung ob ein alter Streckenbefehl nicht gesendet werden konnte
-//	if (counterSSC == 0)
+//if (counterSSC == 0)
 	if (isStreckenbefehlResetted(&oldSSC))
 	{
 		// Ueberpruefung, ob der Shared Memory zum SSC-Treiber 
@@ -577,9 +578,9 @@ static boolean processExternalStreckenbefehl(void)
 void workEV(void)
 {
 /* 
-* Verarbeitungsschritt 1:
-* Auf Kommunikationsprobleme pruefen 
-*/
+ * Verarbeitungsschritt 1:
+ * Auf Kommunikationsprobleme pruefen 
+ */
 	// Als erstes wird ueberprueft, ob bei der Kommunikation mit den
 	// Treibern Fehler oder Probleme aufgetreten sind.
 	if (checkForCommunicationErrors())
@@ -589,18 +590,18 @@ void workEV(void)
 	}
 
 /* 
-* Verarbeitungsschritt 2:
-* Internen Streckenbefehl verarbeiten 
-*/
+ * Verarbeitungsschritt 2:
+ * Internen Streckenbefehl verarbeiten 
+ */
 	// Im Anschluss wird der interne Streckenbefehl, also der aus dem
 	// Shared Memory von der Befehlsvalidierung, ueberprueft und in 
 	// den Shared Memory zum SSC-Treiber geschrieben.
 	processInternalStreckenbefehl();
 
 /*
-* Verarbeitungsschritt 3: 
-* Externen Streckenbefehl verarbeiten 
-*/
+ * Verarbeitungsschritt 3: 
+ * Externen Streckenbefehl verarbeiten 
+ */
 	// Danach wird der Streckenbefehl aus dem Shared Memory vom 
 	// SSC-Treiber (externer Streckenbefehl) verarbeitet.
 	if (!processExternalStreckenbefehl())
@@ -611,9 +612,9 @@ void workEV(void)
 	}
 
 /*
-* Verarbeitungsschritt 4: 
-* Streckenbefehle vergleichen 
-*/
+ * Verarbeitungsschritt 4: 
+ * Streckenbefehle vergleichen 
+ */
 	// Daraufhin werden der interne und der externe Streckenbefehl 
 	// miteinander verglichen.
 	if (!streckenbefehleEqual(&internerStreckenbefehl, &externerStreckenbefehl))
@@ -623,11 +624,11 @@ void workEV(void)
 	}
 
 /*
-* Verarbeitungsschritt 5: 
-* Senden des internen Streckenbefehls an den RS232-Treiber 
-*/
+ * Verarbeitungsschritt 5: 
+ * Senden des internen Streckenbefehls an den RS232-Treiber 
+ */
 	// Ueberpruefung ob ein alter Streckenbefehl nicht gesendet werden konnte
-//	if (counterRS232 == 0)
+//if (counterRS232 == 0)
 	if (isStreckenbefehlResetted(&oldRS232))
 	{
 		// Ueberpruefung, ob der Shared Memory zum RS232-Treiber 
@@ -672,8 +673,8 @@ void workEV(void)
 	}
 
 /*
-* Verarbeitungsschritt 6:
-* Interne Variablen zuruecksetzen
-*/
+ * Verarbeitungsschritt 6:
+ * Interne Variablen zuruecksetzen
+ */
 	initEV();
 }
